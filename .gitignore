@@ -1,0 +1,15 @@
+# Ignore environment variable files
+.env
+
+# Ignore Python bytecode files
+*.pyc
+
+# Ignore Visual Studio Code settings
+.vscode
+
+# Ignore SQL files
+*.sql
+backend/sql/
+
+# Ignore endpoint test script
+backend/test_all_endpoints.py
