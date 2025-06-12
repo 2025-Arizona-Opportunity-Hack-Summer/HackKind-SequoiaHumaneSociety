@@ -5,8 +5,8 @@ from enum import Enum
 from sqlalchemy.orm import Session
 from backend.core.database import get_db
 from backend import models
-import os
-import shutil
+from pydantic import BaseModel, ConfigDict
+
 
 router = APIRouter(prefix="/pets", tags=["Pets"])
 
@@ -78,8 +78,7 @@ class PetCreate(PetBase):
 
 class PetResponse(PetBase):
     id: int
-    class Config:
-        from_attributes = True  # pydantic v2
+    model_config = ConfigDict(from_attributes=True)
 
 # Routes
 @router.get("/", response_model=List[PetResponse])
@@ -95,7 +94,7 @@ def read_pet(pet_id: int, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=PetResponse)
 def create_pet(pet: PetCreate, db: Session = Depends(get_db)):
-    db_pet = models.Pet(**pet.dict())
+    db_pet = models.Pet(**pet.model_dump())
     db.add(db_pet)
     db.commit()
     db.refresh(db_pet)
@@ -106,7 +105,7 @@ def update_pet(pet_id: int, pet_update: PetCreate, db: Session = Depends(get_db)
     pet = db.query(models.Pet).filter(models.Pet.id == pet_id).first()
     if not pet:
         raise HTTPException(status_code=404, detail="Pet not found")
-    for key, value in pet_update.dict().items():
+    for key, value in pet_update.model_dump().items():
         setattr(pet, key, value)
     db.commit()
     db.refresh(pet)
@@ -121,8 +120,9 @@ def delete_pet(pet_id: int, db: Session = Depends(get_db)):
     db.commit()
     return pet
 
-UPLOAD_DIR = "backend/static/uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+# Uploading pet photos logic
+
+from backend.logic.image_uploader import upload_pet_photo_local
 
 @router.post("/{pet_id}/photo", response_model=PetResponse)
 def upload_pet_photo(pet_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
@@ -130,13 +130,12 @@ def upload_pet_photo(pet_id: int, file: UploadFile = File(...), db: Session = De
     if not pet:
         raise HTTPException(status_code=404, detail="Pet not found")
 
-    filename = f"pet_{pet_id}_{file.filename}"
-    file_path = os.path.join(UPLOAD_DIR, filename)
+    if not file.filename.endswith((".jpg", ".jpeg", ".png")):
+        raise HTTPException(status_code=400, detail="Invalid file type")
 
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    image_url = upload_pet_photo_local(file.file, pet_id, file.filename)
 
-    pet.image_url = f"/static/uploads/{filename}"
+    pet.image_url = image_url
     db.commit()
     db.refresh(pet)
     return pet

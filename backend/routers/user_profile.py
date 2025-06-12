@@ -6,6 +6,8 @@ from backend.core.database import get_db
 from backend.models.user import User
 from backend.core.dependencies import get_current_user
 from datetime import datetime
+from pydantic import ConfigDict
+
 
 router = APIRouter(prefix="/users/me", tags=["User Profile"])
 
@@ -22,8 +24,8 @@ class UserOut(BaseModel):
     role: str
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 @router.get("", response_model=UserOut)
 def get_profile(current_user: User = Depends(get_current_user)):

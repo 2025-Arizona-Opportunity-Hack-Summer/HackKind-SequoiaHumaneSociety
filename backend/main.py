@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from typing import Union
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import OAuth2PasswordBearer
+from backend.logic.scheduler import start_scheduler
 from backend.routers import (
     auth_router,
     user_profile_router,
@@ -58,3 +59,4 @@ def read_root():
 def read_item(item_id: int, q: Union[str, None] = None):
     return {"item_id": item_id, "q": q}    
 
+start_scheduler()

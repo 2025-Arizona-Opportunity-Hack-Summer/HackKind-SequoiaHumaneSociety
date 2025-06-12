@@ -5,6 +5,8 @@ from backend.core.database import get_db
 from backend.models.user_preferences import UserPreferences
 from backend.core.dependencies import get_current_user
 from backend.models.user import User
+from pydantic import ConfigDict
+
 
 router = APIRouter(prefix="/users/me/preferences", tags=["User Preferences"])
 
@@ -23,8 +25,8 @@ class PreferencesSchema(BaseModel):
     wants_allergy_friendly: bool
     accepts_special_needs: bool
     
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 @router.get("/", response_model=PreferencesSchema)
 def get_user_preferences(
@@ -45,7 +47,7 @@ def create_user_preferences(
     if db.query(UserPreferences).filter(UserPreferences.user_id == current_user.id).first():
         raise HTTPException(status_code=400, detail="Preferences already exist")
 
-    new_preferences = UserPreferences(user_id=current_user.id, **preferences.dict())
+    new_preferences = UserPreferences(user_id=current_user.id, **preferences.model_dump())
     db.add(new_preferences)
     db.commit()
     db.refresh(new_preferences)

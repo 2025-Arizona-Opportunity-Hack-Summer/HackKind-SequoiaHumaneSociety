@@ -1,11 +1,11 @@
 # Ignore environment variable files
-.env
+*.env
 
 # Ignore Python bytecode files
 *.pyc
 
 # Ignore Visual Studio Code settings
-.vscode
+*.vscode
 
 # Ignore SQL files
 *.sql
@@ -13,3 +13,21 @@ backend/sql/
 
 # Ignore endpoint test script
 backend/test_all_endpoints.py
+
+# Ignore Python cache directories
+__pycache__/
+
+# Ignore Python compiled files
+__pycache__/*
+
+# Ignore Python compiled files
+*.pyo
+
+# Ignore Python compiled files
+*.pyd
+
+# Ignore Python compiled files
+*.pyc
+
+# Ignore static files
+backend/static/

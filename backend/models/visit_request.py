@@ -15,6 +15,6 @@ class VisitRequest(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     pet_id = Column(Integer, ForeignKey("pets.id"))
     requested_at = Column(TIMESTAMP, nullable=False)
-    status = Column(Enum(VisitRequestStatus), default=VisitRequestStatus.Pending)
+    status = Column(Enum(VisitRequestStatus), nullable=False, default=VisitRequestStatus.Pending)
     created_at = Column(TIMESTAMP, server_default=func.now())
 

@@ -6,6 +6,8 @@ from backend.models.user import UserRole
 from backend.core.dependencies import get_current_user
 from pydantic import BaseModel
 from datetime import datetime
+from pydantic import BaseModel, ConfigDict
+
 
 router = APIRouter(prefix="/admin/visit-requests", tags=["Admin Visit Requests"])
 
@@ -16,8 +18,7 @@ class VisitRequestSchema(BaseModel):
     requested_at: datetime
     status: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 @router.get("/", response_model=list[VisitRequestSchema])
