@@ -1,33 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
 from backend.core.database import get_db
 from backend.models.user_preferences import UserPreferences
 from backend.core.dependencies import get_current_user
 from backend.models.user import User
-from pydantic import ConfigDict
-
+from backend.schemas.preferences_schema import PreferencesSchema
 
 router = APIRouter(prefix="/users/me/preferences", tags=["User Preferences"])
-
-class PreferencesSchema(BaseModel):
-    preferred_species: str
-    pet_purpose: str
-    has_children: bool 
-    has_dogs: bool 
-    has_cats: bool 
-    ownership_experience: str
-    preferred_age: str
-    preferred_sex: str
-    preferred_size: str
-    preferred_energy_level: str
-    preferred_hair_length: str
-    wants_allergy_friendly: bool
-    accepts_special_needs: bool
     
-    model_config = ConfigDict(from_attributes=True)
-
-
 @router.get("/", response_model=PreferencesSchema)
 def get_user_preferences(
     db: Session = Depends(get_db),

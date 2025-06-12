@@ -3,6 +3,8 @@ from typing import Union
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import OAuth2PasswordBearer
 from backend.logic.scheduler import start_scheduler
+from fastapi.staticfiles import StaticFiles
+import os
 from backend.routers import (
     auth_router,
     user_profile_router,
@@ -16,7 +18,6 @@ from backend.routers import (
 )
 
 app = FastAPI()
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 def custom_openapi():
@@ -58,5 +59,7 @@ def read_root():
 @app.get("/items/{item_id}")
 def read_item(item_id: int, q: Union[str, None] = None):
     return {"item_id": item_id, "q": q}    
+
+app.mount("/static", StaticFiles(directory=os.path.join("backend", "static")), name="static")
 
 start_scheduler()

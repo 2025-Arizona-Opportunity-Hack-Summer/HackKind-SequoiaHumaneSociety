@@ -1,19 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
 from backend.core.database import get_db
 from backend.core.dependencies import get_current_user
 from backend.models.user_training_preferences import UserTrainingPreference, TrainingTrait
 from backend.models.user import User
 from typing import List
+from backend.schemas.training_schema import TraitInput
 
 router = APIRouter(
     prefix="/preferences/training-traits",
     tags=["Training Trait Preferences"]
 )
-
-class TraitInput(BaseModel):
-    trait: TrainingTrait
 
 @router.get("/", response_model=List[TrainingTrait])
 def get_training_traits(

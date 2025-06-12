@@ -1,34 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from backend.core.database import get_db
-from backend.models.visit_request import VisitRequest, VisitRequestStatus
+from backend.models.visit_request import VisitRequest
 from backend.core.dependencies import get_current_user
 from backend.models.user import User
-from datetime import datetime
 from typing import List
-from pydantic import BaseModel
 from backend.logic.emails import send_visit_confirmation
 from backend.models.pet import Pet
-from pydantic import ConfigDict
-
+from backend.schemas.visit_schema import VisitRequestCreate, VisitStatusUpdate, VisitRequestSchema
 
 router = APIRouter(prefix="/visit-requests", tags=["Visit Requests"])
-
-class VisitStatusUpdate(BaseModel):
-    new_status: VisitRequestStatus
-
-class VisitRequestCreate(BaseModel):
-    requested_at: datetime
-
-class VisitRequestSchema(BaseModel):
-    id: int
-    user_id: int
-    pet_id: int
-    requested_at: datetime
-    status: str
-
-    model_config = ConfigDict(from_attributes=True)
-
 
 @router.post("/{pet_id}", response_model=dict)
 def request_visit(
