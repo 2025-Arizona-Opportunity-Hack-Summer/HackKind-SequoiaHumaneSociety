@@ -3,8 +3,6 @@ from backend.core.database import Base
 import enum
 from sqlalchemy.sql import func
 
-
-
 class PetSpecies(str, enum.Enum):
     Dog = "Dog"
     Cat = "Cat"

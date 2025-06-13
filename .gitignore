@@ -12,7 +12,7 @@
 backend/sql/
 
 # Ignore endpoint test script
-backend/test_all_endpoints.py
+/test_all_endpoints.py
 
 # Ignore Python cache directories
 __pycache__/

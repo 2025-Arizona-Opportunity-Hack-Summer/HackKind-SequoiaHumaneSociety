@@ -4,8 +4,6 @@ from backend.core.database import get_db
 from backend.models.visit_request import VisitRequest, VisitRequestStatus
 from backend.models.user import User, UserRole
 from backend.core.dependencies import get_current_user
-from pydantic import BaseModel, ConfigDict
-from datetime import datetime
 from backend.schemas.visit_schema import VisitRequestSchema
 
 router = APIRouter(prefix="/admin/visit-requests", tags=["Admin Visit Requests"])

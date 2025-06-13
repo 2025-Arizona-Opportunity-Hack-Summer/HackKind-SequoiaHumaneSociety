@@ -3,8 +3,6 @@ from backend.core.database import Base
 import enum
 from sqlalchemy.sql import func
 
-
-
 class TrainingTrait(str, enum.Enum):
     HouseTrained = "HouseTrained"
     LitterTrained = "LitterTrained"

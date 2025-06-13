@@ -1,6 +1,5 @@
-import re
 from enum import Enum
-from typing import Optional, List
+from typing import Optional
 from pydantic import BaseModel, ConfigDict, constr, HttpUrl, Field
 from typing_extensions import Annotated
 from pydantic import field_validator
