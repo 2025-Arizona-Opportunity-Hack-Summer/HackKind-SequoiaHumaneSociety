@@ -77,3 +77,21 @@ class PetCreate(PetBase):
 class PetResponse(PetBase):
     id: int
     model_config = ConfigDict(from_attributes=True)
+    
+class PetUpdate(BaseModel):
+    name: Optional[str] = None
+    age_group: Optional[PetAgeGroup] = None
+    sex: Optional[PetSex] = None
+    species: Optional[PetSpecies] = None
+    size: Optional[PetSize] = None
+    energy_level: Optional[PetEnergyLevel] = None
+    experience_level: Optional[ExperienceLevel] = None
+    hair_length: Optional[HairLength] = None
+    allergy_friendly: Optional[bool] = None
+    special_needs: Optional[bool] = None
+    kid_friendly: Optional[bool] = None
+    pet_friendly: Optional[bool] = None
+    breed: Optional[str] = None
+    shelter_notes: Optional[str] = None
+    image_url: Optional[str] = None
+    status: Optional[PetStatus] = None

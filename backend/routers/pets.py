@@ -4,8 +4,14 @@ from sqlalchemy.orm import Session
 from backend.core.database import get_db
 from backend import models
 from backend.logic.image_uploader import upload_pet_photo_local
-from backend.schemas.pet_schema import PetCreate, PetResponse
+from backend.schemas.pet_schema import PetCreate, PetResponse, PetUpdate
 from pydantic.networks import HttpUrl
+from backend.core.dependencies import get_current_user
+from backend.models.user import User
+from backend.models.pet import Pet
+from backend.models.pet_vector import PetVector
+from backend.models.match import Match
+
 
 router = APIRouter(prefix="/pets", tags=["Pets"])
 
@@ -66,3 +72,33 @@ def upload_pet_photo(pet_id: int, file: UploadFile = File(...), db: Session = De
     db.commit()
     db.refresh(pet)
     return pet
+
+@router.patch("/{pet_id}", response_model=PetResponse)
+def update_pet(
+    pet_id: int,
+    pet_update: PetUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Only admins can update pets")
+
+    pet = db.query(Pet).filter_by(id=pet_id).first()
+    if not pet:
+        raise HTTPException(status_code=404, detail="Pet not found")
+
+    for key, value in pet_update.model_dump(exclude_unset=True).items():
+        setattr(pet, key, value)
+
+    if pet_update.status and pet_update.status != "Available":
+        db.query(PetVector).filter_by(pet_id=pet_id).delete()
+
+    db.commit()
+    db.refresh(pet)
+
+    if pet.status == "Adopted":
+        db.query(Match).filter_by(pet_id=pet_id).delete()
+        db.commit()
+
+    return pet
+
