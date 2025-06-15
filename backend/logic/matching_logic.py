@@ -4,7 +4,6 @@ from backend.models.user_training_preferences import TrainingTrait
 from backend.schemas.pet_schema import PetAgeGroup, PetSize, PetEnergyLevel, ExperienceLevel, HairLength, PetResponse
 from backend.schemas.preferences_schema import PreferencesSchema
 from backend.schemas.training_schema import TraitInput
-from backend.models.user_preferences import OwnershipExperience
 
 #------Vector Building Functions------#
 
@@ -57,14 +56,22 @@ def build_adopter_vector(preferences: PreferencesSchema, training_traits: list[T
         "kid_friendly": float(preferences.has_children),
         "pet_friendly": float(preferences.has_dogs or preferences.has_cats)
     }])
-
+    
+    experience_mapping = {
+        "FirstTime": "Beginner",
+        "HadBefore": "Intermediate", 
+        "CurrentlyHave": "Advanced"
+    }
+    
+    mapped_experience = experience_mapping.get(preferences.ownership_experience.name, "Beginner")
+    df["experience_level"] = mapped_experience
+    
+    df["experience_level_encoded"] = pd.Categorical(df["experience_level"], categories=[e.name for e in ExperienceLevel], ordered=True).codes / (len(ExperienceLevel) - 1)
     df["sex_encoded"] = df["sex"].map({"Female": 0, "Male": 1, "NoPreference": 0.5}).astype(float)
     df["species_encoded"] = df["species"].map({"Cat": 0, "Dog": 1}).astype(float)
-
     df["size_encoded"] = pd.Categorical(df["size"], categories=[e.name for e in PetSize], ordered=True).codes / (len(PetSize) - 1)
     df["energy_level_encoded"] = pd.Categorical(df["energy_level"], categories=[e.name for e in PetEnergyLevel], ordered=True).codes / (len(PetEnergyLevel) - 1)
     df["age_group_encoded"] = pd.Categorical(df["age_group"], categories=[e.name for e in PetAgeGroup], ordered=True).codes / (len(PetAgeGroup) - 1)
-    df["experience_level_encoded"] = pd.Categorical(df["experience_level"], categories=[e.name for e in OwnershipExperience], ordered=True).codes / (len(OwnershipExperience) - 1)
     df["hair_length_encoded"] = pd.Categorical(df["hair_length"], categories=[e.name for e in HairLength], ordered=True).codes / (len(HairLength) - 1)
 
     df.drop(columns=[
