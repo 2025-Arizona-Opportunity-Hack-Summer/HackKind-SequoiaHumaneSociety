@@ -4,9 +4,14 @@ from backend.models.user_training_preferences import TrainingTrait
 from backend.schemas.pet_schema import PetAgeGroup, PetSize, PetEnergyLevel, ExperienceLevel, HairLength, PetResponse
 from backend.schemas.preferences_schema import PreferencesSchema
 from backend.schemas.training_schema import TraitInput
+from backend.models.pet_vector import PetVector
+from backend.models.adopter_vector import AdopterVector
+from sqlalchemy.sql import func
+from typing import List, Tuple
+from backend.models.match import Match
+from backend.models.pet import Pet
 
 #------Vector Building Functions------#
-
 def build_pet_vector(pet_info: PetResponse, training_traits: list[TrainingTrait]):
     df = pd.DataFrame([{
         "age_group": pet_info.age_group.name,
@@ -85,12 +90,7 @@ def build_adopter_vector(preferences: PreferencesSchema, training_traits: list[T
 
     return np.concatenate([df.to_numpy().flatten(), np.array(trait_vector)])
 
-
 #--------Saver Functions--------#
-from backend.models.pet_vector import PetVector
-from backend.models.adopter_vector import AdopterVector
-from sqlalchemy.sql import func
-
 def save_pet_vector(pet, training_traits, db):
     vector = build_pet_vector(pet, training_traits)
     db_vector = PetVector(
@@ -112,11 +112,7 @@ def save_adopter_vector(user_id, preferences, training_traits, db):
     db.merge(db_vector)
     db.commit()
 
-
 #--------Matching Functions--------#
-from typing import List, Tuple
-from backend.models.match import Match
-
 def cosine_similarity(vec1: np.ndarray, vec2: np.ndarray):
     if vec1.size == 0 or vec2.size == 0:
         return 0.0
@@ -156,10 +152,7 @@ def save_matches_for_user(user_id: int, matches: List[Tuple[int, float]], db):
         db.rollback()
         raise
 
-
 #--------Loader Functions--------#
-from backend.models.pet import Pet
-
 def load_adopter_vector(user_id: int, db):
     record = db.query(AdopterVector).filter_by(user_id=user_id).first()
     return record.vector if record else None
@@ -173,3 +166,18 @@ def load_pet_vectors(db):
         .all()
     )
     return [(r.pet_id, r.vector) for r in results]
+
+#--------Match refresh function--------#
+def refresh_all_matches(db):
+    pet_vectors = load_pet_vectors(db)
+    adopter_vectors = db.query(AdopterVector).all()
+
+    # Optionally: clear old matches first
+    db.query(Match).delete()
+    db.commit()
+
+    for adopter_vec in adopter_vectors:
+        user_id = adopter_vec.user_id
+        vector = adopter_vec.vector
+        top_matches = get_top_pet_matches(vector, pet_vectors)
+        save_matches_for_user(user_id, top_matches, db)
