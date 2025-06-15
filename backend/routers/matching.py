@@ -24,7 +24,7 @@ router = APIRouter(prefix="/match", tags=["Matching"])
 
 # ---------- Helper Functions ----------
 
-def get_user_preferences_and_traits(user_id: int, db: Session) -> tuple[PreferencesSchema, list[TraitInput]]:
+def get_user_preferences_and_traits(user_id: int, db: Session):
     prefs = db.query(UserPreferences).filter_by(user_id=user_id).first()
     if not prefs:
         raise HTTPException(status_code=400, detail="Preferences not set")
@@ -35,7 +35,7 @@ def get_user_preferences_and_traits(user_id: int, db: Session) -> tuple[Preferen
     return preferences_schema, training_traits
 
 
-def get_pet_response_and_traits(pet_id: int, db: Session) -> tuple[PetResponse, list[PetTrainingTrait]]:
+def get_pet_response_and_traits(pet_id: int, db: Session):
     pet = db.query(Pet).filter_by(id=pet_id).first()
     if not pet:
         raise HTTPException(status_code=404, detail="Pet not found")
