@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { authService } from "../services/authService";
 
 export default function Signup() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: "",
+    full_name: "",
     email: "",
-    phone: "",
+    phone_number: "",
     password: "",
   });
-
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleChange = (e) => {
@@ -26,33 +27,58 @@ export default function Signup() {
     return /\S+@\S+\.\S+/.test(email);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
-    if (!formData.name.trim()) {
+    // Validation
+    if (!formData.full_name.trim()) {
       setError("Name cannot be empty.");
+      setIsLoading(false);
       return;
     }
 
     if (!isValidEmail(formData.email)) {
       setError("Please enter a valid email address.");
+      setIsLoading(false);
       return;
     }
 
-    if (!isValidPhone(formData.phone)) {
+    if (!isValidPhone(formData.phone_number)) {
       setError("Please enter a valid 10-digit U.S. phone number.");
+      setIsLoading(false);
       return;
     }
 
-    if (!formData.password.trim()) {
-      setError("Password cannot be empty.");
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long.");
+      setIsLoading(false);
       return;
     }
 
-    setError("");
-    console.log("Signup data:", formData);
-    // TODO: send to backend, then redirect
-    navigate("/match-results");
+    try {
+      console.log("Signup data:", formData);
+      // Send registration data to backend
+      await authService.register({
+        ...formData,
+        role: "Adopter"  // Must match backend enum: 'Adopter' or 'Admin'
+      });
+      
+      // After successful registration, log the user in
+      await authService.login({
+        email: formData.email,
+        password: formData.password
+      });
+      
+      // Redirect to match results after successful signup
+      navigate("/match-results");
+    } catch (err) {
+      console.error("Signup error:", err);
+      setError(err.message || "Failed to create account. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -63,8 +89,8 @@ export default function Signup() {
         <label className="block mb-2 font-medium">Name</label>
         <input
           type="text"
-          name="name"
-          value={formData.name}
+          name="full_name"
+          value={formData.full_name}
           onChange={handleChange}
           className="w-full p-2 mb-4 border rounded"
           required
@@ -83,9 +109,9 @@ export default function Signup() {
         <label className="block mb-2 font-medium">Phone Number</label>
         <input
           type="tel"
-          name="phone"
+          name="phone_number"
           placeholder="e.g., 555-123-4567"
-          value={formData.phone}
+          value={formData.phone_number}
           onChange={handleChange}
           className="w-full p-2 mb-4 border rounded"
           required
@@ -105,9 +131,10 @@ export default function Signup() {
 
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700"
+          className={`w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+          disabled={isLoading}
         >
-          Sign Up and See Matches
+          {isLoading ? 'Creating Account...' : 'Sign Up and See Matches'}
         </button>
       </form>
     </div>
