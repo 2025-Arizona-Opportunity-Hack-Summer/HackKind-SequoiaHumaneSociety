@@ -1,6 +1,10 @@
 # Environment variables
 .env
 
+/backend/.venv
+
+/backend/scripts
+
 # Node.js dependencies and builds
 node_modules/
 npm-debug.log*
