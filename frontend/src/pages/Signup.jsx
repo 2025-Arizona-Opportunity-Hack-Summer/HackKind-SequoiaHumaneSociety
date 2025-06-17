@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { authService } from "../services/authService";
 
 export default function Signup() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     full_name: "",
     email: "",
@@ -12,6 +13,7 @@ export default function Signup() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showWelcome, setShowWelcome] = useState(location.state?.showWelcome || false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -59,11 +61,36 @@ export default function Signup() {
 
     try {
       console.log("Signup data:", formData);
+      
+      // Check for saved preferences before registration
+      const savedPreferences = sessionStorage.getItem('tempPreferences');
+      let redirectState = {
+        from: { pathname: '/dashboard' },
+        refreshMatches: false,
+        showWelcome: true
+      };
+      
+      if (savedPreferences) {
+        try {
+          const prefs = JSON.parse(savedPreferences);
+          console.log('Found saved preferences:', prefs);
+          redirectState = {
+            from: prefs.from || { pathname: '/dashboard' },
+            refreshMatches: prefs.refreshMatches || false,
+            showWelcome: true
+          };
+        } catch (err) {
+          console.error('Error parsing saved preferences:', err);
+        }
+      }
+      
       // Send registration data to backend
       await authService.register({
         ...formData,
         role: "Adopter"  // Must match backend enum: 'Adopter' or 'Admin'
       });
+      
+      console.log('Registration successful, logging in...');
       
       // After successful registration, log the user in
       await authService.login({
@@ -71,8 +98,50 @@ export default function Signup() {
         password: formData.password
       });
       
-      // Redirect to match results after successful signup
-      navigate("/match-results");
+      // If we have saved preferences, save them to the user's account
+      if (savedPreferences) {
+        try {
+          const { preferences } = JSON.parse(savedPreferences);
+          console.log('Saving preferences to account...', preferences);
+          
+          // Save the preferences to the user's account
+          const { preferencesService } = await import('../services/preferencesService');
+          await preferencesService.savePreferences(preferences);
+          
+          // Clear the temp preferences
+          sessionStorage.removeItem('tempPreferences');
+          console.log('Preferences saved successfully');
+          
+          // Redirect to matches with refresh flag
+          navigate('/matches', { 
+            replace: true,
+            state: { 
+              ...redirectState,
+              refreshMatches: true,
+              message: 'Your preferences have been saved! Here are your pet matches.'
+            }
+          });
+          return; // Important: Return here to prevent double navigation
+        } catch (err) {
+          console.error('Error saving preferences:', err);
+          // Continue to default redirect if there's an error
+          setError('Account created, but there was an error saving your preferences.');
+        }
+      }
+      
+      // Default redirect if no saved preferences or error occurred
+      const redirectTo = location.state?.from?.pathname || '/dashboard';
+      console.log('Redirecting to:', redirectTo);
+      
+      navigate(redirectTo, { 
+        replace: true,
+        state: {
+          ...redirectState,
+          from: location.state?.from || { pathname: '/dashboard' },
+          showWelcome: true,
+          message: location.state?.message || 'Welcome to your dashboard!'
+        }
+      });
     } catch (err) {
       console.error("Signup error:", err);
       setError(err.message || "Failed to create account. Please try again.");

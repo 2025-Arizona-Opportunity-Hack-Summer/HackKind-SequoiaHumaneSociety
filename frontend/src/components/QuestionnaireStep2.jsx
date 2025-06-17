@@ -1,75 +1,424 @@
-import { useState } from "react";
+import { useState, useEffect } from 'react';
 
-export default function QuestionnaireStep2({ onNext, onBack, formData, setFormData }) {
-  const [error, setError] = useState("");
+export default function QuestionnaireStep2({ onNext, onBack, formData, setFormData, isSubmitting = false }) {
+  const [error, setError] = useState('');
+  const [touched, setTouched] = useState({
+    preferred_age: false,
+    preferred_sex: false,
+    preferred_size: false,
+    activity_level: false,
+    hair_length: false,
+    required_traits: false,
+    special_needs: false
+  });
+
+  // Get pet type from form data to customize options
+  const petType = formData.pet_type || 'dog';
+
+  // Age options based on pet type
+  const ageOptions = [
+    { value: 'no_preference', label: 'No preference' },
+    { value: 'baby', label: petType === 'dog' ? 'Puppy' : 'Kitten' },
+    { value: 'young', label: 'Young' },
+    { value: 'adult', label: 'Adult' },
+    { value: 'senior', label: 'Senior' }
+  ];
+
+  // Gender options
+  const sexOptions = [
+    { value: 'no_preference', label: 'No preference' },
+    { value: 'female', label: 'Female' },
+    { value: 'male', label: 'Male' }
+  ];
+
+  // Size options
+  const sizeOptions = [
+    { value: 'no_preference', label: 'No preference' },
+    { value: 'small', label: 'Small' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'large', label: 'Large' },
+    { value: 'xlarge', label: 'Extra large' }
+  ];
+
+  // Activity level options
+  const activityLevels = [
+    { value: 'no_preference', label: 'No preference' },
+    { value: 'lap', label: 'Lap pet' },
+    { value: 'calm', label: 'Calm' },
+    { value: 'moderate', label: 'Moderately active' },
+    { value: 'very_active', label: 'Very active' }
+  ];
+
+  // Hair length options
+  const hairLengths = [
+    { value: 'no_preference', label: 'No preference' },
+    { value: 'short', label: 'Short' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'long', label: 'Long' }
+  ];
+
+  // Required traits options
+  const requiredTraits = [
+    { 
+      id: 'house_trained', 
+      label: 'House-trained',
+      visible: true
+    },
+    { 
+      id: 'litter_trained', 
+      label: 'Litter-trained',
+      visible: petType === 'cat'
+    },
+    { 
+      id: 'allergy_friendly', 
+      label: 'Allergy-friendly',
+      visible: true
+    },
+    { 
+      id: 'none', 
+      label: 'None',
+      value: 'none',
+      exclusive: true,
+      visible: true
+    }
+  ];
+
+  // Validate form whenever formData changes
+  useEffect(() => {
+    if (error) validateForm();
+  }, [formData]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked, dataset } = e.target;
+    
+    if (name === 'required_traits') {
+      // Handle required traits checkboxes
+      const currentTraits = new Set(formData.required_traits || []);
+      
+      if (dataset.exclusive === 'true') {
+        // If "None" is selected, clear other options
+        if (checked) {
+          currentTraits.clear();
+          currentTraits.add('none');
+        } else {
+          currentTraits.delete('none');
+        }
+      } else {
+        // If any other option is selected, remove "None"
+        currentTraits.delete('none');
+        
+        if (checked) {
+          currentTraits.add(value);
+        } else {
+          currentTraits.delete(value);
+        }
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        required_traits: Array.from(currentTraits)
+      }));
+    } else if (type === 'radio' && name === 'special_needs') {
+      // Handle special needs radio buttons
+      setFormData(prev => ({
+        ...prev,
+        special_needs: value === 'true'
+      }));
+    } else {
+      // Handle other inputs
+      setFormData(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      }));
+    }
+    
+    setTouched(prev => ({ ...prev, [name]: true }));
   };
 
-  const handleNext = () => {
-    if (!formData.currentPets || !formData.experience) {
-      setError("Please answer all required questions.");
-      return;
+  const validateForm = () => {
+    const errors = [];
+    
+    // These fields are required
+    const requiredFields = [
+      { name: 'preferred_age', label: 'preferred age' },
+      { name: 'preferred_sex', label: 'preferred gender' },
+      { name: 'preferred_size', label: 'preferred size' },
+      { name: 'activity_level', label: 'activity level' },
+      { name: 'hair_length', label: 'hair length' },
+      { name: 'special_needs', label: 'special needs preference' }
+    ];
+    
+    requiredFields.forEach(field => {
+      if (formData[field.name] === undefined || formData[field.name] === '') {
+        errors.push(`Please select a ${field.label}`);
+      }
+    });
+    
+    // Validate required traits (at least one or "None" must be selected)
+    if (!formData.required_traits || formData.required_traits.length === 0) {
+      errors.push('Please select at least one required trait or "None"');
     }
-    setError("");
-    onNext();
+    
+    setError(errors.length > 0 ? errors[0] : '');
+    return errors.length === 0;
+  };
+
+  const handleNext = (e) => {
+    e.preventDefault();
+    
+    if (validateForm()) {
+      onNext();
+    }
+  };
+
+  const shouldShowError = (field) => {
+    return touched[field] && error.toLowerCase().includes(field.replace('_', ' '));
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-white">
-      <div className="w-full max-w-xl bg-gray-50 rounded-lg shadow-md p-6">
-        <h2 className="text-2xl font-bold mb-4">Pet Experience – Step 2 of 4</h2>
+    <form onSubmit={handleNext} className="w-full">
+      <div className="w-full max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800">Pet Preferences – Step 2 of 2</h2>
+        
+        <div className="space-y-8">
+          {/* 1. Preferred Age */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              1. Preferred Age <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
+              {ageOptions.map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, preferred_age: option.value }));
+                    setTouched(prev => ({ ...prev, preferred_age: true }));
+                  }}
+                  className={`p-3 border rounded-lg text-center ${
+                    formData.preferred_age === option.value 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            {shouldShowError('preferred_age') && (
+              <p className="mt-1 text-sm text-red-600">{error}</p>
+            )}
+          </div>
 
-        <label className="block mb-2 font-medium">
-          3. Do you currently own any pets?
-        </label>
-        <select
-          name="currentPets"
-          value={formData.currentPets || ""}
-          onChange={handleChange}
-          className="w-full mb-4 p-2 border rounded"
-        >
-          <option value="">Select</option>
-          <option value="none">None</option>
-          <option value="dog">Dog(s)</option>
-          <option value="cat">Cat(s)</option>
-          <option value="both">Both dog(s) and cat(s)</option>
-        </select>
+          {/* 2. Preferred Sex */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              2. Preferred Sex <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
+              {sexOptions.map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, preferred_sex: option.value }));
+                    setTouched(prev => ({ ...prev, preferred_sex: true }));
+                  }}
+                  className={`p-3 border rounded-lg text-center ${
+                    formData.preferred_sex === option.value
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            {shouldShowError('preferred_sex') && (
+              <p className="mt-1 text-sm text-red-600">{error}</p>
+            )}
+          </div>
 
-        <label className="block mb-2 font-medium">
-          4. What is your previous pet ownership experience?
-        </label>
-        <select
-          name="experience"
-          value={formData.experience || ""}
-          onChange={handleChange}
-          className="w-full mb-6 p-2 border rounded"
-        >
-          <option value="">Select</option>
-          <option value="first-time">First-time</option>
-          <option value="had-pets">Had pets before</option>
-          <option value="current">Currently have pets</option>
-        </select>
+          {/* 3. Preferred Size */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              3. Preferred Size <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
+              {sizeOptions.map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, preferred_size: option.value }));
+                    setTouched(prev => ({ ...prev, preferred_size: true }));
+                  }}
+                  className={`p-3 border rounded-lg text-center ${
+                    formData.preferred_size === option.value
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            {shouldShowError('preferred_size') && (
+              <p className="mt-1 text-sm text-red-600">{error}</p>
+            )}
+          </div>
 
-        {error && <p className="text-red-500 mb-4">{error}</p>}
+          {/* 4. Activity Level */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              4. Activity Level <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-2">
+              {activityLevels.map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, activity_level: option.value }));
+                    setTouched(prev => ({ ...prev, activity_level: true }));
+                  }}
+                  className={`p-3 border rounded-lg text-center text-sm ${
+                    formData.activity_level === option.value
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            {shouldShowError('activity_level') && (
+              <p className="mt-1 text-sm text-red-600">{error}</p>
+            )}
+          </div>
 
-        <div className="flex justify-between">
-          <button
-            onClick={onBack}
-            className="text-gray-700 px-4 py-2 rounded hover:bg-gray-200"
-          >
-            ← Back
-          </button>
-          <button
-            onClick={handleNext}
-            className="bg-blue-600 text-white font-semibold px-6 py-2 rounded hover:bg-blue-700"
-          >
-            Next →
-          </button>
+          {/* 5. Hair Length */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              5. Preferred Hair Length <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
+              {hairLengths.map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, hair_length: option.value }));
+                    setTouched(prev => ({ ...prev, hair_length: true }));
+                  }}
+                  className={`p-3 border rounded-lg text-center ${
+                    formData.hair_length === option.value
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            {shouldShowError('hair_length') && (
+              <p className="mt-1 text-sm text-red-600">{error}</p>
+            )}
+          </div>
+
+          {/* 6. Required Traits */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              6. Required Traits <span className="text-red-500">*</span>
+            </label>
+            <div className="space-y-2 mt-2">
+              {requiredTraits
+                .filter(trait => trait.visible)
+                .map(trait => (
+                  <div key={trait.id} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id={trait.id}
+                      name="required_traits"
+                      value={trait.id}
+                      checked={formData.required_traits?.includes(trait.id) || false}
+                      onChange={handleChange}
+                      data-exclusive={trait.exclusive || false}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor={trait.id} className="ml-2 block text-sm text-gray-700">
+                      {trait.label}
+                    </label>
+                  </div>
+                ))}
+            </div>
+            {shouldShowError('required_traits') && (
+              <p className="mt-1 text-sm text-red-600">{error}</p>
+            )}
+          </div>
+
+          {/* 7. Special Needs */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              7. Would you be open to adopting a pet with special needs? <span className="text-red-500">*</span>
+            </label>
+            <div className="flex space-x-4 mt-2">
+              <label className="inline-flex items-center">
+                <input
+                  type="radio"
+                  name="special_needs"
+                  value="true"
+                  checked={formData.special_needs === true}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                />
+                <span className="ml-2 text-sm text-gray-700">Yes</span>
+              </label>
+              <label className="inline-flex items-center">
+                <input
+                  type="radio"
+                  name="special_needs"
+                  value="false"
+                  checked={formData.special_needs === false}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                />
+                <span className="ml-2 text-sm text-gray-700">No</span>
+              </label>
+            </div>
+            {shouldShowError('special_needs') && (
+              <p className="mt-1 text-sm text-red-600">{error}</p>
+            )}
+          </div>
+
+          {/* Error message */}
+          {error && !Object.keys(touched).some(key => touched[key] && error.toLowerCase().includes(key.replace('_', ' '))) && (
+            <div className="p-3 bg-red-50 text-red-700 rounded-md">
+              {error}
+            </div>
+          )}
+
+          {/* Navigation buttons */}
+          <div className="flex justify-between pt-6 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={onBack}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Back
+            </button>
+            <button
+              type="submit"
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${
+                isSubmitting ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Submitting...' : 'Find My Match'}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </form>
   );
 }

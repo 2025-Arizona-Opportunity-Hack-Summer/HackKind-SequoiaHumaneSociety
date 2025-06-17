@@ -36,18 +36,35 @@ export const AuthProvider = ({ children }) => {
       // Check if we have a token
       const token = authService.getToken();
       if (!token) {
+        console.log('No auth token found');
         setUser(null);
         return;
       }
 
-      // If we have a token, verify it and get user data
+      // Try to get user data from localStorage first
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          console.log('Found user in localStorage:', userData);
+          setUser(userData);
+          return;
+        } catch (e) {
+          console.error('Error parsing stored user data:', e);
+        }
+      }
+
+      // If no user in localStorage, try to fetch from API
       try {
+        console.log('Fetching user data from API');
         const userData = await authService.getCurrentUser();
+        console.log('Fetched user data:', userData);
         setUser(userData);
       } catch (error) {
         console.error('Failed to fetch user data:', error);
         // If token is invalid, clear it
         if (error.response?.status === 401) {
+          console.log('Token invalid, logging out');
           await authService.logout();
         }
         setUser(null);
@@ -71,13 +88,20 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(true);
       setError(null);
       
-      const userData = await authService.login(credentials);
+      const response = await authService.login(credentials);
       
-      // Fetch the full user profile
-      const userProfile = await authService.getCurrentUser();
-      setUser(userProfile);
+      if (!response.user) {
+        throw new Error('No user data received');
+      }
       
-      return userData;
+      // Set the user from the login response
+      setUser(response.user);
+      
+      // Store the user data in localStorage
+      localStorage.setItem('user', JSON.stringify(response.user));
+      
+      console.log('User logged in:', response.user);
+      return response.user;
     } catch (error) {
       console.error('Login error:', error);
       setError(error.message || 'Login failed');

@@ -34,13 +34,20 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
 
   if (!isAuthenticated) {
     // Store the attempted URL for redirecting after login
-    sessionStorage.setItem('redirectAfterLogin', location.pathname);
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    const redirectTo = location.pathname + (location.search || '');
+    console.log('Storing redirect URL:', redirectTo);
+    return <Navigate to="/login" state={{ from: { pathname: redirectTo } }} replace />;
   }
 
   // Check if user has the required role if specified
-  if (requiredRole && user?.role !== requiredRole) {
-    return <Navigate to="/unauthorized" replace />;
+  if (requiredRole) {
+    const userRole = user?.role?.toLowerCase();
+    if (userRole !== requiredRole.toLowerCase()) {
+      console.warn(`User role ${userRole} does not have access to this route. Required role: ${requiredRole}`);
+      // Redirect to dashboard or admin based on user role
+      const redirectTo = userRole === 'admin' ? '/admin' : '/dashboard';
+      return <Navigate to={redirectTo} replace />;
+    }
   }
 
   return children;
@@ -48,7 +55,7 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
 
 // Public route component (only for non-authenticated users)
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -59,10 +66,18 @@ const PublicRoute = ({ children }) => {
     );
   }
 
-  // If user is authenticated, redirect to dashboard or intended page
-  if (isAuthenticated) {
-    const from = location.state?.from?.pathname || '/dashboard';
-    return <Navigate to={from} replace />;
+  // If user is authenticated, redirect based on role
+  if (isAuthenticated && user) {
+    // Get the intended path or default based on role
+    let redirectTo = location.state?.from?.pathname;
+    
+    // If no intended path, redirect based on role
+    if (!redirectTo || redirectTo === '/login' || redirectTo === '/') {
+      redirectTo = user.role?.toLowerCase() === 'admin' ? '/admin' : '/dashboard';
+    }
+    
+    console.log('Redirecting authenticated user to:', redirectTo);
+    return <Navigate to={redirectTo} replace />;
   }
 
   return children;
@@ -114,9 +129,7 @@ function AppContent() {
       } />
       
       <Route path="/questionnaire" element={
-        <PublicRoute>
-          <Questionnaire />
-        </PublicRoute>
+        <Questionnaire />
       } />
       
       {/* Protected routes */}

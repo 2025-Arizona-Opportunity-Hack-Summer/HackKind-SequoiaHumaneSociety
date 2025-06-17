@@ -40,35 +40,32 @@ export const authService = {
    */
   login: async (credentials) => {
     try {
-      // First, get the auth token
+      // First, get the auth token and user data
       const loginResponse = await api.post('/auth/login', credentials);
       
       if (!loginResponse.data.access_token) {
         throw new Error('No access token received');
       }
       
-      const { access_token, expires_in } = loginResponse.data;
+      const { access_token, user: userData } = loginResponse.data;
       
-      // Store the token in localStorage
+      if (!userData || !userData.role) {
+        console.warn('No user role received in login response');
+        userData.role = 'adopter'; // Default role
+      }
+      
+      // Store the token and user data in localStorage
       localStorage.setItem('authToken', access_token);
+      localStorage.setItem('user', JSON.stringify(userData));
       
-      // Store token expiration
-      if (expires_in) {
-        const expiresAt = new Date();
-        expiresAt.setSeconds(expiresAt.getSeconds() + expires_in);
-        localStorage.setItem('tokenExpiresAt', expiresAt.toISOString());
-      }
+      // Set token expiration (default to 1 hour if not provided)
+      const expiresIn = loginResponse.data.expires_in || 3600; // Default to 1 hour
+      const expiresAt = new Date();
+      expiresAt.setSeconds(expiresAt.getSeconds() + expiresIn);
+      localStorage.setItem('tokenExpiresAt', expiresAt.toISOString());
       
-      // Fetch the user profile
-      try {
-        const userProfile = await authService.getCurrentUser();
-        localStorage.setItem('user', JSON.stringify(userProfile));
-        return { ...loginResponse.data, user: userProfile };
-      } catch (profileError) {
-        console.error('Failed to fetch user profile:', profileError);
-        // Even if profile fetch fails, proceed with the login
-        return loginResponse.data;
-      }
+      console.log('User logged in successfully:', userData);
+      return { ...loginResponse.data, user: userData };
     } catch (error) {
       throw handleApiError(error, 'Login failed. Please check your credentials and try again.');
     }
@@ -122,10 +119,25 @@ export const authService = {
    */
   getCurrentUser: async () => {
     try {
+      // First try to get from localStorage
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        return JSON.parse(storedUser);
+      }
+      
+      // Fallback to API if not in localStorage
       const response = await api.get('/users/me');
+      if (response.data) {
+        localStorage.setItem('user', JSON.stringify(response.data));
+      }
       return response.data;
     } catch (error) {
-      throw handleApiError(error, 'Failed to fetch user profile');
+      console.error('Error getting current user:', error);
+      // If there's an error, clear any invalid auth data
+      if (error.response?.status === 401) {
+        authService.logout();
+      }
+      throw error;
     }
   },
   

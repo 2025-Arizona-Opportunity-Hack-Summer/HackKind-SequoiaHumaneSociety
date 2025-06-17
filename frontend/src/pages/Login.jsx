@@ -30,12 +30,30 @@ export default function Login() {
 
     try {
       console.log('Attempting login with:', formData);
-      await login(formData);
+      const response = await login(formData);
       
-      // The AuthContext will handle the redirection via the useEffect above
-      // But we'll still handle any stored redirect path
-      const from = location.state?.from?.pathname || '/dashboard';
-      navigate(from, { replace: true });
+      if (!response.user) {
+        throw new Error('No user data received in login response');
+      }
+      
+      // Get the user role from the response
+      const userRole = response.user.role?.toLowerCase() || 'adopter';
+      console.log('Login successful, user role:', userRole, 'Full response:', response);
+      
+      // Redirect based on user role
+      const redirectPath = (() => {
+        // If there's a stored redirect path and it's not the login page, use it
+        if (location.state?.from?.pathname && 
+            location.state.from.pathname !== '/login' &&
+            !location.state.from.pathname.startsWith('/auth')) {
+          return location.state.from.pathname;
+        }
+        // Otherwise, redirect based on role
+        return userRole === 'admin' ? '/admin' : '/dashboard';
+      })();
+      
+      console.log('Redirecting to:', redirectPath);
+      navigate(redirectPath, { replace: true });
       
     } catch (err) {
       console.error('Login error:', {
