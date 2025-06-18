@@ -6,7 +6,8 @@ from backend.core.dependencies import get_current_user
 from backend.models.user import User
 from backend.schemas.preferences_schema import PreferencesSchema
 from backend.logic.matching_logic import save_adopter_vector
-
+from backend.models.user_training_preferences import UserTrainingPreference  
+from backend.schemas.training_schema import TraitInput
 
 router = APIRouter(prefix="/users/me/preferences", tags=["User Preferences"])
     
@@ -44,7 +45,7 @@ def upsert_user_preferences(
     existing = db.query(UserPreferences).filter(UserPreferences.user_id == current_user.id).first()
 
     if existing:
-        for attr, value in preferences.dict(exclude_unset=True).items():
+        for attr, value in preferences.model_dump(exclude_unset=True).items():
             setattr(existing, attr, value)
     else:
         existing = UserPreferences(user_id=current_user.id, **preferences.model_dump())
@@ -52,7 +53,9 @@ def upsert_user_preferences(
 
     db.commit()
     db.refresh(existing)
-
-    save_adopter_vector(current_user,preferences, db)
+    
+    training_traits_records = db.query(UserTrainingPreference).filter(UserTrainingPreference.user_id == current_user.id).all()
+    training_traits = [TraitInput(trait=t.trait) for t in training_traits_records]
+    save_adopter_vector(current_user.id, existing, training_traits, db)
 
     return existing

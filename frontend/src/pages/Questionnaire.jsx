@@ -118,7 +118,8 @@ export default function Questionnaire() {
                 onNext={handleSubmit} 
                 onBack={() => setStep(1)} 
                 formData={formData} 
-                setFormData={setFormData} 
+                setFormData={setFormData}
+                isSubmitting={isSubmitting}
               />
             )}
           </div>

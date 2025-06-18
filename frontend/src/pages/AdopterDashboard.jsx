@@ -9,6 +9,7 @@ export default function AdopterDashboard() {
   const navigate = useNavigate();
   const [visitRequests, setVisitRequests] = useState([]);
   const [preferences, setPreferences] = useState(null);
+  const [trainingTraits, setTrainingTraits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -27,10 +28,11 @@ export default function AdopterDashboard() {
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        // Fetch visit requests and preferences in parallel
-        const [visitsRes, prefsData] = await Promise.all([
+        // Fetch visit requests, preferences, and training traits in parallel
+        const [visitsRes, prefsData, traitsRes] = await Promise.all([
           api.get("/visit-requests/my"),
-          preferencesService.getMyPreferences()
+          preferencesService.getMyPreferences(),
+          preferencesService.getTrainingTraits()
         ]);
         
         // If we got an empty object from getMyPreferences, it means no preferences exist yet
@@ -38,6 +40,7 @@ export default function AdopterDashboard() {
         
         setVisitRequests(visitsRes.data || []);
         setPreferences(hasPreferences ? prefsData : null);
+        setTrainingTraits(traitsRes || []);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
         if (err.response) {
@@ -131,6 +134,22 @@ export default function AdopterDashboard() {
               
               <h3 className="font-medium text-gray-700 mt-4">Experience with Pets</h3>
               <p className="text-gray-900">{preferences.ownership_experience || 'Not specified'}</p>
+              
+              {trainingTraits.length > 0 && (
+                <>
+                  <h3 className="font-medium text-gray-700 mt-4">Training Requirements</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {trainingTraits.map((trait, index) => (
+                      <span 
+                        key={index} 
+                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                      >
+                        {trait.trait || trait}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         ) : (
