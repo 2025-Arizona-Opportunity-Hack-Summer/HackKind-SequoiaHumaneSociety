@@ -11,6 +11,8 @@ from backend.models.user import User
 from backend.models.pet import Pet
 from backend.models.pet_vector import PetVector
 from backend.models.match import Match
+from backend.logic.matching_logic import build_pet_vector
+from backend.models.pet_training_traits import PetTrainingTrait
 
 
 router = APIRouter(prefix="/pets", tags=["Pets"])
@@ -35,6 +37,21 @@ def create_pet(pet: PetCreate, db: Session = Depends(get_db)):
     db.add(db_pet)
     db.commit()
     db.refresh(db_pet)
+    
+    # Auto-generate vector for new pet
+    try:
+        traits = db.query(PetTrainingTrait).filter_by(pet_id=db_pet.id).all()
+        trait_enums = [t.trait for t in traits]
+        pet_response = PetResponse(**{k: v for k, v in db_pet.__dict__.items() if not k.startswith("_")})
+        vector = build_pet_vector(pet_response, trait_enums)
+        
+        pet_vector = PetVector(pet_id=db_pet.id, vector=vector.tolist())
+        db.add(pet_vector)
+        db.commit()
+        print(f"✅ Auto-created vector for {db_pet.name}")
+    except Exception as e:
+        print(f"❌ Vector creation failed for {db_pet.name}: {e}")
+    
     return db_pet
 
 @router.put("/{pet_id}", response_model=PetResponse)
@@ -46,6 +63,26 @@ def update_pet(pet_id: int, pet_update: PetCreate, db: Session = Depends(get_db)
         setattr(pet, key, value)
     db.commit()
     db.refresh(pet)
+    
+    # Auto-regenerate vector after update
+    try:
+        traits = db.query(PetTrainingTrait).filter_by(pet_id=pet_id).all()
+        trait_enums = [t.trait for t in traits]
+        pet_response = PetResponse(**{k: v for k, v in pet.__dict__.items() if not k.startswith("_")})
+        vector = build_pet_vector(pet_response, trait_enums)
+        
+        # Update or create vector
+        existing_vector = db.query(PetVector).filter_by(pet_id=pet_id).first()
+        if existing_vector:
+            existing_vector.vector = vector.tolist()
+        else:
+            pet_vector = PetVector(pet_id=pet_id, vector=vector.tolist())
+            db.add(pet_vector)
+        db.commit()
+        print(f"✅ Auto-updated vector for {pet.name}")
+    except Exception as e:
+        print(f"❌ Vector update failed for {pet.name}: {e}")
+    
     return pet
 
 @router.delete("/{pet_id}", response_model=PetResponse)
