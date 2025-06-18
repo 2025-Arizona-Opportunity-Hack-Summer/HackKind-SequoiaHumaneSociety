@@ -3,7 +3,8 @@ import { useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { petService } from "../services/petService";
 import api from "../services/api";
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { format } from 'date-fns';
 
 // Helper component for the pet card
@@ -264,7 +265,7 @@ export default function MatchResultsPage() {
             await new Promise(resolve => setTimeout(resolve, 1000));
             return fetchMatchedPets(page, append, false);
           }
-          throw new Error('Please complete the questionnaire to see your pet matches.');
+          throw new Error('No Matches Found'); // Original error message: 'Please complete the questionnaire to see your pet matches.'
         }
         
         const response = await petService.getMatches({
@@ -387,12 +388,15 @@ export default function MatchResultsPage() {
       
       // Update local state
       setRequestedVisits(prev => [...prev, selectedPet.id]);
+      
+      // Clear modal state
+      const petName = selectedPet.name;
       setSelectedPet(null);
       setVisitDate("");
       setVisitTime("");
       
-      // Show success toast
-      toast.success(`Visit request submitted for ${selectedPet.name}!`, {
+      // Show success toast - this will only trigger after successful submission
+      toast.success(`Visit request submitted for ${petName}!`, {
         position: "top-center",
         autoClose: 5000,
         hideProgressBar: false,
@@ -578,45 +582,19 @@ export default function MatchResultsPage() {
         setVisitTime={setVisitTime}
       />
 
-      {/* Toast Container */}
-      <div className="fixed top-4 right-4 z-50">
-        <div className="space-y-4">
-          {toast.success && (
-            <div className="bg-green-50 border-l-4 border-green-400 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-green-700">
-                    Visit request submitted successfully!
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {error && (
-            <div className="bg-red-50 border-l-4 border-red-400 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-red-700">
-                    {error}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* React Toastify Container - this handles all toast notifications */}
+      <ToastContainer
+        position="top-center"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </div>
   );
 }
-

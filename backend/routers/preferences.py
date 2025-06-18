@@ -5,6 +5,8 @@ from backend.models.user_preferences import UserPreferences
 from backend.core.dependencies import get_current_user
 from backend.models.user import User
 from backend.schemas.preferences_schema import PreferencesSchema
+from backend.logic.matching_logic import save_adopter_vector
+
 
 router = APIRouter(prefix="/users/me/preferences", tags=["User Preferences"])
     
@@ -50,4 +52,7 @@ def upsert_user_preferences(
 
     db.commit()
     db.refresh(existing)
+
+    save_adopter_vector(current_user,preferences, db)
+
     return existing
