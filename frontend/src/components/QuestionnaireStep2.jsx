@@ -15,46 +15,41 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
   // Get pet type from form data to customize options
   const petType = formData.pet_type || 'dog';
 
-  // Age options based on pet type
   const ageOptions = [
-    { value: 'no_preference', label: 'No preference' },
-    { value: 'baby', label: petType === 'dog' ? 'Puppy' : 'Kitten' },
-    { value: 'young', label: 'Young' },
-    { value: 'adult', label: 'Adult' },
-    { value: 'senior', label: 'Senior' }
+    { value: 'NoPreference', label: 'No preference' },
+    { value: 'Baby', label: petType === 'Dog' ? 'Puppy' : 'Kitten' },
+    { value: 'Young', label: 'Young' },
+    { value: 'Adult', label: 'Adult' },
+    { value: 'Senior', label: 'Senior' }
   ];
-
-  // Gender options
+  
   const sexOptions = [
-    { value: 'no_preference', label: 'No preference' },
-    { value: 'female', label: 'Female' },
-    { value: 'male', label: 'Male' }
+    { value: 'NoPreference', label: 'No preference' },
+    { value: 'Female', label: 'Female' },
+    { value: 'Male', label: 'Male' }
   ];
-
-  // Size options
+  
   const sizeOptions = [
-    { value: 'no_preference', label: 'No preference' },
-    { value: 'small', label: 'Small' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'large', label: 'Large' },
-    { value: 'xlarge', label: 'Extra large' }
+    { value: 'NoPreference', label: 'No preference' },
+    { value: 'Small', label: 'Small' },
+    { value: 'Medium', label: 'Medium' },
+    { value: 'Large', label: 'Large' },
+    { value: 'ExtraLarge', label: 'Extra large' }
   ];
-
-  // Activity level options
+  
   const activityLevels = [
-    { value: 'no_preference', label: 'No preference' },
-    { value: 'lap', label: 'Lap pet' },
-    { value: 'calm', label: 'Calm' },
-    { value: 'moderate', label: 'Moderately active' },
-    { value: 'very_active', label: 'Very active' }
+    { value: 'NoPreference', label: 'No preference' },
+    { value: 'LapPet', label: 'Lap pet' },
+    { value: 'Calm', label: 'Calm' },
+    { value: 'Moderate', label: 'Moderately active' },
+    { value: 'VeryActive', label: 'Very active' }
   ];
-
-  // Hair length options
+  
   const hairLengths = [
-    { value: 'no_preference', label: 'No preference' },
-    { value: 'short', label: 'Short' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'long', label: 'Long' }
+    { value: 'NoPreference', label: 'No preference' },
+    { value: 'Short', label: 'Short' },
+    { value: 'Medium', label: 'Medium' },
+    { value: 'Long', label: 'Long' }
   ];
 
   // Required traits options

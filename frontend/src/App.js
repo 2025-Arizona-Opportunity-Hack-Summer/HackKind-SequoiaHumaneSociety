@@ -129,7 +129,9 @@ function AppContent() {
       } />
       
       <Route path="/questionnaire" element={
-        <Questionnaire />
+        <ProtectedRoute>
+          <Questionnaire />
+        </ProtectedRoute>
       } />
       
       {/* Protected routes */}

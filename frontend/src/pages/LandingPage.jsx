@@ -13,10 +13,10 @@ export default function LandingPage() {
       </p>
       <div className="flex flex-col sm:flex-row gap-4">
         <button
-          onClick={() => navigate("/questionnaire")}
+          onClick={() => navigate("/signup")}
           className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md"
         >
-          Start Questionnaire
+          Get Started
         </button>
         <button
           onClick={() => navigate("/login")}

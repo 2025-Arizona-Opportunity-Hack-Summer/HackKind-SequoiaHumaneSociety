@@ -1,89 +1,79 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from 'react-toastify';
 import QuestionnaireStep1 from "../components/QuestionnaireStep1";
 import QuestionnaireStep2 from "../components/QuestionnaireStep2";
-// Removed unused step components since we only need 2 steps
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { preferencesService } from "../services/preferencesService";
-import { useAuth } from "../contexts/AuthContext";
 
 export default function Questionnaire() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
-    
+
     setIsSubmitting(true);
     try {
+      console.log('Form data before mapping:', formData);
+      
       // Map form data to API format
       const preferencesData = preferencesService.mapQuestionnaireToPreferences(formData);
+      console.log('Mapped preferences data:', preferencesData);
+
+      // Since the user is always authenticated, directly save the preferences
+      const response = await preferencesService.savePreferences(preferencesData);
+      console.log('Save preferences response:', response);
       
-      // Store preferences in session storage for after registration
-      const tempPreferences = {
-        preferences: preferencesData,
-        redirectTo: '/matches',
-        from: location.state?.from || { pathname: '/dashboard' },
-        refreshMatches: true
-      };
+      toast.success('Preferences saved successfully! Redirecting to your matches...');
       
-      console.log('Storing temp preferences:', tempPreferences);
-      sessionStorage.setItem('tempPreferences', JSON.stringify(tempPreferences));
-      
-      // If user is authenticated, save preferences and go to matches
-      if (isAuthenticated) {
-        console.log('User is authenticated, saving preferences...');
-        await preferencesService.savePreferences(preferencesData);
-        toast.success('Preferences saved successfully! Redirecting to your matches...');
-        navigate('/matches', { 
-          replace: true,
-          state: { 
-            from: location.state?.from || { pathname: '/dashboard' },
-            refreshMatches: true
-          }
-        });
-      } else {
-        console.log('User is not authenticated, redirecting to signup...');
-        // If not authenticated, redirect to signup with stored preferences
-        navigate('/signup', { 
-          replace: true,
-          state: { 
-            from: {
-              pathname: '/matches',
-              state: { refreshMatches: true }
-            },
-            savedPreferences: true,
-            message: 'Please create an account to save your preferences and view your matches.'
-          }
-        });
-      }
+      // Navigate to the matches page
+      navigate('/match-results', {
+        replace: true,
+        state: {
+          refreshMatches: true,
+        },
+      });
     } catch (error) {
       console.error('Error saving preferences:', error);
-      toast.error(error.message || 'Failed to save preferences. Please try again.');
+      
+      let errorMessage = 'Failed to save preferences. Please try again.';
+      
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error('Error response data:', error.response.data);
+        console.error('Error status:', error.response.status);
+        
+        if (error.response.status === 422) {
+          errorMessage = 'Validation error. Please check your inputs and try again.';
+          console.error('Validation errors:', error.response.data.detail);
+        } else if (error.response.status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        }
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error('No response received:', error.request);
+        errorMessage = 'No response from server. Please check your connection and try again.';
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error('Error message:', error.message);
+        errorMessage = error.message || errorMessage;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Show loading state while checking auth status
-  if (isAuthenticated === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="large" />
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
         <h1 className="text-2xl font-bold text-center mb-8">
-          {isAuthenticated ? 'Update Your Preferences' : 'Tell Us About Your Ideal Pet'}
+          Tell Us About Your Ideal Pet
         </h1>
         
         {isSubmitting && (

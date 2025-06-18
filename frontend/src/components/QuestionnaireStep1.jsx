@@ -13,34 +13,34 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
 
   // Pet type options
   const petTypes = [
-    { value: 'dog', label: 'Dog' },
-    { value: 'cat', label: 'Cat' }
+    { value: 'Dog', label: 'Dog' },
+    { value: 'Cat', label: 'Cat' }
   ];
 
   // Pet purpose options
   const petPurposes = [
-    { value: 'myself', label: 'Myself' },
-    { value: 'family', label: 'My Family' }
+    { value: 'Myself', label: 'Myself' },
+    { value: 'MyFamily', label: 'My Family' }
   ];
 
   // Current pets options
   const currentPetsOptions = [
     { value: 'none', label: 'None' },
-    { value: 'dog', label: 'Dog(s)' },
-    { value: 'cat', label: 'Cat(s)' },
-    { value: 'both', label: 'Both dog(s) and cat(s)' }
+    { value: 'Dog', label: 'Dog(s)' },
+    { value: 'Cat', label: 'Cat(s)' },
+    { value: 'Both', label: 'Both dog(s) and cat(s)' }
   ];
 
   // Ownership experience options
   const experienceLevels = [
-    { value: 'first_time', label: 'First-time' },
-    { value: 'had_pets', label: 'Had pets before' },
-    { value: 'current_pets', label: 'Currently have pets' }
+    { value: 'FirstTime', label: 'First-time' },
+    { value: 'HadBefore', label: 'Had pets before' },
+    { value: 'CurrentlyHave', label: 'Currently have pets' }
   ];
 
   // Initialize showChildrenQuestion based on initial form data
   useEffect(() => {
-    if (formData.pet_purpose === 'family') {
+    if (formData.pet_purpose === 'MyFamily') {
       setShowChildrenQuestion(true);
     }
   }, []);
@@ -56,7 +56,7 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
     
     // Show/hide children question based on pet purpose
     if (name === 'pet_purpose') {
-      const willShowChildren = value === 'family';
+      const willShowChildren = value === 'MyFamily';
       setShowChildrenQuestion(willShowChildren);
       
       // Update form data with the new purpose and reset has_children if needed
