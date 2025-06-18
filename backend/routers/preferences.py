@@ -34,17 +34,19 @@ def create_user_preferences(
     return new_preferences
 
 @router.put("/", response_model=PreferencesSchema)
-def update_user_preferences(
+def upsert_user_preferences(
     preferences: PreferencesSchema,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     existing = db.query(UserPreferences).filter(UserPreferences.user_id == current_user.id).first()
-    if not existing:
-        raise HTTPException(status_code=404, detail="Preferences not found")
 
-    for attr, value in preferences.dict(exclude_unset=True).items():
-        setattr(existing, attr, value)
+    if existing:
+        for attr, value in preferences.dict(exclude_unset=True).items():
+            setattr(existing, attr, value)
+    else:
+        existing = UserPreferences(user_id=current_user.id, **preferences.model_dump())
+        db.add(existing)
 
     db.commit()
     db.refresh(existing)
