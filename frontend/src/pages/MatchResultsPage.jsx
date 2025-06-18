@@ -232,9 +232,9 @@ const PetCard = ({ pet, onSelect, isSelected, isRequested }) => {
         {!imageLoaded && (
           <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse"></div>
         )}
-        {pet.photo_url ? (
+        {pet.image_url ? (
           <img 
-            src={pet.photo_url} 
+            src={pet.image_url} 
             alt={pet.name}
             className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
             onLoad={() => setImageLoaded(true)}
