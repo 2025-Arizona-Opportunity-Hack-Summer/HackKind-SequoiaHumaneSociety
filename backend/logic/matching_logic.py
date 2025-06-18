@@ -128,14 +128,17 @@ def cosine_similarity(vec1: np.ndarray, vec2: np.ndarray):
     return float(np.dot(vec1, vec2) / (norm1 * norm2))
 
 
-def get_top_pet_matches(adopter_vector: List[float], pet_vectors: List[Tuple[int, List[float]]], top_k: int = 5):
+def get_top_pet_matches(adopter_vector: List[float], pet_vectors: List[Tuple[int, List[float]]], top_k: int = 5, similarity_threshold: float = 0.6):
     adopter_vec = np.array(adopter_vector)
     similarities = []
 
     for pet_id, pet_vec in pet_vectors:
         pet_vec_np = np.array(pet_vec)
         score = cosine_similarity(adopter_vec, pet_vec_np)
-        similarities.append((pet_id, score))
+        
+        # Only include matches above the threshold
+        if score >= similarity_threshold:
+            similarities.append((pet_id, score))
 
     similarities.sort(key=lambda x: x[1], reverse=True)
 

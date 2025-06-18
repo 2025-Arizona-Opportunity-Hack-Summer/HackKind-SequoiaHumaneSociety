@@ -138,10 +138,16 @@ def get_pet_recommendations(
         # Save matches in background
         background_tasks.add_task(save_matches_for_user, current_user.id, top_matches, db)
 
-        # Get pet details
+        # Get pet details with all fields
         pet_ids = [pid for pid, _ in paginated_matches]
         pets = db.query(Pet).filter(Pet.id.in_(pet_ids), Pet.status == "Available").all()
         pet_map = {pet.id: pet for pet in pets}
+
+        # Get all training traits for the pets
+        pet_traits = {}
+        for pet_id in pet_ids:
+            traits = db.query(PetTrainingTrait).filter(PetTrainingTrait.pet_id == pet_id).all()
+            pet_traits[pet_id] = [t.trait.name for t in traits]
 
         print(f"Found {len(pets)} available pets for {len(pet_ids)} pet IDs")
 
@@ -149,17 +155,28 @@ def get_pet_recommendations(
         for pet_id, score in paginated_matches:
             pet = pet_map.get(pet_id)
             if pet:
-                results.append({
+                pet_data = {
                     "id": pet.id,
                     "name": pet.name,
+                    "species": pet.species.value,
                     "breed": pet.breed,
-                    "age": pet.age_group,
-                    "gender": pet.sex,
-                    "size": pet.size,
-                    "description": pet.shelter_notes,
-                    "photo_url": pet.image_url,
-                    "temperament": pet.energy_level,
-                })
+                    "age_group": pet.age_group.value,
+                    "sex": pet.sex.value,
+                    "size": pet.size.value if pet.size else None,
+                    "energy_level": pet.energy_level.value if pet.energy_level else None,
+                    "experience_level": pet.experience_level.value if pet.experience_level else None,
+                    "hair_length": pet.hair_length.value if pet.hair_length else None,
+                    "allergy_friendly": pet.allergy_friendly,
+                    "special_needs": pet.special_needs,
+                    "kid_friendly": pet.kid_friendly,
+                    "pet_friendly": pet.pet_friendly,
+                    "shelter_notes": pet.shelter_notes,
+                    "image_url": str(pet.image_url) if pet.image_url else None,
+                    "status": pet.status.value,
+                    "training_traits": pet_traits.get(pet_id, []),
+                    "match_score": float(score)  # Include the match score
+                }
+                results.append(pet_data)
 
         print(f"Returning {len(results)} results")
         return results
