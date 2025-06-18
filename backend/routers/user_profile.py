@@ -4,12 +4,21 @@ from backend.core.database import get_db
 from backend.models.user import User
 from backend.core.dependencies import get_current_user
 from backend.schemas.user_schema import UserUpdate, UserOut
+from backend.schemas.user_schema import UserWithPreferences
+from backend.models.user_preferences import UserPreferences
 
 router = APIRouter(prefix="/users/me", tags=["User Profile"])
 
-@router.get("", response_model=UserOut)
-def get_profile(current_user: User = Depends(get_current_user)):
-    return current_user
+@router.get("", response_model=UserWithPreferences)
+def get_profile_with_preferences(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    preferences = db.query(UserPreferences).filter(UserPreferences.user_id == current_user.id).first()
+    return {
+        **current_user.__dict__,
+        "preferences": preferences
+    }
 
 @router.put("", response_model=UserOut)
 def update_profile(

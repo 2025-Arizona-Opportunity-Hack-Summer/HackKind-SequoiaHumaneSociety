@@ -16,19 +16,19 @@ export const petService = {
       const params = new URLSearchParams({
         page: page.toString(),
         pageSize: pageSize.toString(),
-        ...(forceRefresh && { refresh: 'true' }) // Only add refresh param if true
+        ...(forceRefresh && { refresh: 'true' })
       });
       
       const response = await api.get(`/match/recommendations?${params.toString()}`);
+      
+      // The backend now returns the pets directly
       return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
       if (error.response?.status === 400) {
-        // User hasn't completed the questionnaire
         throw new Error('Please complete the questionnaire to get pet recommendations.');
       } else if (error.response?.status === 401) {
         throw new Error('Please log in to view your matches.');
       } else if (error.response?.status === 404) {
-        // No matches found
         return [];
       }
       console.error('Error fetching matches:', error);

@@ -19,6 +19,8 @@ from backend.logic.matching_logic import (
     get_top_pet_matches,
     save_matches_for_user
 )
+from fastapi import Query
+
 
 router = APIRouter(prefix="/match", tags=["Matching"])
 
@@ -80,38 +82,91 @@ def refresh_pet_vector(
 
 
 
-@router.get("/recommendations", response_model=list[dict])
+@router.get("/recommendations")
 def get_pet_recommendations(
     background_tasks: BackgroundTasks,
+    page: int = Query(1, ge=1),
+    pageSize: int = Query(10, ge=1, le=50),
+    refresh: bool = Query(False),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    adopter_vector = load_adopter_vector(current_user.id, db)
-    if not adopter_vector:
-        raise HTTPException(status_code=400, detail="Adopter vector not found")
+    try:
+        # Debug: Check if user has preferences
+        preferences = db.query(UserPreferences).filter(UserPreferences.user_id == current_user.id).first()
+        if not preferences:
+            raise HTTPException(status_code=400, detail="Please complete the questionnaire to get pet recommendations.")
+        
+        print(f"User {current_user.id} has preferences: {preferences}")
+        
+        # If refresh is requested, regenerate the adopter vector
+        if refresh:
+            print(f"Refreshing adopter vector for user {current_user.id}")
+            prefs_dict, traits_list = get_user_preferences_and_traits(current_user.id, db)
+            save_adopter_vector(current_user.id, prefs_dict, traits_list, db)
+        
+        # Load adopter vector
+        adopter_vector = load_adopter_vector(current_user.id, db)
+        if not adopter_vector:
+            print(f"No adopter vector found for user {current_user.id}, generating...")
+            # Try to generate it
+            prefs_dict, traits_list = get_user_preferences_and_traits(current_user.id, db)
+            save_adopter_vector(current_user.id, prefs_dict, traits_list, db)
+            adopter_vector = load_adopter_vector(current_user.id, db)
+            
+            if not adopter_vector:
+                raise HTTPException(status_code=400, detail="Could not generate adopter vector")
 
-    pet_vectors = load_pet_vectors(db)
-    if not pet_vectors:
-        return []
+        print(f"Adopter vector loaded for user {current_user.id}")
 
-    top_matches = get_top_pet_matches(adopter_vector, pet_vectors, top_k=5)
-    background_tasks.add_task(save_matches_for_user, current_user.id, top_matches, db)
+        # Load pet vectors
+        pet_vectors = load_pet_vectors(db)
+        if not pet_vectors:
+            print("No pet vectors found")
+            return []
 
-    pet_ids = [pid for pid, _ in top_matches]
-    pets = db.query(Pet).filter(Pet.id.in_(pet_ids), Pet.status == "Available").all()
-    pet_map = {pet.id: pet for pet in pets}
+        print(f"Found {len(pet_vectors)} pet vectors")
 
-    results = []
-    for pet_id, score in top_matches:
-        pet = pet_map.get(pet_id)
-        if pet:
-            pet_data = PetResponse(**{k: v for k, v in pet.__dict__.items() if not k.startswith("_")})
-            results.append({
-                "pet": pet_data,
-                "score": round(score, 3)
-            })
+        # Get matches
+        top_matches = get_top_pet_matches(adopter_vector, pet_vectors, top_k=50)
+        print(f"Generated {len(top_matches)} matches")
+        
+        # Calculate pagination
+        skip = (page - 1) * pageSize
+        paginated_matches = top_matches[skip:skip + pageSize]
+        
+        # Save matches in background
+        background_tasks.add_task(save_matches_for_user, current_user.id, top_matches, db)
 
-    return results
+        # Get pet details
+        pet_ids = [pid for pid, _ in paginated_matches]
+        pets = db.query(Pet).filter(Pet.id.in_(pet_ids), Pet.status == "Available").all()
+        pet_map = {pet.id: pet for pet in pets}
+
+        print(f"Found {len(pets)} available pets for {len(pet_ids)} pet IDs")
+
+        results = []
+        for pet_id, score in paginated_matches:
+            pet = pet_map.get(pet_id)
+            if pet:
+                results.append({
+                    "id": pet.id,
+                    "name": pet.name,
+                    "breed": pet.breed,
+                    "age": pet.age_group,
+                    "gender": pet.sex,
+                    "size": pet.size,
+                    "description": pet.shelter_notes,
+                    "photo_url": pet.image_url,
+                    "temperament": pet.energy_level,
+                })
+
+        print(f"Returning {len(results)} results")
+        return results
+
+    except Exception as e:
+        print(f"Error in get_pet_recommendations: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/me", response_model=list[dict])
