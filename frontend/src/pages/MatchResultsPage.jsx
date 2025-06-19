@@ -17,26 +17,18 @@ const getBadgeColor = (label, value) => {
   const colorMap = {
     species: 'bg-purple-50 text-purple-700 border-purple-100',
     breed: 'bg-blue-50 text-blue-700 border-blue-100',
-    
     age: 'bg-amber-50 text-amber-700 border-amber-100',
     age_group: 'bg-amber-50 text-amber-700 border-amber-100',
-    
     energy: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-100',
     energy_level: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-100',
-    
     coat: 'bg-teal-50 text-teal-700 border-teal-100',
     hair_length: 'bg-teal-50 text-teal-700 border-teal-100',
-    
     'exp level': 'bg-indigo-50 text-indigo-700 border-indigo-100',
     experience_level: 'bg-indigo-50 text-indigo-700 border-indigo-100',
-    
     sex: 'bg-pink-50 text-pink-700 border-pink-100',
-    
     size: 'bg-cyan-50 text-cyan-700 border-cyan-100',
-    
     training: 'bg-emerald-50 text-emerald-700 border-emerald-100',
     training_traits: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-    
     default: 'bg-gray-50 text-gray-700 border-gray-100'
   };
   
@@ -46,11 +38,6 @@ const getBadgeColor = (label, value) => {
 const PetCard = ({ pet, onSelect, isSelected, isRequested }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [showMoreInfo, setShowMoreInfo] = useState(false);
-  
-  const toggleMoreInfo = (e) => {
-    e.stopPropagation();
-    setShowMoreInfo(!showMoreInfo);
-  };
   
   const renderBadge = (label, value, customColor) => {
     if (value === undefined || value === null || value === '') return null;
@@ -138,7 +125,7 @@ const PetCard = ({ pet, onSelect, isSelected, isRequested }) => {
     <div 
       className={`relative bg-white rounded-xl overflow-hidden transition-all duration-300 transform hover:-translate-y-1 ${
         isSelected 
-          ? 'ring-2 ring-indigo-500 shadow-lg' 
+          ? 'ring-2 ring-red-500 shadow-lg' 
           : 'border border-gray-100 hover:shadow-lg hover:border-gray-200'
       } ${isRequested ? 'opacity-80' : 'hover:opacity-95'}`}
       onClick={() => onSelect(pet)}
@@ -181,10 +168,9 @@ const PetCard = ({ pet, onSelect, isSelected, isRequested }) => {
       </div>
       
       <div className="p-5">
-        {/* Pet Name and Basic Info */}
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h3 className="text-xl font-bold text-gray-800 group-hover:text-indigo-600 transition-colors">
+            <h3 className="text-xl font-bold text-gray-800 group-hover:text-red-600 transition-colors">
               {pet.name}
             </h3>
             <div className="flex items-center text-sm text-gray-500 mt-1">
@@ -206,28 +192,24 @@ const PetCard = ({ pet, onSelect, isSelected, isRequested }) => {
           </div>
         </div>
         
-        {/* Primary Badges - Always visible */}
         <div className="flex flex-wrap gap-2 mb-3">
           {generatePrimaryBadges()}
         </div>
         
-        {/* Additional Badges - Only show if they exist */}
         {hasAdditionalBadges && (
           <>
-            {/* Show more badges if expanded */}
             <div className={`overflow-hidden transition-all duration-300 ${showMoreInfo ? 'max-h-96' : 'max-h-0'}`}>
               <div className="flex flex-wrap gap-2 mb-3">
                 {generateAdditionalBadges()}
               </div>
             </div>
             
-            {/* Toggle More Info Button */}
             <button 
               onClick={(e) => {
                 e.stopPropagation();
                 setShowMoreInfo(!showMoreInfo);
               }}
-              className="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center"
+              className="text-xs font-medium text-red-600 hover:text-red-800 flex items-center"
             >
               {showMoreInfo ? 'Show less' : 'Show more'}
               <svg 
@@ -242,14 +224,11 @@ const PetCard = ({ pet, onSelect, isSelected, isRequested }) => {
           </>
         )}
         
-        {/* Shelter Notes */}
         <div className="mt-3 pt-3 border-t border-gray-100">
           <p className="text-sm text-gray-600">
             {pet.shelter_notes || 'No additional notes available for this pet.'}
           </p>
         </div>
-        
-        {/* Removed duplicate toggle button */}
       </div>
     </div>
   );
@@ -298,19 +277,17 @@ const VisitRequestModal = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        {/* Overlay */}
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" 
           aria-hidden="true"
           onClick={onClose}
         ></div>
 
-        {/* Modal */}
         <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
           <div className="bg-white px-6 pt-5 pb-4 sm:p-6 sm:pb-4">
             <div className="sm:flex sm:items-start">
-              <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 sm:mx-0 sm:h-10 sm:w-10">
-                <svg className="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
@@ -358,7 +335,7 @@ const VisitRequestModal = ({
                     id="date"
                     value={visitDate}
                     onChange={(e) => setVisitDate(e.target.value)}
-                    className="block w-full pl-3 pr-10 py-3 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 rounded-xl shadow-sm"
+                    className="block w-full pl-3 pr-10 py-3 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 rounded-xl shadow-sm"
                     disabled={isLoading}
                     required
                   >
@@ -394,7 +371,7 @@ const VisitRequestModal = ({
                     id="time"
                     value={visitTime}
                     onChange={(e) => setVisitTime(e.target.value)}
-                    className="block w-full pl-3 pr-10 py-3 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 rounded-xl shadow-sm"
+                    className="block w-full pl-3 pr-10 py-3 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 rounded-xl shadow-sm"
                     disabled={isLoading || !visitDate}
                     required
                   >
@@ -413,16 +390,16 @@ const VisitRequestModal = ({
                 </div>
               </div>
 
-              <div className="mt-2 bg-blue-50 p-4 rounded-xl">
+              <div className="mt-2 bg-red-50 p-4 rounded-xl">
                 <div className="flex">
                   <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h2a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
                   </div>
                   <div className="ml-3">
-                    <h3 className="text-sm font-medium text-blue-800">What to expect</h3>
-                    <div className="mt-2 text-sm text-blue-700">
+                    <h3 className="text-sm font-medium text-red-800">What to expect</h3>
+                    <div className="mt-2 text-sm text-red-700">
                       <p>• Please arrive 5 minutes before your scheduled time</p>
                       <p>• Bring a valid ID</p>
                       <p>• Plan to spend about 30 minutes with us</p>
@@ -438,10 +415,10 @@ const VisitRequestModal = ({
               type="button"
               onClick={onSubmit}
               disabled={isLoading || !visitDate || !visitTime}
-              className={`w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-3 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-200 ${
+              className={`w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-3 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-200 ${
                 isLoading || !visitDate || !visitTime
-                  ? 'bg-indigo-300 cursor-not-allowed'
-                  : 'bg-indigo-600 hover:bg-indigo-700'
+                  ? 'bg-red-300 cursor-not-allowed'
+                  : 'bg-red-600 hover:bg-red-700'
               }`}
             >
               {isLoading ? (
@@ -460,7 +437,7 @@ const VisitRequestModal = ({
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-6 py-3 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-200"
+              className="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-6 py-3 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-200"
             >
               Cancel
             </button>
@@ -483,7 +460,6 @@ export default function MatchResultsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [requestedVisits, setRequestedVisits] = useState([]);
   const [error, setError] = useState('');
-  const [retryCount, setRetryCount] = useState(0);
   const [pagination, setPagination] = useState({
     page: 1,
     pageSize: 6,
@@ -508,9 +484,6 @@ export default function MatchResultsPage() {
 
   const fetchMatchedPets = useCallback(async (page = 1, append = false, forceRefresh = false) => {
     try {
-      console.log('=== fetchMatchedPets called ===');
-      console.log('Parameters:', { page, append, forceRefresh });
-      
       if (page === 1) {
         setIsLoading(true);
         setPets([]);
@@ -520,79 +493,47 @@ export default function MatchResultsPage() {
       
       setError('');
       
-      try {
-        console.log('Checking questionnaire completion...');
-        const hasPreferences = await checkQuestionnaireCompletion();
-        console.log('User has preferences:', hasPreferences);
-        
-        if (!hasPreferences) {
-          if (forceRefresh) {
-            console.log('No preferences but force refresh, retrying...');
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            return fetchMatchedPets(page, append, false);
-          }
-          throw new Error('Please complete the questionnaire to see your pet matches.');
-        }
-        
-        console.log('Calling petService.getMatches with params:', {
-          page,
-          pageSize: pagination.pageSize,
-          forceRefresh: forceRefresh || undefined
+      const hasPreferences = await checkQuestionnaireCompletion();
+      
+      if (!hasPreferences) {
+        throw new Error('Please complete the questionnaire to see your pet matches.');
+      }
+      
+      const response = await petService.getMatches({
+        page,
+        pageSize: pagination.pageSize,
+        forceRefresh: forceRefresh || undefined
+      });
+      
+      if (response && Array.isArray(response)) {
+        setPets(prev => {
+          const newPets = append ? [...prev, ...response] : response;
+          const uniquePets = Array.from(new Map(newPets.map(pet => [pet.id, pet])).values());
+          return uniquePets;
         });
         
-        const response = await petService.getMatches({
-          page,
-          pageSize: pagination.pageSize,
-          forceRefresh: forceRefresh || undefined
-        });
+        setPagination(prev => ({
+          ...prev,
+          hasMore: response.length === pagination.pageSize,
+          page
+        }));
         
-        console.log('petService.getMatches response:', response);
-        console.log('Response type:', typeof response);
-        console.log('Is array:', Array.isArray(response));
-        console.log('Response length:', response?.length);
-        
-        if (response && Array.isArray(response)) {
-          console.log('Processing response...');
-          setPets(prev => {
-            const newPets = append ? [...prev, ...response] : response;
-            const uniquePets = Array.from(new Map(newPets.map(pet => [pet.id, pet])).values());
-            console.log('Setting pets. Previous length:', prev.length, 'New length:', uniquePets.length);
-            return uniquePets;
-          });
-          
-          setPagination(prev => ({
-            ...prev,
-            hasMore: response.length === pagination.pageSize,
-            page
-          }));
-          
-          setRetryCount(0);
-          
-          if (forceRefresh && response.length === 0) {
-            toast.info("We couldn't find any matches based on your preferences. Try adjusting your criteria.");
-          }
-        } else {
-          console.error('Invalid response format:', response);
-          throw new Error('Invalid response format from server');
+        if (forceRefresh && response.length === 0) {
+          toast.info("We couldn't find any matches based on your preferences. Try adjusting your criteria.");
         }
-      } catch (err) {
-        console.error('Error in fetchMatchedPets inner try:', err);
-        console.error('Error response:', err.response);
-        console.error('Error status:', err.response?.status);
-        console.error('Error data:', err.response?.data);
-        
-        const errorMessage = err.response?.data?.message || 
-                           err.message || 
-                           'Failed to load pet matches. Please try again.';
-        setError(errorMessage);
-        
-        if (err.response?.status === 403 || err.message.includes('questionnaire')) {
-          setError('Please complete the questionnaire to see your pet matches.');
-        }
-        throw err;
+      } else {
+        throw new Error('Invalid response format from server');
+      }
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 
+                         err.message || 
+                         'Failed to load pet matches. Please try again.';
+      setError(errorMessage);
+      
+      if (err.response?.status === 403 || err.message.includes('questionnaire')) {
+        setError('Please complete the questionnaire to see your pet matches.');
       }
     } finally {
-      console.log('=== fetchMatchedPets finished ===');
       setIsLoading(false);
       setIsLoadingMore(false);
     }
@@ -600,26 +541,22 @@ export default function MatchResultsPage() {
  
   useEffect(() => {
     if (user) {
-      const timer = setTimeout(() => {
-        const shouldRefresh = location.state?.refreshMatches;
-        
-        if (shouldRefresh) {
-          window.history.replaceState(
-            { ...window.history.state, refreshMatches: undefined },
-            ''
-          );
-        }
-        
-        fetchMatchedPets(1, false, shouldRefresh).catch(() => {
-        });
-      }, retryCount > 0 ? 2000 : 0);
+      const shouldRefresh = location.state?.refreshMatches;
       
-      return () => clearTimeout(timer);
+      if (shouldRefresh) {
+        window.history.replaceState(
+          { ...window.history.state, refreshMatches: undefined },
+          ''
+        );
+      }
+      
+      fetchMatchedPets(1, false, shouldRefresh).catch(() => {
+      });
     } else {
       setError('Please log in to view your matches.');
       setIsLoading(false);
     }
-  }, [user, retryCount, fetchMatchedPets, location.state]);
+  }, [user, fetchMatchedPets, location.state]);
 
   const handleLoadMore = () => {
     if (!isLoadingMore && pagination.hasMore) {
@@ -648,11 +585,7 @@ export default function MatchResultsPage() {
         requested_at: dateTime.toISOString()
       });
       
-      setRequestedVisits(prev => [...prev, { 
-        pet_id: selectedPet.id, 
-        requested_at: dateTime.toISOString(),
-        status: 'Pending' 
-      }]);
+      setRequestedVisits(prev => [...prev, selectedPet.id]);
       
       const petName = selectedPet.name;
       setSelectedPet(null);
@@ -697,39 +630,6 @@ export default function MatchResultsPage() {
     setError('');
   };
 
-  const testBackendEndpoints = async () => {
-  try {
-    console.log('Testing backend endpoints...');
-    
-    console.log('1. Testing /match/recommendations...');
-    try {
-      const response = await api.get('/match/recommendations?page=1&pageSize=10');
-      console.log('✅ Recommendations endpoint works:', response.data);
-    } catch (error) {
-      console.log('❌ Recommendations endpoint failed:', error.response?.status, error.response?.data);
-    }
-    
-    console.log('2. Testing /match/debug/pet-vectors...');
-    try {
-      const vectorResponse = await api.get('/match/debug/pet-vectors');
-      console.log('✅ Pet vectors debug:', vectorResponse.data);
-    } catch (error) {
-      console.log('❌ Pet vectors debug failed:', error.response?.status, error.response?.data);
-    }
-    
-    console.log('3. Testing /users/me...');
-    try {
-      const userResponse = await api.get('/users/me');
-      console.log('✅ User profile:', userResponse.data);
-    } catch (error) {
-      console.log('❌ User profile failed:', error.response?.status, error.response?.data);
-    }
-    
-  } catch (error) {
-    console.error('Test failed:', error);
-  }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -743,130 +643,115 @@ export default function MatchResultsPage() {
         </div>
 
         {isLoading ? (
-  <div className="flex flex-col justify-center items-center py-20">
-    <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
-    <div className="mt-4 space-x-2">
-      <button 
-        onClick={testBackendEndpoints}
-        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-      >
-        Debug Backend
-      </button>
-      <button 
-        onClick={() => petService.getMatches({ page: 1, pageSize: 6 }).then(console.log).catch(console.error)}
-        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-      >
-        Test getMatches
-      </button>
-    </div>
-  </div>
-) : error ? (
-  <div className="text-center p-8 max-w-2xl mx-auto bg-white rounded-lg shadow">
-    <div className="text-red-500 mb-6 text-lg">{error}</div>
-    {error.includes('questionnaire') ? (
-      <a 
-        href="/questionnaire" 
-        className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-      >
-        Complete Questionnaire
-      </a>
-    ) : error.includes('log in') ? (
-      <a
-        href="/login"
-        className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-      >
-        Log In
-      </a>
-    ) : (
-      <button
-        onClick={() => fetchMatchedPets(1)}
-        className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-      >
-        <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-          <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-        </svg>
-        Try Again
-      </button>
-    )}
-  </div>
-) : (
-  <>
-    {pets.length > 0 ? (
-      <>
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {pets.map((pet) => (
-            <PetCard
-              key={pet.id}
-              pet={pet}
-              onSelect={handlePetSelect}
-              isSelected={selectedPet?.id === pet.id}
-              isRequested={requestedVisits.includes(pet.id)}
-            />
-          ))}
-        </div>
-        
-        {pagination.hasMore && (
-          <div className="mt-10 text-center">
-            <button
-              onClick={handleLoadMore}
-              disabled={isLoadingMore}
-              className={`inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white ${
-                isLoadingMore ? 'bg-primary-red/80' : 'bg-primary-red hover:bg-primary-red-dark'
-              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-red`}
-            >
-              {isLoadingMore ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Loading...
-                </>
-              ) : (
-                'Load More Matches'
-              )}
-            </button>
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
           </div>
+        ) : error ? (
+          <div className="text-center p-8 max-w-2xl mx-auto bg-white rounded-lg shadow">
+            <div className="text-red-500 mb-6 text-lg">{error}</div>
+            {error.includes('questionnaire') ? (
+              <a 
+                href="/questionnaire" 
+                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                Complete Questionnaire
+              </a>
+            ) : error.includes('log in') ? (
+              <a
+                href="/login"
+                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                Log In
+              </a>
+            ) : (
+              <button
+                onClick={() => fetchMatchedPets(1)}
+                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                </svg>
+                Try Again
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            {pets.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                  {pets.map((pet) => (
+                    <PetCard
+                      key={pet.id}
+                      pet={pet}
+                      onSelect={handlePetSelect}
+                      isSelected={selectedPet?.id === pet.id}
+                      isRequested={requestedVisits.includes(pet.id)}
+                    />
+                  ))}
+                </div>
+                
+                {pagination.hasMore && (
+                  <div className="mt-10 text-center">
+                    <button
+                      onClick={handleLoadMore}
+                      disabled={isLoadingMore}
+                      className={`inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white ${
+                        isLoadingMore ? 'bg-primary-red/80' : 'bg-primary-red hover:bg-primary-red-dark'
+                      } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-red`}
+                    >
+                      {isLoadingMore ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Loading...
+                        </>
+                      ) : (
+                        'Load More Matches'
+                      )}
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-12 bg-white rounded-lg shadow">
+                <svg
+                  className="mx-auto h-12 w-12 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <h3 className="mt-2 text-lg font-medium text-gray-900">No matches found</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  We couldn't find any pets that match your current preferences. Try adjusting your criteria.
+                </p>
+                <div className="mt-6">
+                  <a
+                    href="/questionnaire"
+                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 1 1 0 001.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd" />
+                    </svg>
+                    Update Preferences
+                  </a>
+                </div>
+              </div>
+            )}
+          </>
         )}
-      </>
-    ) : (
-      <div className="text-center py-12 bg-white rounded-lg shadow">
-        <svg
-          className="mx-auto h-12 w-12 text-gray-400"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-        <h3 className="mt-2 text-lg font-medium text-gray-900">No matches found</h3>
-        <p className="mt-1 text-sm text-gray-500">
-          We couldn't find any pets that match your current preferences. Try adjusting your criteria.
-        </p>
-        <div className="mt-6">
-          <a
-            href="/questionnaire"
-            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 1 1 0 001.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd" />
-            </svg>
-            Update Preferences
-          </a>
-        </div>
-      </div>
-    )}
-  </>
-)}
       </div>
 
-      {/* Visit Request Modal */}
       <VisitRequestModal
         isOpen={!!selectedPet}
         onClose={closeModal}
@@ -880,7 +765,6 @@ export default function MatchResultsPage() {
         setVisitTime={setVisitTime}
       />
 
-      {/* React Toastify Container - this handles all toast notifications */}
       <ToastContainer
         position="top-center"
         autoClose={5000}
