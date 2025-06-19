@@ -1,11 +1,20 @@
 # Environment variables
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
+# Backend Python environment
+/.venv
 /backend/.venv
 /scripts
+/.pytest_cache
 
 # Node.js dependencies and builds
 node_modules/
+/.pnp
+.pnp.js
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -17,6 +26,9 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+
+# Testing
+/coverage
 
 # Logs
 *.log
@@ -38,4 +50,10 @@ backend/static/
 
 # Test scripts
 /test_all_endpoints.py
-/coverage
+
+# Frontend environment files specifically
+/frontend/.env
+/frontend/.env.local
+/frontend/.env.development
+/frontend/.env.production
+/frontend/.env.test
