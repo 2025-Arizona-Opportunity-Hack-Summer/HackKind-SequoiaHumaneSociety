@@ -106,16 +106,7 @@ export default function Login() {
           </div>
 
           <div className="mb-8">
-            <div className="flex justify-between items-center mb-2">
-              <label className="block text-sm font-medium text-primary-charcoal">Password</label>
-              <button
-                type="button"
-                onClick={() => navigate('/forgot-password')}
-                className="text-sm text-primary-red hover:text-opacity-80 transition-colors"
-              >
-                Forgot password?
-              </button>
-            </div>
+            <label className="block text-sm font-medium text-primary-charcoal mb-2">Password</label>
             <input
               type="password"
               name="password"
