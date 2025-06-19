@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { petService } from '../services/petService';
 import api from '../services/api';
+import toast, { Toaster } from 'react-hot-toast';
 
 const ENUMS = {
   species: ["Dog", "Cat"],
@@ -32,8 +33,10 @@ export default function AdminDashboard() {
       setIsLoggingOut(false);
     }
   };
-  const [pets, setPets] = useState([]);
   const [visits, setVisits] = useState([]);
+  const [pets, setPets] = useState([]);
+  const [selectedVisit, setSelectedVisit] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     species: "",
@@ -136,7 +139,9 @@ export default function AdminDashboard() {
         kid_friendly: formData.kid_friendly || false,
         pet_friendly: formData.pet_friendly || false,
         shelter_notes: formData.shelter_notes || null,
-        status: formData.status || 'Available'
+        status: formData.status || 'Available',
+        // Include the existing image URL when updating a pet and no new image is provided
+        ...(editId !== null && !formData.image && formData.existingImageUrl && { image_url: formData.existingImageUrl })
       };
       
       // Remove any undefined or empty string values
@@ -246,41 +251,7 @@ export default function AdminDashboard() {
       
     } catch (err) {
       console.error('Failed to save pet:', err);
-      
-      let errorMessage = 'Failed to save pet. Please try again.';
-      
-      if (err.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.error('Response data:', err.response.data);
-        console.error('Response status:', err.response.status);
-        console.error('Response headers:', err.response.headers);
-        
-        if (err.response.data && typeof err.response.data === 'object') {
-          // Handle validation errors or other structured error responses
-          if (err.response.data.detail) {
-            errorMessage = err.response.data.detail;
-          } else if (err.response.data.message) {
-            errorMessage = err.response.data.message;
-          } else if (typeof err.response.data === 'string') {
-            errorMessage = err.response.data;
-          } else {
-            errorMessage = JSON.stringify(err.response.data, null, 2);
-          }
-        } else if (typeof err.response.data === 'string') {
-          errorMessage = err.response.data;
-        }
-      } else if (err.request) {
-        // The request was made but no response was received
-        console.error('No response received:', err.request);
-        errorMessage = 'No response from server. Please check your connection.';
-      } else {
-        // Something happened in setting up the request that triggered an Error
-        console.error('Error setting up request:', err.message);
-        errorMessage = `Error: ${err.message}`;
-      }
-      
-      alert(`Failed to save pet: ${errorMessage}`);
+      alert('Failed to save pet. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -354,10 +325,22 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleViewDetails = (visit) => {
+    setSelectedVisit(visit);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedVisit(null);
+  };
+
   const handleUpdateVisitStatus = async (id, newStatus) => {
     try {
+      // Show loading toast
+      const loadingToast = toast.loading('Updating status...');
+      
       // Call the API to update the visit request status using PUT
-      // The backend expects the status to be embedded in the request body
       await api.put(`/admin/visit-requests/${id}/status`, { status: newStatus });
       
       // Update the local state to reflect the change
@@ -367,87 +350,110 @@ export default function AdminDashboard() {
         )
       );
       
-      // Show success message
-      alert(`Visit request status updated to ${newStatus} successfully!`);
-      
+      // Show success toast with status-specific styling
+      toast.dismiss(loadingToast);
+      toast.success(`Status updated to ${newStatus}`, {
+        style: {
+          background: newStatus === 'Pending' ? '#FEF3C7' : 
+                    newStatus === 'Confirmed' ? '#D1FAE5' : '#FEE2E2',
+          color: newStatus === 'Pending' ? '#92400E' : 
+                newStatus === 'Confirmed' ? '#065F46' : '#991B1B',
+          border: `1px solid ${
+            newStatus === 'Pending' ? '#F59E0B' : 
+            newStatus === 'Confirmed' ? '#10B981' : '#EF4444'
+          }`,
+        },
+        iconTheme: {
+          primary: newStatus === 'Pending' ? '#F59E0B' : 
+                  newStatus === 'Confirmed' ? '#10B981' : '#EF4444',
+          secondary: 'white',
+        },
+      });
     } catch (err) {
       console.error(`Failed to update visit request status to ${newStatus}:`, err);
-      alert(`Failed to update visit request status. Please try again.`);
+      toast.dismiss();
+      toast.error(`Failed to update status: ${err.response?.data?.detail || 'Please try again'}`);
     }
   };
 
-  return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        <button
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors disabled:opacity-70 flex items-center gap-2"
-        >
-          {isLoggingOut ? (
-            <>
-              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Logging out...
-            </>
-          ) : (
-            'Logout'
-          )}
-        </button>
-      </div>
+  // Helper function to get image URL
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http') || url.startsWith('data:')) return url;
+    // Remove any leading slashes to prevent double slashes
+    const cleanUrl = url.startsWith('/') ? url.substring(1) : url;
+    return `http://localhost:8000/${cleanUrl}`;
+  };
 
-      {/* Pet Management */}
-      <div className="mb-12">
-        <h2 className="text-xl font-semibold mb-4">Manage Pets</h2>
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <input name="name" placeholder="Name" value={formData.name} onChange={handleInputChange} className="p-2 border rounded" />
-          <select name="species" value={formData.species} onChange={handleInputChange} className="p-2 border rounded">
-            <option value="">Select Species</option>
-            {ENUMS.species.map((v) => <option key={v}>{v}</option>)}
-          </select>
-          <input name="breed" placeholder="Breed" value={formData.breed} onChange={handleInputChange} className="p-2 border rounded" />
-          <select name="age_group" value={formData.age_group} onChange={handleInputChange} className="p-2 border rounded">
-            <option value="">Select Age Group</option>
-            {ENUMS.age_group.map((v) => <option key={v}>{v}</option>)}
-          </select>
-          <select name="sex" value={formData.sex} onChange={handleInputChange} className="p-2 border rounded">
-            <option value="">Select Sex</option>
-            {ENUMS.sex.map((v) => <option key={v}>{v}</option>)}
-          </select>
-          <select name="size" value={formData.size} onChange={handleInputChange} className="p-2 border rounded">
-            <option value="">Select Size</option>
-            {ENUMS.size.map((v) => <option key={v}>{v}</option>)}
-          </select>
-          <select name="energy_level" value={formData.energy_level} onChange={handleInputChange} className="p-2 border rounded">
-            <option value="">Select Energy Level</option>
-            {ENUMS.energy_level.map((v) => <option key={v}>{v}</option>)}
-          </select>
-          <select name="experience_level" value={formData.experience_level} onChange={handleInputChange} className="p-2 border rounded">
-            <option value="">Select Experience Level This Pet Requires</option>
-            {ENUMS.experience_level.map((v) => <option key={v}>{v}</option>)}
-          </select>
-          <select name="hair_length" value={formData.hair_length} onChange={handleInputChange} className="p-2 border rounded">
-            <option value="">Select Hair Length</option>
-            {ENUMS.hair_length.map((v) => <option key={v}>{v}</option>)}
-          </select>
-          <textarea name="shelter_notes" placeholder="Shelter Notes" value={formData.shelter_notes} onChange={handleInputChange} className="p-2 border rounded col-span-2" />
-          <div className="col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Pet Image</label>
-            <input 
-              type="file" 
-              name="image" 
-              accept="image/*"
-              onChange={handleInputChange} 
-              className="block w-full text-sm text-gray-500
-                file:mr-4 file:py-2 file:px-4
-                file:rounded-full file:border-0
-                file:text-sm file:font-semibold
-                file:bg-blue-50 file:text-blue-700
-                hover:file:bg-blue-100"
-            />
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            borderRadius: '8px',
+            fontSize: '14px',
+            maxWidth: '500px',
+            padding: '12px 16px',
+          },
+        }}
+      />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white shadow rounded-lg p-6">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+          </div>
+
+          {/* Pet Management */}
+          <div className="mb-12">
+            <h2 className="text-xl font-semibold mb-4">Manage Pets</h2>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+            <input name="name" placeholder="Name" value={formData.name} onChange={handleInputChange} className="p-2 border rounded" />
+            <select name="species" value={formData.species} onChange={handleInputChange} className="p-2 border rounded">
+              <option value="">Select Species</option>
+              {ENUMS.species.map((v) => <option key={v}>{v}</option>)}
+            </select>
+            <input name="breed" placeholder="Breed" value={formData.breed} onChange={handleInputChange} className="p-2 border rounded" />
+            <select name="age_group" value={formData.age_group} onChange={handleInputChange} className="p-2 border rounded">
+              <option value="">Select Age Group</option>
+              {ENUMS.age_group.map((v) => <option key={v}>{v}</option>)}
+            </select>
+            <select name="sex" value={formData.sex} onChange={handleInputChange} className="p-2 border rounded">
+              <option value="">Select Sex</option>
+              {ENUMS.sex.map((v) => <option key={v}>{v}</option>)}
+            </select>
+            <select name="size" value={formData.size} onChange={handleInputChange} className="p-2 border rounded">
+              <option value="">Select Size</option>
+              {ENUMS.size.map((v) => <option key={v}>{v}</option>)}
+            </select>
+            <select name="energy_level" value={formData.energy_level} onChange={handleInputChange} className="p-2 border rounded">
+              <option value="">Select Energy Level</option>
+              {ENUMS.energy_level.map((v) => <option key={v}>{v}</option>)}
+            </select>
+            <select name="experience_level" value={formData.experience_level} onChange={handleInputChange} className="p-2 border rounded">
+              <option value="">Select Experience Level This Pet Requires</option>
+              {ENUMS.experience_level.map((v) => <option key={v}>{v}</option>)}
+            </select>
+            <select name="hair_length" value={formData.hair_length} onChange={handleInputChange} className="p-2 border rounded">
+              <option value="">Select Hair Length</option>
+              {ENUMS.hair_length.map((v) => <option key={v}>{v}</option>)}
+            </select>
+            <textarea name="shelter_notes" placeholder="Shelter Notes" value={formData.shelter_notes} onChange={handleInputChange} className="p-2 border rounded col-span-2" />
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Pet Image</label>
+              <input 
+                type="file" 
+                name="image" 
+                accept="image/*"
+                onChange={handleInputChange} 
+                className="block w-full text-sm text-gray-500
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-full file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-accent-blush file:text-primary-red
+                  hover:file:bg-accent-blush/80"
+              />
             {imagePreview || formData.existingImageUrl ? (
               <div className="mt-2">
                 <p className="text-sm text-gray-500 mb-1">Preview:</p>
@@ -474,9 +480,9 @@ export default function AdminDashboard() {
             disabled={isLoading}
             className={`px-4 py-2 rounded text-white font-medium ${
               isLoading 
-                ? 'bg-blue-400 cursor-not-allowed' 
-                : 'bg-blue-600 hover:bg-blue-700'
-            }`}
+                ? 'bg-primary-red/70 cursor-not-allowed' 
+                : 'bg-primary-red hover:bg-primary-red-dark'
+            } transition-colors`}
           >
             {isLoading ? (
               <span className="flex items-center">
@@ -527,7 +533,7 @@ export default function AdminDashboard() {
 
         {isLoading ? (
           <div className="flex justify-center items-center h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-red"></div>
           </div>
         ) : error ? (
           <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4">
@@ -539,17 +545,30 @@ export default function AdminDashboard() {
           <ul className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {pets.map((pet) => (
               <li key={pet.id} className="border p-4 rounded shadow">
-                {pet.image_url ? (
-                  <img 
-                    src={pet.image_url.startsWith('data:') ? pet.image_url : `http://localhost:8000${pet.image_url}`} 
-                    alt={pet.name} 
-                    className="w-full h-48 object-cover rounded mb-2" 
-                  />
-                ) : (
-                  <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500 rounded mb-2">
-                    No image available
-                  </div>
-                )}
+                <div className="relative">
+                  {pet.image_url ? (
+                    <>
+                      <img 
+                        src={getImageUrl(pet.image_url)} 
+                        alt={pet.name} 
+                        className="w-full h-48 object-cover rounded mb-2"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          // Show fallback div if image fails to load
+                          const fallback = e.target.nextElementSibling;
+                          if (fallback) fallback.classList.remove('hidden');
+                        }}
+                      />
+                      <div className="hidden w-full h-48 bg-light-gray flex items-center justify-center text-medium-gray rounded mb-2">
+                        No image available
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-full h-48 bg-light-gray flex items-center justify-center text-medium-gray rounded mb-2">
+                      No image available
+                    </div>
+                  )}
+                </div>
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-semibold">{pet.name}</span>
                   <span className="text-sm italic">{pet.status}</span>
@@ -557,7 +576,7 @@ export default function AdminDashboard() {
                 <div className="flex justify-between">
                   <button 
                     onClick={() => handleEditPet(pet)} 
-                    className="text-blue-600 hover:text-blue-800"
+                    className="text-primary-red hover:text-primary-red-dark"
                   >
                     Edit
                   </button>
@@ -603,6 +622,9 @@ export default function AdminDashboard() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {visits.map((visit) => {
+                  // Log the visit object to debug
+                  console.log('Visit object:', visit);
+                  
                   const requestedDate = new Date(visit.requested_at);
                   const formattedDate = requestedDate.toLocaleDateString('en-US', {
                     year: 'numeric',
@@ -612,28 +634,46 @@ export default function AdminDashboard() {
                     minute: '2-digit'
                   });
                   
+                  // Safely access nested properties
+                  const petName = visit.pet?.name || 'Unknown Pet';
+                  const petBreed = visit.pet?.breed || 'Unknown Breed';
+                  const petPhoto = visit.pet?.photo_url || '';
+                  const userName = visit.user?.full_name || 'N/A';
+                  const userEmail = visit.user?.email || 'No email';
+                  
                   return (
                     <tr key={visit.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          {visit.pet_image_url && (
+                          {petPhoto ? (
                             <div className="flex-shrink-0 h-10 w-10">
                               <img 
                                 className="h-10 w-10 rounded-full object-cover" 
-                                src={visit.pet_image_url.startsWith('http') ? visit.pet_image_url : `http://localhost:8000${visit.pet_image_url}`} 
-                                alt={visit.pet_name}
+                                src={petPhoto.startsWith('http') ? petPhoto : `http://localhost:8000${petPhoto}`} 
+                                alt={petName}
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.nextElementSibling?.classList.remove('hidden');
+                                }}
                               />
+                              <div className="hidden h-10 w-10 rounded-full bg-light-gray flex items-center justify-center text-medium-gray text-xs">
+                                No Image
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-light-gray flex items-center justify-center text-medium-gray text-xs">
+                              No Image
                             </div>
                           )}
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{visit.pet_name}</div>
-                            <div className="text-sm text-gray-500">{visit.pet_breed}</div>
+                            <div className="text-sm font-medium text-gray-900">{petName}</div>
+                            <div className="text-sm text-gray-500">{petBreed}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{visit.user_name || 'N/A'}</div>
-                        <div className="text-sm text-gray-500">{visit.user_email}</div>
+                        <div className="text-sm text-gray-900">{userName}</div>
+                        <div className="text-sm text-gray-500">{userEmail}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formattedDate}
@@ -642,7 +682,7 @@ export default function AdminDashboard() {
                         <select
                           value={visit.status}
                           onChange={(e) => handleUpdateVisitStatus(visit.id, e.target.value)}
-                          className={`px-2 py-1 text-xs font-semibold rounded-md border ${
+                          className={`px-3 py-1.5 text-xs font-semibold rounded-md border w-32 appearance-none pr-8 ${
                             visit.status === 'Pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
                             visit.status === 'Confirmed' ? 'bg-green-100 text-green-800 border-green-300' :
                             'bg-red-100 text-red-800 border-red-300'
@@ -655,16 +695,8 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
-                          onClick={() => {
-                            // Show visit request details in a modal or expandable section
-                            alert(`Visit Request Details:\n\n` +
-                              `Pet: ${visit.pet_name}\n` +
-                              `Requester: ${visit.user_name || 'N/A'}\n` +
-                              `Email: ${visit.user_email}\n` +
-                              `Requested: ${new Date(visit.requested_at).toLocaleString()}\n` +
-                              `Status: ${visit.status.charAt(0).toUpperCase() + visit.status.slice(1)}`);
-                          }}
-                          className="text-blue-600 hover:text-blue-900"
+                          onClick={() => handleViewDetails(visit)}
+                          className="text-primary-red hover:text-primary-red-dark"
                         >
                           View Details
                         </button>
@@ -676,6 +708,115 @@ export default function AdminDashboard() {
             </table>
           </div>
         )}
+      </div>
+
+          {/* Visit Details Modal */}
+          {isModalOpen && selectedVisit && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-start">
+                <h3 className="text-lg font-medium text-gray-900">Visit Request Details</h3>
+                <button
+                  onClick={closeModal}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <span className="sr-only">Close</span>
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="mt-6 space-y-4">
+                <div className="border-b pb-4">
+                  <h4 className="text-sm font-medium text-gray-500">Pet Information</h4>
+                  <div className="mt-2 flex items-center">
+                    {selectedVisit.pet?.photo_url ? (
+                      <>
+                        <img 
+                          src={getImageUrl(selectedVisit.pet.photo_url)}
+                          alt={selectedVisit.pet?.name || 'Pet'} 
+                          className="h-16 w-16 rounded-full object-cover mr-4"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            const fallback = e.target.nextElementSibling;
+                            if (fallback) fallback.classList.remove('hidden');
+                          }}
+                        />
+                        <div className="hidden h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs mr-4">
+                          No Image
+                        </div>
+                      </>
+                    ) : (
+                      <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs mr-4">
+                        No Image
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-lg font-medium text-gray-900">{selectedVisit.pet?.name || 'Unknown Pet'}</p>
+                      {selectedVisit.pet?.breed && (
+                        <p className="text-sm text-gray-500">{selectedVisit.pet.breed}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-b pb-4">
+                  <h4 className="text-sm font-medium text-gray-500">Requester Information</h4>
+                  <div className="mt-2 space-y-1">
+                    <p className="text-gray-900">{selectedVisit.user?.full_name || 'N/A'}</p>
+                    <p className="text-gray-600">{selectedVisit.user?.email || 'No email'}</p>
+                    {selectedVisit.user?.phone_number && (
+                      <p className="text-gray-600">{selectedVisit.user.phone_number}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="border-b pb-4">
+                  <h4 className="text-sm font-medium text-gray-500">Visit Details</h4>
+                  <div className="mt-2 grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500">Requested</p>
+                      <p className="text-gray-900">
+                        {new Date(selectedVisit.requested_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Status</p>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        selectedVisit.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                        selectedVisit.status === 'Confirmed' ? 'bg-green-100 text-green-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {selectedVisit.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {selectedVisit.notes && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">Additional Notes</h4>
+                    <p className="mt-2 text-gray-700 whitespace-pre-line">{selectedVisit.notes}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+          )}
+        </div>
       </div>
     </div>
   );

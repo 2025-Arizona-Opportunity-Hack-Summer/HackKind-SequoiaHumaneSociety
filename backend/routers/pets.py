@@ -124,8 +124,22 @@ def update_pet(
     if not pet:
         raise HTTPException(status_code=404, detail="Pet not found")
 
-    for key, value in pet_update.model_dump(exclude_unset=True).items():
+    # Store the current image URL before updating
+    current_image_url = pet.image_url
+    
+    # Update only the fields that were provided in the request
+    update_data = pet_update.model_dump(exclude_unset=True)
+    
+    # Convert HttpUrl to string if present
+    if 'image_url' in update_data and update_data['image_url'] is not None:
+        update_data['image_url'] = str(update_data['image_url'])
+    
+    for key, value in update_data.items():
         setattr(pet, key, value)
+    
+    # If image_url was not in the update data, restore the original
+    if 'image_url' not in update_data and current_image_url:
+        pet.image_url = current_image_url
 
     if pet_update.status and pet_update.status != "Available":
         db.query(PetVector).filter_by(pet_id=pet_id).delete()
@@ -136,6 +150,8 @@ def update_pet(
     if pet.status == "Adopted":
         db.query(Match).filter_by(pet_id=pet_id).delete()
         db.commit()
+        
+    return pet
 
     return pet
 

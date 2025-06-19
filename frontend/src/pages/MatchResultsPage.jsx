@@ -930,8 +930,8 @@ export default function MatchResultsPage() {
               onClick={handleLoadMore}
               disabled={isLoadingMore}
               className={`inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white ${
-                isLoadingMore ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'
-              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
+                isLoadingMore ? 'bg-primary-red/80' : 'bg-primary-red hover:bg-primary-red-dark'
+              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-red`}
             >
               {isLoadingMore ? (
                 <>

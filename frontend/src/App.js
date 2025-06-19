@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { authService } from './services/authService';
 import { API_BASE_URL } from './config/api';
@@ -15,6 +15,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 
 // Components
 import LoadingSpinner from './components/common/LoadingSpinner';
+import Navbar from './components/Navbar';
 
 // Auth context
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -73,7 +74,7 @@ const PublicRoute = ({ children }) => {
     
     // If no intended path, redirect based on role
     if (!redirectTo || redirectTo === '/login' || redirectTo === '/') {
-      redirectTo = user.role?.toLowerCase() === 'admin' ? '/admin/dashboard' : '/dashboard';
+      redirectTo = user.role?.toLowerCase() === 'admin' ? '/admin' : '/dashboard';
     }
     
     console.log('Redirecting authenticated user to:', redirectTo);
@@ -81,6 +82,21 @@ const PublicRoute = ({ children }) => {
   }
 
   return children;
+};
+
+// Layout component that includes Navbar and applies base styles
+const Layout = () => {
+  return (
+    <div className="min-h-screen flex flex-col bg-primary-white text-primary-charcoal font-sans">
+      <Navbar />
+      <main className="flex-grow">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Outlet />
+        </div>
+      </main>
+      {/* Footer can be added here */}
+    </div>
+  );
 };
 
 function AppContent() {
@@ -110,12 +126,10 @@ function AppContent() {
     );
   }
 
+
   return (
     <Routes>
-      {/* Public routes */}
-      <Route path="/" element={<LandingPage />} />
-      
-      {/* Auth routes (only for non-authenticated users) */}
+      {/* Auth routes (only for non-authenticated users) - No Navbar */}
       <Route path="/login" element={
         <PublicRoute>
           <Login />
@@ -128,38 +142,43 @@ function AppContent() {
         </PublicRoute>
       } />
       
-      <Route path="/questionnaire" element={
-        <ProtectedRoute>
-          <Questionnaire />
-        </ProtectedRoute>
-      } />
-      
-      {/* Protected routes */}
-      <Route path="/dashboard" element={
-        <ProtectedRoute>
-          <AdopterDashboard />
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/admin/dashboard" element={
-        <ProtectedRoute requiredRole="admin">
-          <AdminDashboard />
-        </ProtectedRoute>
-      } />
-      
-      {/* Redirect old /admin to /admin/dashboard */}
-      <Route path="/admin" element={
-        <Navigate to="/admin/dashboard" replace />
-      } />
-      
-      <Route path="/match-results" element={
-        <ProtectedRoute>
-          <MatchResultsPage />
-        </ProtectedRoute>
-      } />
-      
-      {/* Catch-all route */}
-      <Route path="*" element={<NotFoundPage />} />
+      {/* All other routes with Navbar */}
+      <Route path="/" element={<Layout />}>
+        <Route index element={<LandingPage />} />
+        
+        <Route path="/questionnaire" element={
+          <ProtectedRoute>
+            <Questionnaire />
+          </ProtectedRoute>
+        } />
+        
+        {/* Protected routes */}
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <AdopterDashboard />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/admin/dashboard" element={
+          <ProtectedRoute requiredRole="admin">
+            <AdminDashboard />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/match-results" element={
+          <ProtectedRoute>
+            <MatchResultsPage />
+          </ProtectedRoute>
+        } />
+        
+        {/* Redirect old /admin to /admin/dashboard */}
+        <Route path="/admin" element={
+          <Navigate to="/admin/dashboard" replace />
+        } />
+        
+        {/* Catch-all route */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
     </Routes>
   );
 }

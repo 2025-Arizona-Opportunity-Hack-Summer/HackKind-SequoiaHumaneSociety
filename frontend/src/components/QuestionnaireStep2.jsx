@@ -190,10 +190,10 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
                     setFormData(prev => ({ ...prev, preferred_age: option.value }));
                     setTouched(prev => ({ ...prev, preferred_age: true }));
                   }}
-                  className={`p-3 border rounded-lg text-center ${
+                  className={`p-4 border rounded-lg text-center transition-colors ${
                     formData.preferred_age === option.value 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-300 hover:bg-gray-50'
+                      ? 'border-primary-red bg-accent-blush' 
+                      : 'border-medium-gray hover:bg-light-gray'
                   }`}
                 >
                   {option.label}
@@ -219,10 +219,10 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
                     setFormData(prev => ({ ...prev, preferred_sex: option.value }));
                     setTouched(prev => ({ ...prev, preferred_sex: true }));
                   }}
-                  className={`p-3 border rounded-lg text-center ${
+                  className={`p-4 border rounded-lg text-center transition-colors ${
                     formData.preferred_sex === option.value
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-300 hover:bg-gray-50'
+                      ? 'border-primary-red bg-accent-blush'
+                      : 'border-medium-gray hover:bg-light-gray'
                   }`}
                 >
                   {option.label}
@@ -248,10 +248,10 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
                     setFormData(prev => ({ ...prev, preferred_size: option.value }));
                     setTouched(prev => ({ ...prev, preferred_size: true }));
                   }}
-                  className={`p-3 border rounded-lg text-center ${
+                  className={`p-4 border rounded-lg text-center transition-colors ${
                     formData.preferred_size === option.value
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-300 hover:bg-gray-50'
+                      ? 'border-primary-red bg-accent-blush'
+                      : 'border-medium-gray hover:bg-light-gray'
                   }`}
                 >
                   {option.label}
@@ -277,10 +277,10 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
                     setFormData(prev => ({ ...prev, activity_level: option.value }));
                     setTouched(prev => ({ ...prev, activity_level: true }));
                   }}
-                  className={`p-3 border rounded-lg text-center text-sm ${
+                  className={`p-4 border rounded-lg text-center text-sm transition-colors ${
                     formData.activity_level === option.value
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-300 hover:bg-gray-50'
+                      ? 'border-primary-red bg-accent-blush'
+                      : 'border-medium-gray hover:bg-light-gray'
                   }`}
                 >
                   {option.label}
@@ -306,10 +306,10 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
                     setFormData(prev => ({ ...prev, hair_length: option.value }));
                     setTouched(prev => ({ ...prev, hair_length: true }));
                   }}
-                  className={`p-3 border rounded-lg text-center ${
+                  className={`p-4 border rounded-lg text-center transition-colors ${
                     formData.hair_length === option.value
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-300 hover:bg-gray-50'
+                      ? 'border-primary-red bg-accent-blush'
+                      : 'border-medium-gray hover:bg-light-gray'
                   }`}
                 >
                   {option.label}
@@ -339,7 +339,7 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
                       checked={formData.required_traits?.includes(trait.id) || false}
                       onChange={handleChange}
                       data-exclusive={trait.exclusive || false}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-primary-red focus:ring-primary-red border-medium-gray rounded"
                     />
                     <label htmlFor={trait.id} className="ml-2 block text-sm text-gray-700">
                       {trait.label}
@@ -365,7 +365,7 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
                   value="true"
                   checked={formData.special_needs === true}
                   onChange={handleChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                  className="h-4 w-4 text-primary-red focus:ring-primary-red border-medium-gray"
                 />
                 <span className="ml-2 text-sm text-gray-700">Yes</span>
               </label>
@@ -376,7 +376,7 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
                   value="false"
                   checked={formData.special_needs === false}
                   onChange={handleChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                  className="h-4 w-4 text-primary-red focus:ring-primary-red border-medium-gray"
                 />
                 <span className="ml-2 text-sm text-gray-700">No</span>
               </label>
@@ -388,7 +388,7 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
 
           {/* Error message */}
           {error && !Object.keys(touched).some(key => touched[key] && error.toLowerCase().includes(key.replace('_', ' '))) && (
-            <div className="p-3 bg-red-50 text-red-700 rounded-md">
+            <div className="p-3 bg-red-50 text-red-700 rounded-md border border-red-100">
               {error}
             </div>
           )}
@@ -398,15 +398,15 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
             <button
               type="button"
               onClick={onBack}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="inline-flex items-center px-4 py-2 border border-medium-gray shadow-sm text-sm font-medium rounded-md text-charcoal bg-white hover:bg-light-gray focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-red transition-colors"
             >
               Back
             </button>
             <button
               type="submit"
               className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${
-                isSubmitting ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
-              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                isSubmitting ? 'bg-primary-red/70' : 'bg-primary-red hover:bg-primary-red-dark'
+              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-red transition-colors`}
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Submitting...' : 'Find My Match'}

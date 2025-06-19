@@ -78,42 +78,83 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white p-6">
-      <form onSubmit={handleSubmit} className="w-full max-w-md bg-gray-50 p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold mb-6 text-center">Log In</h2>
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gradient-to-br from-primary-white to-primary-blush/20 p-6">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-primary-charcoal mb-2 font-heading">Welcome Back</h1>
+          <p className="text-primary-medium-gray">Sign in to continue to PetMatch</p>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-lg border border-primary-light-gray/50">
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded">
+              <p className="text-sm">{error}</p>
+            </div>
+          )}
 
-        {error && <p className="text-red-600 mb-4 text-sm">{error}</p>}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-primary-charcoal mb-2">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className="input w-full"
+              placeholder="Enter your email"
+              required
+            />
+          </div>
 
-        <label className="block mb-2 font-medium">Email</label>
-        <input
-          type="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          className="w-full p-2 mb-4 border rounded"
-          required
-        />
+          <div className="mb-8">
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-sm font-medium text-primary-charcoal">Password</label>
+              <button
+                type="button"
+                onClick={() => navigate('/forgot-password')}
+                className="text-sm text-primary-red hover:text-opacity-80 transition-colors"
+              >
+                Forgot password?
+              </button>
+            </div>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              className="input w-full"
+              placeholder="••••••••"
+              required
+            />
+          </div>
 
-        <label className="block mb-2 font-medium">Password</label>
-        <input
-          type="password"
-          name="password"
-          value={formData.password}
-          onChange={handleChange}
-          className="w-full p-2 mb-6 border rounded"
-          required
-        />
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full btn btn-primary py-3 px-6 text-base font-medium rounded-xl hover:shadow-lg transition-all duration-200 flex items-center justify-center"
+          >
+            {isLoading ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Signing in...
+              </>
+            ) : 'Sign In'}
+          </button>
 
-        <button 
-          type="submit" 
-          disabled={isLoading}
-          className={`w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700 ${
-            isLoading ? 'opacity-70 cursor-not-allowed' : ''
-          }`}
-        >
-          {isLoading ? 'Logging in...' : 'Log In'}
-        </button>
-      </form>
+          <div className="mt-6 text-center text-sm">
+            <span className="text-primary-medium-gray">Don't have an account? </span>
+            <button
+              type="button"
+              onClick={() => navigate('/signup')}
+              className="font-medium text-primary-red hover:text-opacity-80 transition-colors focus:outline-none"
+            >
+              Sign up
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

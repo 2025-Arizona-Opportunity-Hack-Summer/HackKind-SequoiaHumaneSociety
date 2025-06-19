@@ -1,3 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Open+Sans:wght@300;400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', 'Open Sans', system-ui, sans-serif;
+    color: #1E1E1E;
+    background-color: #FAFAFA;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: #1E1E1E;
+  }
+
+  a {
+    @apply transition-colors duration-200;
+  }
+
+  .btn {
+    @apply px-6 py-2.5 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-red;
+  }
+
+  .btn-primary {
+    @apply bg-primary-red text-white hover:bg-opacity-90 focus:ring-primary-red;
+  }
+
+  .btn-outline {
+    @apply border border-primary-red text-primary-red hover:bg-primary-red hover:bg-opacity-10;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100;
+  }
+
+  .input {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-red focus:border-transparent;
+  }
+
+  .tag {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-blush bg-opacity-30 text-primary-charcoal;
+  }
+}

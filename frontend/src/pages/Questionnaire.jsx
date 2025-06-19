@@ -92,7 +92,7 @@ export default function Questionnaire() {
               <div key={stepNum} className="flex flex-col items-center">
                 <div 
                   className={`w-10 h-10 rounded-full flex items-center justify-center text-white ${
-                    step >= stepNum ? 'bg-blue-600' : 'bg-gray-300'
+                    step >= stepNum ? 'bg-primary-red' : 'bg-light-gray'
                   }`}
                 >
                   {stepNum}
@@ -115,8 +115,8 @@ export default function Questionnaire() {
             )}
             {step === 2 && (
               <QuestionnaireStep2 
-                onNext={handleSubmit} 
-                onBack={() => setStep(1)} 
+                onNext={handleSubmit}
+                onBack={() => setStep(1)}
                 formData={formData} 
                 setFormData={setFormData}
                 isSubmitting={isSubmitting}

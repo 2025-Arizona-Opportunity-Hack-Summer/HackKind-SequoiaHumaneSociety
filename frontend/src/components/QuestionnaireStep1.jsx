@@ -137,10 +137,10 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
                     setFormData(prev => ({ ...prev, pet_type: pet.value }));
                     setTouched(prev => ({ ...prev, pet_type: true }));
                   }}
-                  className={`p-4 border rounded-lg text-center ${
+                  className={`p-4 border rounded-lg text-center transition-colors ${
                     formData.pet_type === pet.value 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-300 hover:bg-gray-50'
+                      ? 'border-primary-red bg-accent-blush' 
+                      : 'border-medium-gray hover:bg-light-gray'
                   }`}
                 >
                   {pet.label}
@@ -161,10 +161,10 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
               {petPurposes.map((purpose) => (
                 <div 
                   key={purpose.value}
-                  className={`p-3 border rounded-lg cursor-pointer ${
+                  className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                     formData.pet_purpose === purpose.value 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-300 hover:bg-gray-50'
+                      ? 'border-primary-red bg-accent-blush' 
+                      : 'border-medium-gray hover:bg-light-gray'
                   }`}
                   onClick={() => {
                     const willShowChildren = purpose.value === 'family';
@@ -184,7 +184,7 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
                       value={purpose.value}
                       checked={formData.pet_purpose === purpose.value}
                       onChange={() => {}}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      className="h-4 w-4 text-primary-red focus:ring-primary-red border-medium-gray"
                     />
                     <span className="ml-3 text-sm text-gray-700">
                       {purpose.label}
@@ -218,7 +218,7 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
                         setFormData(prev => ({ ...prev, has_children: option.value }));
                         setTouched(prev => ({ ...prev, has_children: true }));
                       }}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      className="h-4 w-4 text-primary-red focus:ring-primary-red border-medium-gray"
                     />
                     <span className="ml-2 text-sm text-gray-700">{option.label}</span>
                   </label>
@@ -244,10 +244,10 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
                     setFormData(prev => ({ ...prev, has_pets: option.value }));
                     setTouched(prev => ({ ...prev, has_pets: true }));
                   }}
-                  className={`p-2 text-sm border rounded ${
+                  className={`p-3 text-sm border rounded-lg transition-colors ${
                     formData.has_pets === option.value 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-300 hover:bg-gray-50'
+                      ? 'border-primary-red bg-accent-blush' 
+                      : 'border-medium-gray hover:bg-light-gray'
                   }`}
                 >
                   {option.label}
@@ -268,10 +268,10 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
               {experienceLevels.map((level) => (
                 <div 
                   key={level.value}
-                  className={`p-3 border rounded-lg cursor-pointer ${
+                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
                     formData.ownership_experience === level.value 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-300 hover:bg-gray-50'
+                      ? 'border-primary-red bg-accent-blush' 
+                      : 'border-medium-gray hover:bg-light-gray'
                   }`}
                   onClick={() => {
                     setFormData(prev => ({ ...prev, ownership_experience: level.value }));
@@ -285,7 +285,7 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
                       value={level.value}
                       checked={formData.ownership_experience === level.value}
                       onChange={() => {}}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      className="h-4 w-4 text-primary-red focus:ring-primary-red border-medium-gray"
                     />
                     <span className="ml-3 text-sm text-gray-700">
                       {level.label}
@@ -303,7 +303,7 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
           <div className="pt-6 border-t border-gray-200">
             <button
               type="submit"
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-red hover:bg-primary-red-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-red transition-colors"
             >
               Next: Pet Preferences
             </button>

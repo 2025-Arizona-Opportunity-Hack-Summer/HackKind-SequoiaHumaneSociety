@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer, String, Text, Enum, TIMESTAMP
+from sqlalchemy import Column, Integer, String, Text, Enum, TIMESTAMP, ForeignKey
+from sqlalchemy.orm import relationship
 from backend.core.database import Base
 import enum
 from sqlalchemy.sql import func
+from typing import List, Optional
 
 class UserRole(str, enum.Enum):
     Adopter = "Adopter"
@@ -16,4 +18,9 @@ class User(Base):
     phone_number = Column(String(20))
     role = Column(Enum(UserRole), default=UserRole.Adopter)
     created_at = Column(TIMESTAMP, server_default=func.now())
-
+    
+    # Relationships
+    visit_requests = relationship("VisitRequest", back_populates="user")
+    
+    def __repr__(self):
+        return f"<User(id={self.id}, email={self.email}, role={self.role})>"

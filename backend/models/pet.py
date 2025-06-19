@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer, String, Boolean, Text, Enum, TIMESTAMP
+from sqlalchemy import Column, Integer, String, Boolean, Text, Enum, TIMESTAMP, ForeignKey
+from sqlalchemy.orm import relationship
 from backend.core.database import Base
 import enum
 from sqlalchemy.sql import func
+from typing import List, Optional
 
 class PetSpecies(str, enum.Enum):
     Dog = "Dog"
@@ -48,6 +50,12 @@ class PetStatus(str, enum.Enum):
 
 class Pet(Base):
     __tablename__ = "pets"
+    
+    # Relationships
+    visit_requests = relationship("VisitRequest", back_populates="pet")
+    
+    def __repr__(self):
+        return f"<Pet(id={self.id}, name={self.name}, species={self.species})>"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     species = Column(Enum(PetSpecies), nullable=False)
