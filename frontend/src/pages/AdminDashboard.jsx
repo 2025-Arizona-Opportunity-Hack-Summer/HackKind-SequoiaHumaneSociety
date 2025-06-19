@@ -75,6 +75,21 @@ export default function AdminDashboard() {
         // Fetch visit requests using admin endpoint
         const response = await api.get('/admin/visit-requests');
         console.log('Visit requests response:', response.data);
+        
+        // Debug: Log visit data
+        if (response.data && response.data.length > 0) {
+          console.log('First visit data:', response.data[0]);
+          console.log('First visit pet data:', response.data[0].pet);
+          console.log('First visit pet ID:', response.data[0].pet?.id);
+          console.log('First visit pet photo URL:', response.data[0].pet?.photo_url);
+          
+          // Log the constructed image URL
+          const petId = response.data[0].pet?.id;
+          if (petId) {
+            console.log('Constructed image URL:', `http://localhost:8000/api/pets/${petId}/photo`);
+          }
+        }
+        
         setVisits(response.data || []);
         
       } catch (err) {
@@ -377,12 +392,24 @@ export default function AdminDashboard() {
   };
 
   // Helper function to get image URL
-  const getImageUrl = (url) => {
-    if (!url) return null;
-    if (url.startsWith('http') || url.startsWith('data:')) return url;
-    // Remove any leading slashes to prevent double slashes
-    const cleanUrl = url.startsWith('/') ? url.substring(1) : url;
-    return `http://localhost:8000/${cleanUrl}`;
+  const getImageUrl = (url, petId) => {
+    if (!url && !petId) return null;
+    
+    // If we have a pet ID, use the new endpoint
+    if (petId) {
+      return `http://localhost:8000/api/pets/${petId}/photo`;
+    }
+    
+    // Fallback for direct URLs (shouldn't be needed in most cases)
+    if (url) {
+      if (url.startsWith('http') || url.startsWith('data:')) {
+        return url;
+      }
+      const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+      return `http://localhost:8000${cleanUrl}`;
+    }
+    
+    return null;
   };
 
   return (
@@ -546,10 +573,10 @@ export default function AdminDashboard() {
             {pets.map((pet) => (
               <li key={pet.id} className="border p-4 rounded shadow">
                 <div className="relative">
-                  {pet.image_url ? (
+                  {pet.id ? (
                     <>
                       <img 
-                        src={getImageUrl(pet.image_url)} 
+                        src={getImageUrl(null, pet.id)} 
                         alt={pet.name} 
                         className="w-full h-48 object-cover rounded mb-2"
                         onError={(e) => {
@@ -637,7 +664,6 @@ export default function AdminDashboard() {
                   // Safely access nested properties
                   const petName = visit.pet?.name || 'Unknown Pet';
                   const petBreed = visit.pet?.breed || 'Unknown Breed';
-                  const petPhoto = visit.pet?.photo_url || '';
                   const userName = visit.user?.full_name || 'N/A';
                   const userEmail = visit.user?.email || 'No email';
                   
@@ -645,29 +671,22 @@ export default function AdminDashboard() {
                     <tr key={visit.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          {petPhoto ? (
-                            <div className="flex-shrink-0 h-10 w-10">
-                              <img 
-                                className="h-10 w-10 rounded-full object-cover" 
-                                src={petPhoto.startsWith('http') ? petPhoto : `http://localhost:8000${petPhoto}`} 
-                                alt={petName}
-                                onError={(e) => {
-                                  e.target.style.display = 'none';
-                                  e.target.nextElementSibling?.classList.remove('hidden');
-                                }}
-                              />
-                              <div className="hidden h-10 w-10 rounded-full bg-light-gray flex items-center justify-center text-medium-gray text-xs">
-                                No Image
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-light-gray flex items-center justify-center text-medium-gray text-xs">
+                          <div className="flex-shrink-0 h-10 w-10">
+                            <img 
+                              className="h-10 w-10 rounded-full object-cover" 
+                              src={getImageUrl(null, visit.pet?.id)} 
+                              alt={petName}
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextElementSibling?.classList.remove('hidden');
+                              }}
+                            />
+                            <div className="hidden h-10 w-10 rounded-full bg-light-gray flex items-center justify-center text-medium-gray text-xs">
                               No Image
                             </div>
-                          )}
+                          </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">{petName}</div>
-                            <div className="text-sm text-gray-500">{petBreed}</div>
                           </div>
                         </div>
                       </td>
@@ -732,32 +751,21 @@ export default function AdminDashboard() {
                 <div className="border-b pb-4">
                   <h4 className="text-sm font-medium text-gray-500">Pet Information</h4>
                   <div className="mt-2 flex items-center">
-                    {selectedVisit.pet?.photo_url ? (
-                      <>
-                        <img 
-                          src={getImageUrl(selectedVisit.pet.photo_url)}
-                          alt={selectedVisit.pet?.name || 'Pet'} 
-                          className="h-16 w-16 rounded-full object-cover mr-4"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            const fallback = e.target.nextElementSibling;
-                            if (fallback) fallback.classList.remove('hidden');
-                          }}
-                        />
-                        <div className="hidden h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs mr-4">
-                          No Image
-                        </div>
-                      </>
-                    ) : (
-                      <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs mr-4">
-                        No Image
-                      </div>
-                    )}
+                  <img 
+                      src={getImageUrl(null, selectedVisit.pet?.id)}
+                      alt={selectedVisit.pet?.name || 'Pet'} 
+                      className="h-16 w-16 rounded-full object-cover mr-4"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        const fallback = e.target.nextElementSibling;
+                        if (fallback) fallback.classList.remove('hidden');
+                      }}
+                    />
+                    <div className="hidden h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs mr-4">
+                      No Image
+                    </div>
                     <div>
                       <p className="text-lg font-medium text-gray-900">{selectedVisit.pet?.name || 'Unknown Pet'}</p>
-                      {selectedVisit.pet?.breed && (
-                        <p className="text-sm text-gray-500">{selectedVisit.pet.breed}</p>
-                      )}
                     </div>
                   </div>
                 </div>

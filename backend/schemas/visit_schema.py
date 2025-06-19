@@ -31,7 +31,7 @@ class PetInfo(BaseModel):
     id: int
     name: str
     breed: str | None = None
-    photo_url: str | None = None
+    image_url: str | None = None
 
 class VisitRequestSchema(BaseModel):
     id: int

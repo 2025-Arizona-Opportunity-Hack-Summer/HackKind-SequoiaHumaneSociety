@@ -1,6 +1,11 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Response
 from typing import List
+import requests
 from sqlalchemy.orm import Session
+from fastapi.responses import FileResponse
+from pathlib import Path
+import os
+
 from backend.core.database import get_db
 from backend import models
 from backend.logic.image_uploader import upload_pet_photo_local
@@ -94,21 +99,83 @@ def delete_pet(pet_id: int, db: Session = Depends(get_db)):
     db.commit()
     return pet
 
-@router.post("/{pet_id}/photo", response_model=PetResponse)
-def upload_pet_photo(pet_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+@router.get("/{pet_id}/photo")
+async def get_pet_photo(pet_id: int, db: Session = Depends(get_db)):
+    """
+    Get a pet's photo by pet ID.
+    Handles both local files and external URLs.
+    """
+    try:
+        pet = db.query(models.Pet).filter(models.Pet.id == pet_id).first()
+        if not pet or not pet.image_url:
+            raise HTTPException(status_code=404, detail="Pet or photo not found")
+        
+        # Handle local files
+        if not (pet.image_url.startswith('http') or pet.image_url.startswith('https')):
+            # Check if file exists
+            file_path = Path(pet.image_url)
+            if not file_path.exists():
+                # Try to find the file in uploads directory if path is not absolute
+                uploads_path = Path("uploads") / pet.image_url
+                if not uploads_path.exists():
+                    raise HTTPException(status_code=404, detail="Photo file not found")
+                file_path = uploads_path
+            
+            # Return the file with proper caching headers
+            return FileResponse(
+                file_path,
+                media_type="image/jpeg",
+                headers={
+                    "Cache-Control": "public, max-age=86400",  # Cache for 24 hours
+                    "Access-Control-Allow-Origin": "*"  # Allow all origins
+                }
+            )
+        
+        # Handle external URLs (proxy the request)
+        try:
+            # Stream the response
+            response = requests.get(pet.image_url, stream=True, timeout=10)
+            response.raise_for_status()
+            
+            # Determine content type from response headers or default to image/jpeg
+            content_type = response.headers.get('content-type', 'image/jpeg')
+            
+            # Stream the response back to the client
+            return Response(
+                content=response.content,  # Use response.content for the full content
+                media_type=content_type,
+                headers={
+                    "Cache-Control": "public, max-age=86400",  # Cache for 24 hours
+                    "Access-Control-Allow-Origin": "*"  # Allow all origins
+                }
+            )
+        except requests.exceptions.RequestException as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Failed to fetch external image: {str(e)}"
+            )
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error in get_pet_photo: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while processing the image"
+        )
+
+@router.post("/{pet_id}/photo")
+async def upload_pet_photo(pet_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
     pet = db.query(models.Pet).filter(models.Pet.id == pet_id).first()
     if not pet:
         raise HTTPException(status_code=404, detail="Pet not found")
-
-    if not file.filename.endswith((".jpg", ".jpeg", ".png")):
-        raise HTTPException(status_code=400, detail="Invalid file type")
-
-    image_url = upload_pet_photo_local(file.file, pet_id, file.filename)
-
-    pet.image_url = image_url
+    
+    # Save the file and get the path
+    file_path = upload_pet_photo_local(file.file, pet_id)
+    
+    # Update the pet's image_url
+    pet.image_url = file_path
     db.commit()
-    db.refresh(pet)
-    return pet
+    
+    return {"message": "Photo uploaded successfully", "image_url": file_path}
 
 @router.patch("/{pet_id}", response_model=PetResponse)
 def update_pet(

@@ -49,7 +49,7 @@ def view_all_requests(
                 'id': visit.pet.id,
                 'name': visit.pet.name,
                 'breed': getattr(visit.pet, 'breed', None),
-                'photo_url': getattr(visit.pet, 'photo_url', None)
+                'image_url': getattr(visit.pet, 'image_url', None)
             }
         }
         result.append(visit_dict)
