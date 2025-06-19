@@ -1,15 +1,12 @@
 import api from './api';
 
-// Helper function to handle API errors
 const handleApiError = (error, defaultMessage = 'An error occurred') => {
   console.error('[Auth Service]', error);
   
-  // Handle network errors
   if (!error.response) {
     throw new Error('Network error. Please check your connection and try again.');
   }
   
-  // Handle API errors with response
   const { status, data } = error.response;
   let message = defaultMessage;
   
@@ -51,15 +48,13 @@ export const authService = {
       
       if (!userData || !userData.role) {
         console.warn('No user role received in login response');
-        userData.role = 'adopter'; // Default role
+        userData.role = 'adopter'; 
       }
       
-      // Store the token and user data in localStorage
       localStorage.setItem('authToken', access_token);
       localStorage.setItem('user', JSON.stringify(userData));
       
-      // Set token expiration (default to 1 hour if not provided)
-      const expiresIn = loginResponse.data.expires_in || 3600; // Default to 1 hour
+      const expiresIn = loginResponse.data.expires_in || 3600; 
       const expiresAt = new Date();
       expiresAt.setSeconds(expiresAt.getSeconds() + expiresIn);
       localStorage.setItem('tokenExpiresAt', expiresAt.toISOString());
@@ -91,21 +86,17 @@ export const authService = {
    */
   logout: async () => {
     try {
-      // Clear all auth-related data from localStorage
       localStorage.removeItem('authToken');
       localStorage.removeItem('tokenExpiresAt');
       localStorage.removeItem('user');
       
-      // Call the logout endpoint if available
       try {
         await api.post('/auth/logout');
       } catch (error) {
-        // If the logout API call fails, we still want to clear local data
         console.warn('Logout API call failed, but local session was cleared', error);
       }
     } catch (error) {
       console.error('Error during logout:', error);
-      // Even if there's an error, we want to clear the local session
       localStorage.removeItem('authToken');
       localStorage.removeItem('tokenExpiresAt');
       localStorage.removeItem('user');
@@ -119,13 +110,11 @@ export const authService = {
    */
   getCurrentUser: async () => {
     try {
-      // First try to get from localStorage
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         return JSON.parse(storedUser);
       }
       
-      // Fallback to API if not in localStorage
       const response = await api.get('/users/me');
       if (response.data) {
         localStorage.setItem('user', JSON.stringify(response.data));
@@ -133,7 +122,6 @@ export const authService = {
       return response.data;
     } catch (error) {
       console.error('Error getting current user:', error);
-      // If there's an error, clear any invalid auth data
       if (error.response?.status === 401) {
         authService.logout();
       }
@@ -149,13 +137,12 @@ export const authService = {
     const token = localStorage.getItem('authToken');
     if (!token) return false;
     
-    // Check token expiration if available
     const expiresAt = localStorage.getItem('tokenExpiresAt');
     if (expiresAt) {
       return new Date(expiresAt) > new Date();
     }
     
-    return true; // If no expiration, assume valid
+    return true; 
   },
   
   /**

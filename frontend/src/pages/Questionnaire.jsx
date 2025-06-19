@@ -19,17 +19,14 @@ export default function Questionnaire() {
     try {
       console.log('Form data before mapping:', formData);
       
-      // Map form data to API format
       const preferencesData = preferencesService.mapQuestionnaireToPreferences(formData);
       console.log('Mapped preferences data:', preferencesData);
 
-      // Since the user is always authenticated, directly save the preferences
       const response = await preferencesService.savePreferences(preferencesData);
       console.log('Save preferences response:', response);
       
       toast.success('Preferences saved successfully! Redirecting to your matches...');
       
-      // Navigate to the matches page
       navigate('/match-results', {
         replace: true,
         state: {
@@ -42,8 +39,6 @@ export default function Questionnaire() {
       let errorMessage = 'Failed to save preferences. Please try again.';
       
       if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
         console.error('Error response data:', error.response.data);
         console.error('Error status:', error.response.status);
         
@@ -54,11 +49,9 @@ export default function Questionnaire() {
           errorMessage = 'Server error. Please try again later.';
         }
       } else if (error.request) {
-        // The request was made but no response was received
         console.error('No response received:', error.request);
         errorMessage = 'No response from server. Please check your connection and try again.';
       } else {
-        // Something happened in setting up the request that triggered an Error
         console.error('Error message:', error.message);
         errorMessage = error.message || errorMessage;
       }

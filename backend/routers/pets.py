@@ -43,7 +43,6 @@ def create_pet(pet: PetCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_pet)
     
-    # Auto-generate vector for new pet
     try:
         traits = db.query(PetTrainingTrait).filter_by(pet_id=db_pet.id).all()
         trait_enums = [t.trait for t in traits]
@@ -69,14 +68,12 @@ def update_pet(pet_id: int, pet_update: PetCreate, db: Session = Depends(get_db)
     db.commit()
     db.refresh(pet)
     
-    # Auto-regenerate vector after update
     try:
         traits = db.query(PetTrainingTrait).filter_by(pet_id=pet_id).all()
         trait_enums = [t.trait for t in traits]
         pet_response = PetResponse(**{k: v for k, v in pet.__dict__.items() if not k.startswith("_")})
         vector = build_pet_vector(pet_response, trait_enums)
         
-        # Update or create vector
         existing_vector = db.query(PetVector).filter_by(pet_id=pet_id).first()
         if existing_vector:
             existing_vector.vector = vector.tolist()
@@ -101,52 +98,40 @@ def delete_pet(pet_id: int, db: Session = Depends(get_db)):
 
 @router.get("/{pet_id}/photo")
 async def get_pet_photo(pet_id: int, db: Session = Depends(get_db)):
-    """
-    Get a pet's photo by pet ID.
-    Handles both local files and external URLs.
-    """
     try:
         pet = db.query(models.Pet).filter(models.Pet.id == pet_id).first()
         if not pet or not pet.image_url:
             raise HTTPException(status_code=404, detail="Pet or photo not found")
         
-        # Handle local files
         if not (pet.image_url.startswith('http') or pet.image_url.startswith('https')):
-            # Check if file exists
             file_path = Path(pet.image_url)
             if not file_path.exists():
-                # Try to find the file in uploads directory if path is not absolute
                 uploads_path = Path("uploads") / pet.image_url
                 if not uploads_path.exists():
                     raise HTTPException(status_code=404, detail="Photo file not found")
                 file_path = uploads_path
             
-            # Return the file with proper caching headers
             return FileResponse(
                 file_path,
                 media_type="image/jpeg",
                 headers={
-                    "Cache-Control": "public, max-age=86400",  # Cache for 24 hours
-                    "Access-Control-Allow-Origin": "*"  # Allow all origins
+                    "Cache-Control": "public, max-age=86400", 
+                    "Access-Control-Allow-Origin": "*"  
                 }
             )
         
-        # Handle external URLs (proxy the request)
         try:
-            # Stream the response
             response = requests.get(pet.image_url, stream=True, timeout=10)
             response.raise_for_status()
             
-            # Determine content type from response headers or default to image/jpeg
             content_type = response.headers.get('content-type', 'image/jpeg')
             
-            # Stream the response back to the client
             return Response(
-                content=response.content,  # Use response.content for the full content
+                content=response.content,  
                 media_type=content_type,
                 headers={
-                    "Cache-Control": "public, max-age=86400",  # Cache for 24 hours
-                    "Access-Control-Allow-Origin": "*"  # Allow all origins
+                    "Cache-Control": "public, max-age=86400",  
+                    "Access-Control-Allow-Origin": "*"  
                 }
             )
         except requests.exceptions.RequestException as e:
@@ -155,7 +140,6 @@ async def get_pet_photo(pet_id: int, db: Session = Depends(get_db)):
                 detail=f"Failed to fetch external image: {str(e)}"
             )
     except Exception as e:
-        # Log the error for debugging
         print(f"Error in get_pet_photo: {str(e)}")
         raise HTTPException(
             status_code=500,
@@ -168,10 +152,8 @@ async def upload_pet_photo(pet_id: int, file: UploadFile = File(...), db: Sessio
     if not pet:
         raise HTTPException(status_code=404, detail="Pet not found")
     
-    # Save the file and get the path
     file_path = upload_pet_photo_local(file.file, pet_id)
     
-    # Update the pet's image_url
     pet.image_url = file_path
     db.commit()
     
@@ -191,20 +173,16 @@ def update_pet(
     if not pet:
         raise HTTPException(status_code=404, detail="Pet not found")
 
-    # Store the current image URL before updating
     current_image_url = pet.image_url
     
-    # Update only the fields that were provided in the request
     update_data = pet_update.model_dump(exclude_unset=True)
     
-    # Convert HttpUrl to string if present
     if 'image_url' in update_data and update_data['image_url'] is not None:
         update_data['image_url'] = str(update_data['image_url'])
     
     for key, value in update_data.items():
         setattr(pet, key, value)
     
-    # If image_url was not in the update data, restore the original
     if 'image_url' not in update_data and current_image_url:
         pet.image_url = current_image_url
 

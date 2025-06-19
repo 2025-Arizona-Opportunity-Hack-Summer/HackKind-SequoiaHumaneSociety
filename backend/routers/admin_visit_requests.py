@@ -18,7 +18,6 @@ def view_all_requests(
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin)
 ):
-    # Query visit requests with related user and pet data
     visits = db.query(VisitRequest)\
         .options(
             joinedload(VisitRequest.user),
@@ -26,10 +25,8 @@ def view_all_requests(
         )\
         .all()
     
-    # Convert to list of dictionaries with nested user and pet data
     result = []
     for visit in visits:
-        # Skip if user or pet is not loaded
         if not visit.user or not visit.pet:
             continue
             
@@ -38,7 +35,7 @@ def view_all_requests(
             'user_id': visit.user_id,
             'pet_id': visit.pet_id,
             'requested_at': visit.requested_at,
-            'status': visit.status.value,  # Convert enum to string
+            'status': visit.status.value,  
             'user': {
                 'id': visit.user.id,
                 'full_name': visit.user.full_name,

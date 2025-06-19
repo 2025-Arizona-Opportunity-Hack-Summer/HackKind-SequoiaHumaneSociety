@@ -9,10 +9,8 @@ class VisitRequestCreate(BaseModel):
     @field_validator("requested_at")
     @classmethod
     def check_future_datetime(cls, v: datetime) -> datetime:
-        # Ensure v is timezone-aware
         if v.tzinfo is None:
             v = v.replace(tzinfo=timezone.utc)
-        # Now safe to compare
         if v <= datetime.now(timezone.utc):
             raise ValueError("Visit time must be in the future.")
         return v

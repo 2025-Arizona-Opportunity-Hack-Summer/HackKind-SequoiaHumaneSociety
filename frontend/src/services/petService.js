@@ -21,7 +21,6 @@ export const petService = {
       
       const response = await api.get(`/match/recommendations?${params.toString()}`);
       
-      // The backend now returns the pets directly
       return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
       if (error.response?.status === 400) {

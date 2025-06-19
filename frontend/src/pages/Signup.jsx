@@ -32,7 +32,6 @@ export default function Signup() {
     setError("");
     setIsLoading(true);
 
-    // Validation
     if (!formData.full_name.trim()) {
       setError("Name cannot be empty.");
       setIsLoading(false);
@@ -58,21 +57,18 @@ export default function Signup() {
     }
 
     try {
-      // Send registration data to backend
       await authService.register({
         ...formData,
-        role: "Adopter"  // Must match backend enum: 'Adopter' or 'Admin'
+        role: "Adopter"  
       });
       
       console.log('Registration successful, logging in...');
       
-      // After successful registration, log the user in
       await authService.login({
         email: formData.email,
         password: formData.password
       });
       
-      // After login, navigate to the questionnaire
       console.log('Login successful, navigating to questionnaire...');
       navigate('/questionnaire', { replace: true });
 

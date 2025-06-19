@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
-// Pages
 import LandingPage from "./pages/LandingPage";
 import Questionnaire from "./pages/Questionnaire";
 import Signup from "./pages/Signup";
@@ -11,14 +10,11 @@ import AdopterDashboard from './pages/AdopterDashboard';
 import MatchResultsPage from './pages/MatchResultsPage';
 import NotFoundPage from "./pages/NotFoundPage";
 
-// Components
 import LoadingSpinner from './components/common/LoadingSpinner';
 import Navbar from './components/Navbar';
 
-// Auth context
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
-// Protected route component
 const ProtectedRoute = ({ children, requiredRole = null }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
@@ -32,18 +28,15 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
   }
 
   if (!isAuthenticated) {
-    // Store the attempted URL for redirecting after login
     const redirectTo = location.pathname + (location.search || '');
     console.log('Storing redirect URL:', redirectTo);
     return <Navigate to="/login" state={{ from: { pathname: redirectTo } }} replace />;
   }
 
-  // Check if user has the required role if specified
   if (requiredRole) {
     const userRole = user?.role?.toLowerCase();
     if (userRole !== requiredRole.toLowerCase()) {
       console.warn(`User role ${userRole} does not have access to this route. Required role: ${requiredRole}`);
-      // Redirect to dashboard or admin based on user role
       const redirectTo = userRole === 'admin' ? '/admin' : '/dashboard';
       return <Navigate to={redirectTo} replace />;
     }
@@ -52,7 +45,6 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
   return children;
 };
 
-// Public route component (only for non-authenticated users)
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
@@ -65,12 +57,9 @@ const PublicRoute = ({ children }) => {
     );
   }
 
-  // If user is authenticated, redirect based on role
   if (isAuthenticated && user) {
-    // Get the intended path or default based on role
     let redirectTo = location.state?.from?.pathname;
     
-    // If no intended path, redirect based on role
     if (!redirectTo || redirectTo === '/login' || redirectTo === '/') {
       redirectTo = user.role?.toLowerCase() === 'admin' ? '/admin' : '/dashboard';
     }
@@ -82,7 +71,6 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
-// Layout component that includes Navbar and applies base styles
 const Layout = () => {
   return (
     <div className="min-h-screen flex flex-col bg-primary-white text-primary-charcoal font-sans">
@@ -101,7 +89,6 @@ function AppContent() {
   const { initializeAuth } = useAuth();
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize auth state
   useEffect(() => {
     const init = async () => {
       try {

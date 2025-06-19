@@ -13,14 +13,12 @@ export default function AdopterDashboard() {
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        // Fetch visit requests, preferences, and training traits in parallel
         const [visitsRes, prefsData, traitsRes] = await Promise.all([
           api.get("/visit-requests/my"),
           preferencesService.getMyPreferences(),
           preferencesService.getTrainingTraits()
         ]);
         
-        // If we got an empty object from getMyPreferences, it means no preferences exist yet
         const hasPreferences = prefsData && Object.keys(prefsData).length > 0;
         
         setVisitRequests(visitsRes.data || []);

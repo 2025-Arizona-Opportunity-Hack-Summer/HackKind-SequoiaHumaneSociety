@@ -12,7 +12,6 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
     special_needs: false
   });
 
-  // Get pet type from form data to customize options
   const petType = formData.pet_type || 'dog';
 
   const ageOptions = [
@@ -52,7 +51,6 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
     { value: 'Long', label: 'Long' }
   ];
 
-  // Required traits options
   const requiredTraits = [
     { 
       id: 'house_trained', 
@@ -78,7 +76,6 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
     }
   ];
 
-  // Validate form whenever formData changes
   useEffect(() => {
     if (error) validateForm();
   }, [formData]);
@@ -87,11 +84,9 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
     const { name, value, type, checked, dataset } = e.target;
     
     if (name === 'required_traits') {
-      // Handle required traits checkboxes
       const currentTraits = new Set(formData.required_traits || []);
       
       if (dataset.exclusive === 'true') {
-        // If "None" is selected, clear other options
         if (checked) {
           currentTraits.clear();
           currentTraits.add('none');
@@ -99,7 +94,6 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
           currentTraits.delete('none');
         }
       } else {
-        // If any other option is selected, remove "None"
         currentTraits.delete('none');
         
         if (checked) {
@@ -114,13 +108,11 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
         required_traits: Array.from(currentTraits)
       }));
     } else if (type === 'radio' && name === 'special_needs') {
-      // Handle special needs radio buttons
       setFormData(prev => ({
         ...prev,
         special_needs: value === 'true'
       }));
     } else {
-      // Handle other inputs
       setFormData(prev => ({
         ...prev,
         [name]: type === 'checkbox' ? checked : value
@@ -133,7 +125,6 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
   const validateForm = () => {
     const errors = [];
     
-    // These fields are required
     const requiredFields = [
       { name: 'preferred_age', label: 'preferred age' },
       { name: 'preferred_sex', label: 'preferred gender' },
@@ -149,7 +140,6 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
       }
     });
     
-    // Validate required traits (at least one or "None" must be selected)
     if (!formData.required_traits || formData.required_traits.length === 0) {
       errors.push('Please select at least one required trait or "None"');
     }

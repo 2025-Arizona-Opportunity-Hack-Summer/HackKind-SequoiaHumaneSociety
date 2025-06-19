@@ -19,7 +19,6 @@ class VisitRequest(Base):
     status = Column(Enum(VisitRequestStatus), nullable=False, default=VisitRequestStatus.Pending)
     created_at = Column(TIMESTAMP, server_default=func.now())
     
-    # Relationships
     user = relationship("User", back_populates="visit_requests")
     pet = relationship("Pet", back_populates="visit_requests")
 

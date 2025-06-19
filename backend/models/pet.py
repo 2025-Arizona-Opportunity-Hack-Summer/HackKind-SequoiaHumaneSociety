@@ -50,7 +50,6 @@ class PetStatus(str, enum.Enum):
 class Pet(Base):
     __tablename__ = "pets"
     
-    # Relationships
     visit_requests = relationship("VisitRequest", back_populates="pet")
     
     def __repr__(self):

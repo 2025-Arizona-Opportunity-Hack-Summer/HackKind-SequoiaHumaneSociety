@@ -1,4 +1,3 @@
-// src/pages/AdminDashboard.jsx
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -61,29 +60,24 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
 
-  // Fetch pets and visit requests when component mounts
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
         setError(null);
         
-        // Fetch pets
-        const petsData = await petService.getPets(0, 100); // Fetch first 100 pets
-        setPets(petsData.items || petsData); // Handle both paginated and non-paginated responses
+        const petsData = await petService.getPets(0, 100); 
+        setPets(petsData.items || petsData); 
         
-        // Fetch visit requests using admin endpoint
         const response = await api.get('/admin/visit-requests');
         console.log('Visit requests response:', response.data);
         
-        // Debug: Log visit data
         if (response.data && response.data.length > 0) {
           console.log('First visit data:', response.data[0]);
           console.log('First visit pet data:', response.data[0].pet);
           console.log('First visit pet ID:', response.data[0].pet?.id);
           console.log('First visit pet photo URL:', response.data[0].pet?.photo_url);
           
-          // Log the constructed image URL
           const petId = response.data[0].pet?.id;
           if (petId) {
             console.log('Constructed image URL:', `http://localhost:8000/api/pets/${petId}/photo`);
@@ -108,7 +102,6 @@ export default function AdminDashboard() {
     
     if (type === 'file' && files && files[0]) {
       const file = files[0];
-      // Create image preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
@@ -138,7 +131,6 @@ export default function AdminDashboard() {
     try {
       setIsLoading(true);
       
-      // Create a copy of form data with only the fields we want to send
       const petData = {
         name: formData.name,
         age_group: formData.age_group,
@@ -155,11 +147,9 @@ export default function AdminDashboard() {
         pet_friendly: formData.pet_friendly || false,
         shelter_notes: formData.shelter_notes || null,
         status: formData.status || 'Available',
-        // Include the existing image URL when updating a pet and no new image is provided
         ...(editId !== null && !formData.image && formData.existingImageUrl && { image_url: formData.existingImageUrl })
       };
       
-      // Remove any undefined or empty string values
       Object.keys(petData).forEach(key => {
         if (petData[key] === '' || petData[key] === undefined) {
           petData[key] = null;
@@ -172,14 +162,11 @@ export default function AdminDashboard() {
       
       let response;
       if (editId !== null) {
-        // Update existing pet
         console.log(`Updating pet with ID: ${editId}`);
         try {
-          // First update the pet data
           response = await api.put(`/pets/${editId}`, petData);
           console.log('Update response:', response);
           
-          // Then handle the image upload if a new image was selected
           if (formData.image) {
             console.log('Uploading new image...');
             const imageFormData = new FormData();
@@ -201,10 +188,8 @@ export default function AdminDashboard() {
           throw updateError;
         }
       } else {
-        // Create new pet
         console.log('Creating new pet');
         try {
-          // First create the pet
           console.log('Creating pet with data:', petData);
           try {
             response = await api.post('/pets', petData);
@@ -215,7 +200,6 @@ export default function AdminDashboard() {
             throw createError;
           }
           
-          // Then upload the image if provided
           if (formData.image) {
             console.log('Uploading image for new pet...');
             const imageFormData = new FormData();
@@ -238,11 +222,9 @@ export default function AdminDashboard() {
         }
       }
 
-      // Refresh the pets list
       const data = await petService.getPets(0, 100);
       setPets(data.items || data);
       
-      // Reset form
       setFormData({
         name: "",
         species: "",
@@ -290,11 +272,9 @@ export default function AdminDashboard() {
       shelter_notes: pet.shelter_notes || "",
       status: pet.status || "Available",
       image: null,
-      // Store the existing image URL for reference
       existingImageUrl: pet.image_url
     });
     setEditId(pet.id);
-    // Scroll to the form
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -303,13 +283,10 @@ export default function AdminDashboard() {
     
     try {
       setIsLoading(true);
-      // Assuming the API endpoint is /api/pets/:id
       await api.delete(`/pets/${id}`);
-      // Refresh the pets list
       const data = await petService.getPets(0, 100);
       setPets(data.items || data);
       
-      // Reset form if editing the deleted pet
       if (editId === id) {
         setEditId(null);
         setFormData({
@@ -352,20 +329,16 @@ export default function AdminDashboard() {
 
   const handleUpdateVisitStatus = async (id, newStatus) => {
     try {
-      // Show loading toast
       const loadingToast = toast.loading('Updating status...');
       
-      // Call the API to update the visit request status using PUT
       await api.put(`/admin/visit-requests/${id}/status`, { status: newStatus });
       
-      // Update the local state to reflect the change
       setVisits(prevVisits => 
         prevVisits.map(visit => 
           visit.id === id ? { ...visit, status: newStatus } : visit
         )
       );
       
-      // Show success toast with status-specific styling
       toast.dismiss(loadingToast);
       toast.success(`Status updated to ${newStatus}`, {
         style: {
@@ -391,16 +364,13 @@ export default function AdminDashboard() {
     }
   };
 
-  // Helper function to get image URL
   const getImageUrl = (url, petId) => {
     if (!url && !petId) return null;
     
-    // If we have a pet ID, use the new endpoint
     if (petId) {
       return `http://localhost:8000/api/pets/${petId}/photo`;
     }
     
-    // Fallback for direct URLs (shouldn't be needed in most cases)
     if (url) {
       if (url.startsWith('http') || url.startsWith('data:')) {
         return url;
@@ -581,7 +551,6 @@ export default function AdminDashboard() {
                         className="w-full h-48 object-cover rounded mb-2"
                         onError={(e) => {
                           e.target.style.display = 'none';
-                          // Show fallback div if image fails to load
                           const fallback = e.target.nextElementSibling;
                           if (fallback) fallback.classList.remove('hidden');
                         }}
@@ -649,7 +618,6 @@ export default function AdminDashboard() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {visits.map((visit) => {
-                  // Log the visit object to debug
                   console.log('Visit object:', visit);
                   
                   const requestedDate = new Date(visit.requested_at);
@@ -661,7 +629,6 @@ export default function AdminDashboard() {
                     minute: '2-digit'
                   });
                   
-                  // Safely access nested properties
                   const petName = visit.pet?.name || 'Unknown Pet';
                   const petBreed = visit.pet?.breed || 'Unknown Breed';
                   const userName = visit.user?.full_name || 'N/A';

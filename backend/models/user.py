@@ -18,7 +18,6 @@ class User(Base):
     role = Column(Enum(UserRole), default=UserRole.Adopter)
     created_at = Column(TIMESTAMP, server_default=func.now())
     
-    # Relationships
     visit_requests = relationship("VisitRequest", back_populates="user")
     
     def __repr__(self):

@@ -6,7 +6,6 @@ export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   
-  // Debug logging
   console.log('Navbar - User:', user);
   console.log('Navbar - isAuthenticated:', isAuthenticated);
   if (user) {

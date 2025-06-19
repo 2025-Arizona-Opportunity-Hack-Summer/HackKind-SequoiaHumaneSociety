@@ -120,7 +120,6 @@ def cosine_similarity(vec1: np.ndarray, vec2: np.ndarray):
     if vec1.shape != vec2.shape:
         raise ValueError(f"Vector shape mismatch: {vec1.shape} vs {vec2.shape}")
     
-    # Handle zero vectors
     norm1, norm2 = np.linalg.norm(vec1), np.linalg.norm(vec2)
     if norm1 == 0 or norm2 == 0:
         return 0.0
@@ -136,7 +135,6 @@ def get_top_pet_matches(adopter_vector: List[float], pet_vectors: List[Tuple[int
         pet_vec_np = np.array(pet_vec)
         score = cosine_similarity(adopter_vec, pet_vec_np)
         
-        # Only include matches above the threshold
         if score >= similarity_threshold:
             similarities.append((pet_id, score))
 
@@ -150,7 +148,7 @@ def save_matches_for_user(user_id: int, matches: List[Tuple[int, float]], db):
         for pet_id, score in matches:
             match = Match(user_id=user_id, pet_id=pet_id, match_score=score)
             db.merge(match)
-        db.commit()  # Single commit at the end
+        db.commit()  
     except Exception:
         db.rollback()
         raise
@@ -175,7 +173,6 @@ def refresh_all_matches(db):
     pet_vectors = load_pet_vectors(db)
     adopter_vectors = db.query(AdopterVector).all()
 
-    # Optionally: clear old matches first
     db.query(Match).delete()
     db.commit()
 

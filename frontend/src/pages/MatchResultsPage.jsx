@@ -7,62 +7,6 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { format } from 'date-fns';
 
-// Skeleton loader component for pet cards
-const PetCardSkeleton = () => (
-  <div className="bg-white rounded-xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg border border-gray-100">
-    <div className="h-48 bg-gray-200 animate-pulse"></div>
-    <div className="p-4">
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-        </div>
-        <div className="h-6 w-6 bg-gray-200 rounded-full"></div>
-      </div>
-      
-      {/* Primary badges */}
-      <div className="flex flex-wrap gap-2 mb-3">
-        <div className="h-6 bg-gray-200 rounded-full w-16"></div>
-        <div className="h-6 bg-gray-200 rounded-full w-16"></div>
-        <div className="h-6 bg-gray-200 rounded-full w-16"></div>
-        <div className="h-6 bg-gray-200 rounded-full w-16"></div>
-      </div>
-      
-      {/* Show more button skeleton */}
-      <div className="h-4 bg-gray-200 rounded w-20"></div>
-      
-      {/* Shelter notes skeleton */}
-      <div className="mt-3 pt-3 border-t border-gray-100">
-        <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
-        <div className="h-3 bg-gray-200 rounded w-5/6"></div>
-      </div>
-    </div>
-  </div>
-);
-
-// Helper function to get energy level color
-const getEnergyLevelColor = (level) => {
-  switch(level?.toLowerCase()) {
-    case 'lappet': return 'bg-blue-100 text-blue-800';
-    case 'calm': return 'bg-green-100 text-green-800';
-    case 'moderate': return 'bg-yellow-100 text-yellow-800';
-    case 'veryactive': return 'bg-red-100 text-red-800';
-    default: return 'bg-gray-100 text-gray-800';
-  }
-};
-
-// Helper function to get experience level text
-const getExperienceLevel = (level) => {
-  switch(level?.toLowerCase()) {
-    case 'firsttime': return 'First Time Owner';
-    case 'someexperience': return 'Some Experience';
-    case 'experienced': return 'Experienced';
-    case 'veryexperienced': return 'Very Experienced';
-    default: return level || 'Not specified';
-  }
-};
-
-// Helper function to get badge color based on label
 const getBadgeColor = (label, value) => {
   if (typeof value === 'boolean') {
     return value 
@@ -71,44 +15,34 @@ const getBadgeColor = (label, value) => {
   }
   
   const colorMap = {
-    // Primary pet info
     species: 'bg-purple-50 text-purple-700 border-purple-100',
     breed: 'bg-blue-50 text-blue-700 border-blue-100',
     
-    // Age - Warm amber
     age: 'bg-amber-50 text-amber-700 border-amber-100',
     age_group: 'bg-amber-50 text-amber-700 border-amber-100',
     
-    // Energy - Fuchsia
     energy: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-100',
     energy_level: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-100',
     
-    // Coat - Teal
     coat: 'bg-teal-50 text-teal-700 border-teal-100',
     hair_length: 'bg-teal-50 text-teal-700 border-teal-100',
     
-    // Experience Level - Indigo
     'exp level': 'bg-indigo-50 text-indigo-700 border-indigo-100',
     experience_level: 'bg-indigo-50 text-indigo-700 border-indigo-100',
     
-    // Sex - Pink
     sex: 'bg-pink-50 text-pink-700 border-pink-100',
     
-    // Size - Cyan
     size: 'bg-cyan-50 text-cyan-700 border-cyan-100',
     
-    // Training traits - Emerald
     training: 'bg-emerald-50 text-emerald-700 border-emerald-100',
     training_traits: 'bg-emerald-50 text-emerald-700 border-emerald-100',
     
-    // Default - Gray
     default: 'bg-gray-50 text-gray-700 border-gray-100'
   };
   
   return colorMap[label.toLowerCase()] || colorMap.default;
 };
 
-// Main PetCard component
 const PetCard = ({ pet, onSelect, isSelected, isRequested }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [showMoreInfo, setShowMoreInfo] = useState(false);
@@ -118,7 +52,6 @@ const PetCard = ({ pet, onSelect, isSelected, isRequested }) => {
     setShowMoreInfo(!showMoreInfo);
   };
   
-  // Helper function to render a badge
   const renderBadge = (label, value, customColor) => {
     if (value === undefined || value === null || value === '') return null;
     
@@ -153,7 +86,6 @@ const PetCard = ({ pet, onSelect, isSelected, isRequested }) => {
     );
   };
   
-  // Generate primary badges (always visible)
   const generatePrimaryBadges = () => {
     const primaryBadges = [
       { label: 'Species', value: pet.species },
@@ -171,9 +103,7 @@ const PetCard = ({ pet, onSelect, isSelected, isRequested }) => {
       .map(({ label, value, color }) => renderBadge(label, value, color));
   };
 
-  // Generate additional badges (shown in show more section)
   const generateAdditionalBadges = () => {
-    // Boolean badges
     const booleanBadges = [
       { label: 'Allergy Friendly', value: pet.allergy_friendly },
       { label: 'Kid Friendly', value: pet.kid_friendly },
@@ -181,14 +111,12 @@ const PetCard = ({ pet, onSelect, isSelected, isRequested }) => {
       { label: 'Special Needs', value: pet.special_needs }
     ].filter(badge => badge.value !== undefined);
 
-    // Training traits
     const trainingBadges = pet.training_traits?.map(trait => ({
       label: trait.replace(/([A-Z])/g, ' $1').trim(),
       value: true,
       color: 'bg-emerald-50 text-emerald-700 border-emerald-100'
     })) || [];
     
-    // Combine all additional badges
     const allAdditionalBadges = [
       ...booleanBadges,
       ...trainingBadges
@@ -199,7 +127,6 @@ const PetCard = ({ pet, onSelect, isSelected, isRequested }) => {
     );
   };
   
-  // Check if there are any additional badges to show
   const hasAdditionalBadges = 
     (pet.allergy_friendly !== undefined ||
      pet.kid_friendly !== undefined ||
@@ -328,7 +255,6 @@ const PetCard = ({ pet, onSelect, isSelected, isRequested }) => {
   );
 };
 
-// Helper component for the visit request modal
 const VisitRequestModal = ({ 
   isOpen, 
   onClose, 
@@ -341,7 +267,6 @@ const VisitRequestModal = ({
   visitTime,
   setVisitTime
 }) => {
-  // Generate time slots (10am-4pm in 30 min intervals)
   const timeSlots = [];
   for (let hour = 10; hour < 16; hour++) {
     timeSlots.push({
@@ -354,7 +279,6 @@ const VisitRequestModal = ({
     });
   }
 
-  // Get dates for the next 14 days
   const getAvailableDates = () => {
     const dates = [];
     const today = new Date();
@@ -362,7 +286,6 @@ const VisitRequestModal = ({
     for (let i = 1; i <= 14; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
-      // Skip Sundays (0) and Saturdays (6)
       if (date.getDay() !== 0 && date.getDay() !== 6) {
         dates.push(date);
       }
@@ -567,25 +490,22 @@ export default function MatchResultsPage() {
     hasMore: false
   });
 
-  // Check if user has completed the questionnaire
   const checkQuestionnaireCompletion = useCallback(async () => {
     try {
       const response = await api.get('/users/me');
       
-      // Check if user has both preferences and training traits
       const hasPreferences = response.data?.preferences && 
                            Object.keys(response.data.preferences).length > 0;
       const hasTrainingTraits = response.data?.training_traits && 
                               response.data.training_traits.length > 0;
       
-      return hasPreferences || hasTrainingTraits; // User needs at least one
+      return hasPreferences || hasTrainingTraits; 
     } catch (error) {
       console.error('Error checking user profile:', error);
       return false;
     }
   }, []);
 
-  // Fetch matched pets from the backend
   const fetchMatchedPets = useCallback(async (page = 1, append = false, forceRefresh = false) => {
     try {
       console.log('=== fetchMatchedPets called ===');
@@ -677,37 +597,20 @@ export default function MatchResultsPage() {
       setIsLoadingMore(false);
     }
   }, [pagination.pageSize, checkQuestionnaireCompletion]);
-
-  // Handle retry mechanism
-  const handleRetry = useCallback(() => {
-    setRetryCount(prev => {
-      const newCount = prev + 1;
-      if (newCount <= 3) { // Limit number of retries
-        fetchMatchedPets(1);
-      }
-      return newCount;
-    });
-  }, [fetchMatchedPets]);
-
-  // Initial load and retry effect
+ 
   useEffect(() => {
     if (user) {
       const timer = setTimeout(() => {
-        // Check if we need to force refresh (e.g., after questionnaire completion)
         const shouldRefresh = location.state?.refreshMatches;
         
-        // Clear the refresh flag from location state to prevent refetching on re-renders
         if (shouldRefresh) {
-          // Replace current entry in history to remove the refresh flag
           window.history.replaceState(
             { ...window.history.state, refreshMatches: undefined },
             ''
           );
         }
         
-        // Always fetch fresh data when coming from questionnaire
         fetchMatchedPets(1, false, shouldRefresh).catch(() => {
-          // Error is already handled in fetchMatchedPets
         });
       }, retryCount > 0 ? 2000 : 0);
       
@@ -739,28 +642,23 @@ export default function MatchResultsPage() {
     setError("");
 
     try {
-      // Combine date and time into a single ISO string
       const dateTime = new Date(`${visitDate}T${visitTime}`);
       
-      // Send the visit request to the backend
       await api.post(`/visit-requests/${selectedPet.id}`, {
         requested_at: dateTime.toISOString()
       });
       
-      // Update local state
       setRequestedVisits(prev => [...prev, { 
         pet_id: selectedPet.id, 
         requested_at: dateTime.toISOString(),
         status: 'Pending' 
       }]);
       
-      // Clear modal state
       const petName = selectedPet.name;
       setSelectedPet(null);
       setVisitDate("");
       setVisitTime("");
       
-      // Show success toast - this will only trigger after successful submission
       toast.success(`Visit request submitted for ${petName}!`, {
         position: "top-center",
         autoClose: 5000,
@@ -799,25 +697,10 @@ export default function MatchResultsPage() {
     setError('');
   };
 
-  // Format date to display in the UI
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-  };
-
-
-// Add this before your return statement
   const testBackendEndpoints = async () => {
   try {
     console.log('Testing backend endpoints...');
     
-    // Test 1: Check if route exists
     console.log('1. Testing /match/recommendations...');
     try {
       const response = await api.get('/match/recommendations?page=1&pageSize=10');
@@ -826,7 +709,6 @@ export default function MatchResultsPage() {
       console.log('❌ Recommendations endpoint failed:', error.response?.status, error.response?.data);
     }
     
-    // Test 2: Check pet vectors
     console.log('2. Testing /match/debug/pet-vectors...');
     try {
       const vectorResponse = await api.get('/match/debug/pet-vectors');
@@ -835,7 +717,6 @@ export default function MatchResultsPage() {
       console.log('❌ Pet vectors debug failed:', error.response?.status, error.response?.data);
     }
     
-    // Test 3: Check user profile
     console.log('3. Testing /users/me...');
     try {
       const userResponse = await api.get('/users/me');

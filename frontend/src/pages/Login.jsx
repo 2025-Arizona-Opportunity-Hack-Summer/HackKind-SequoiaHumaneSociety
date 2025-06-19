@@ -10,7 +10,6 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   
-  // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
       const from = location.state?.from?.pathname || '/dashboard';
@@ -36,19 +35,15 @@ export default function Login() {
         throw new Error('No user data received in login response');
       }
       
-      // Get the user role from the response
       const userRole = response.user.role?.toLowerCase() || 'adopter';
       console.log('Login successful, user role:', userRole, 'Full response:', response);
       
-      // Redirect based on user role
       const redirectPath = (() => {
-        // If there's a stored redirect path and it's not the login page, use it
         if (location.state?.from?.pathname && 
             location.state.from.pathname !== '/login' &&
             !location.state.from.pathname.startsWith('/auth')) {
           return location.state.from.pathname;
         }
-        // Otherwise, redirect based on role
         if (userRole === 'admin') {
           return '/admin/dashboard';
         }
@@ -66,7 +61,6 @@ export default function Login() {
         statusText: err.response?.statusText,
       });
       
-      // Set more detailed error message
       const errorMessage = err.response?.data?.detail || 
                          err.response?.data?.message || 
                          err.message || 

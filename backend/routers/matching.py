@@ -92,24 +92,20 @@ def get_pet_recommendations(
     current_user: User = Depends(get_current_user)
 ):
     try:
-        # Debug: Check if user has preferences
         preferences = db.query(UserPreferences).filter(UserPreferences.user_id == current_user.id).first()
         if not preferences:
             raise HTTPException(status_code=400, detail="Please complete the questionnaire to get pet recommendations.")
         
         print(f"User {current_user.id} has preferences: {preferences}")
         
-        # If refresh is requested, regenerate the adopter vector
         if refresh:
             print(f"Refreshing adopter vector for user {current_user.id}")
             prefs_dict, traits_list = get_user_preferences_and_traits(current_user.id, db)
             save_adopter_vector(current_user.id, prefs_dict, traits_list, db)
         
-        # Load adopter vector
         adopter_vector = load_adopter_vector(current_user.id, db)
         if not adopter_vector:
             print(f"No adopter vector found for user {current_user.id}, generating...")
-            # Try to generate it
             prefs_dict, traits_list = get_user_preferences_and_traits(current_user.id, db)
             save_adopter_vector(current_user.id, prefs_dict, traits_list, db)
             adopter_vector = load_adopter_vector(current_user.id, db)
@@ -119,7 +115,6 @@ def get_pet_recommendations(
 
         print(f"Adopter vector loaded for user {current_user.id}")
 
-        # Load pet vectors
         pet_vectors = load_pet_vectors(db)
         if not pet_vectors:
             print("No pet vectors found")
@@ -127,23 +122,18 @@ def get_pet_recommendations(
 
         print(f"Found {len(pet_vectors)} pet vectors")
 
-        # Get matches
         top_matches = get_top_pet_matches(adopter_vector, pet_vectors, top_k=50)
         print(f"Generated {len(top_matches)} matches")
         
-        # Calculate pagination
         skip = (page - 1) * pageSize
         paginated_matches = top_matches[skip:skip + pageSize]
         
-        # Save matches in background
         background_tasks.add_task(save_matches_for_user, current_user.id, top_matches, db)
 
-        # Get pet details with all fields
         pet_ids = [pid for pid, _ in paginated_matches]
         pets = db.query(Pet).filter(Pet.id.in_(pet_ids), Pet.status == "Available").all()
         pet_map = {pet.id: pet for pet in pets}
 
-        # Get all training traits for the pets
         pet_traits = {}
         for pet_id in pet_ids:
             traits = db.query(PetTrainingTrait).filter(PetTrainingTrait.pet_id == pet_id).all()
@@ -174,7 +164,7 @@ def get_pet_recommendations(
                     "image_url": str(pet.image_url) if pet.image_url else None,
                     "status": pet.status.value,
                     "training_traits": pet_traits.get(pet_id, []),
-                    "match_score": float(score)  # Include the match score
+                    "match_score": float(score)  
                 }
                 results.append(pet_data)
 

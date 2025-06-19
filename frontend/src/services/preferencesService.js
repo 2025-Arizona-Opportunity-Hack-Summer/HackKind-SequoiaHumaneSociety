@@ -1,33 +1,26 @@
 import api from './api';
 
-// Define the endpoint without a trailing slash to avoid redirects
 const PREFERENCES_ENDPOINT = '/users/me/preferences';
 
-// Helper function to log detailed error information
 const logErrorDetails = (error, context) => {
   console.error(`[${context}] Error:`, error);
   if (error.response) {
-    // The request was made and the server responded with a status code
-    // that falls out of the range of 2xx
+
     console.error('Response data:', error.response.data);
     console.error('Response status:', error.response.status);
     console.error('Response headers:', error.response.headers);
   } else if (error.request) {
-    // The request was made but no response was received
     console.error('Request was made but no response received:', error.request);
   } else {
-    // Something happened in setting up the request that triggered an Error
     console.error('Error message:', error.message);
   }
   console.error('Error config:', error.config);
 };
 
 export const preferencesService = {
-  // Save user preferences from questionnaire
   async savePreferences(preferencesData) {
     console.log('Saving preferences with data:', preferencesData);
     
-    // Check if this is mapped data with separate training traits
     let preferences, trainingTraits;
     if (preferencesData.preferences && preferencesData.trainingTraits !== undefined) {
       preferences = preferencesData.preferences;
@@ -41,7 +34,6 @@ export const preferencesService = {
     console.log('Full API URL:', fullUrl);
     
     try {
-      // Save preferences first
       let preferencesResult;
       try {
         console.log('Attempting to update existing preferences...');
@@ -85,7 +77,6 @@ export const preferencesService = {
         }
       }
       
-      // Save training traits if any
       if (trainingTraits && trainingTraits.length > 0) {
         try {
           console.log('About to save training traits:', trainingTraits);
@@ -93,7 +84,6 @@ export const preferencesService = {
           console.log('Successfully saved training traits');
         } catch (traitsError) {
           console.error('Failed to save training traits, but preferences were saved:', traitsError);
-          // Don't throw here - preferences were saved successfully
         }
       } else {
         console.log('No training traits to save. trainingTraits:', trainingTraits);
@@ -108,21 +98,19 @@ export const preferencesService = {
     }
   },
 
-  // Get current user's preferences
   async getMyPreferences() {
     try {
       const response = await api.get(PREFERENCES_ENDPOINT);
       return response.data || {};
     } catch (error) {
       if (error.response?.status === 404) {
-        return {}; // Return empty preferences if not found
+        return {}; 
       }
       console.error('Error fetching user preferences:', error);
       throw error;
     }
   },
 
-  // Update user preferences
   async updatePreferences(updates) {
     try {
       const response = await api.patch(PREFERENCES_ENDPOINT, updates);
@@ -136,7 +124,6 @@ export const preferencesService = {
     }
   },
 
-  // Save training traits to the database
   async saveTrainingTraits(traitsArray) {
     try {
       console.log('1. Starting saveTrainingTraits with traitsArray:', traitsArray);
@@ -146,7 +133,6 @@ export const preferencesService = {
         return;
       }
       
-      // First, get current traits to avoid duplicates
       console.log('2. Fetching current training traits...');
       const currentTraits = await this.getTrainingTraits();
       console.log('3. Current traits from server:', currentTraits);
@@ -154,7 +140,6 @@ export const preferencesService = {
       const currentTraitNames = currentTraits.map(t => t.trait || t);
       console.log('4. Current trait names:', currentTraitNames);
       
-      // Filter out invalid traits and duplicates
       const traitsToSave = traitsArray
         .filter(trait => {
           const isValid = trait && trait !== 'none' && trait !== 'allergy_friendly';
@@ -173,7 +158,6 @@ export const preferencesService = {
       
       console.log('5. Traits to save after filtering:', traitsToSave);
       
-      // Create API calls for each trait
       const savePromises = traitsToSave.map(trait => {
         console.log(`6. Preparing API call for trait:`, { trait });
         return api.post('/preferences/training-traits', { trait })
@@ -187,7 +171,7 @@ export const preferencesService = {
               console.error('Response data:', error.response.data);
               console.error('Status:', error.response.status);
             }
-            throw error; // Re-throw to be caught by the outer catch
+            throw error; 
           });
       });
       
@@ -207,43 +191,37 @@ export const preferencesService = {
     }
   },
   
-  // Get all training traits from the database
   async getTrainingTraits() {
     try {
       const response = await api.get('/preferences/training-traits');
       return response.data || [];
     } catch (error) {
       if (error.response?.status === 404) {
-        return []; // No traits found
+        return []; 
       }
       console.error('Error fetching training traits:', error);
       throw error;
     }
   },
 
-  // Map questionnaire form data to API format
   mapQuestionnaireToPreferences(formData) {
     console.log('=== MAPPING FORM DATA TO PREFERENCES ===');
     console.log('Raw form data:', formData);
 
-    // FIXED: Map training traits to backend enum values
     const trainingTraitMap = {
       'house_trained': 'HouseTrained',
       'litter_trained': 'LitterTrained',
-      'HouseTrained': 'HouseTrained',    // Add this line
-      'LitterTrained': 'LitterTrained',  // Add this line
+      'HouseTrained': 'HouseTrained',    
+      'LitterTrained': 'LitterTrained',  
     };
 
-    // Extract and map training traits (excluding 'none' and 'allergy_friendly')
     const trainingTraits = (formData.required_traits || [])
     .filter(trait => trait !== 'none' && trait !== 'allergy_friendly')
     .map(trait => trainingTraitMap[trait])
-    .filter(trait => trait); // Remove any unmapped traits
-
+    .filter(trait => trait); 
    console.log('Raw required_traits:', formData.required_traits);
    console.log('Mapped training traits:', trainingTraits);
     
-    // Map has_pets to has_dogs and has_cats
     let hasDogs = false;
     let hasCats = false;
     if (formData.has_pets) {
@@ -251,10 +229,8 @@ export const preferencesService = {
       if (formData.has_pets === 'Cat' || formData.has_pets === 'Both') hasCats = true;
     }
 
-    // Map required_traits to wants_allergy_friendly
     const wantsAllergyFriendly = formData.required_traits?.includes('allergy_friendly') || false;
     
-    // FIXED: Map activity_level to preferred_energy_level (form sends correct values)
     const energyLevelMap = {
       'LapPet': 'LapPet',
       'Calm': 'Calm',
@@ -263,7 +239,6 @@ export const preferencesService = {
       'NoPreference': 'NoPreference'
     };
     
-    // Map preferred_age to match PetAgeGroup enum
     const ageMap = {
       'Baby': (formData.pet_type || '').toLowerCase() === 'dog' ? 'Puppy' : 'Kitten',
       'Young': 'Young',
@@ -272,14 +247,12 @@ export const preferencesService = {
       'NoPreference': 'NoPreference'
     };
 
-    // FIXED: Map preferred_sex to match PreferredSex enum (form sends correct values)
     const sexMap = {
       'Female': 'Female',
       'Male': 'Male',
       'NoPreference': 'NoPreference'
     };
 
-    // FIXED: Map preferred_size to match PreferredSize enum (form sends correct values)
     const sizeMap = {
       'Small': 'Small',
       'Medium': 'Medium',
@@ -288,7 +261,6 @@ export const preferencesService = {
       'NoPreference': 'NoPreference'
     };
 
-    // FIXED: Map hair_length to match HairLength enum (form sends correct values)
     const hairLengthMap = {
       'Short': 'Short',
       'Medium': 'Medium',
@@ -296,20 +268,17 @@ export const preferencesService = {
       'NoPreference': 'NoPreference'
     };
 
-    // Map ownership_experience to match OwnershipExperience enum
     const ownershipMap = {
       'FirstTime': 'FirstTime',
       'HadBefore': 'HadBefore', 
       'CurrentlyHave': 'CurrentlyHave'
     };
 
-    // Map pet_purpose to match PetPurpose enum
     const purposeMap = {
       'Myself': 'Myself',
       'MyFamily': 'MyFamily'
     };
     
-    // Log individual mappings for debugging
     console.log('Mapping details:');
     console.log('- pet_type:', formData.pet_type);
     console.log('- pet_purpose:', formData.pet_purpose, '->', purposeMap[formData.pet_purpose]);
@@ -337,7 +306,6 @@ export const preferencesService = {
       accepts_special_needs: Boolean(formData.special_needs)
     };
 
-    // Ensure all required fields are present and not undefined
     const requiredFields = [
       'preferred_species', 'pet_purpose', 'has_children', 'has_dogs', 'has_cats',
       'ownership_experience', 'preferred_age', 'preferred_sex', 'preferred_size',
@@ -345,7 +313,6 @@ export const preferencesService = {
       'accepts_special_needs'
     ];
 
-    // Check for undefined values and warn
     const undefinedFields = [];
     requiredFields.forEach(field => {
       if (preferences[field] === undefined) {

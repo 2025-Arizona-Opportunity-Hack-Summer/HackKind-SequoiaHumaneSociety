@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authService } from '../services/authService';
 
-// Create the auth context
 export const AuthContext = createContext({
   user: null,
   isAuthenticated: false,
@@ -13,22 +12,17 @@ export const AuthContext = createContext({
   isAdmin: false,
 });
 
-// Custom hook to use the auth context
 export const useAuth = () => useContext(AuthContext);
 
-// Auth provider component
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Check if user is authenticated
   const isAuthenticated = !!user;
   
-  // Check if user is admin
   const isAdmin = user?.role === 'admin';
 
-  // Initialize auth state on mount
   const initializeAuth = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -41,7 +35,6 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      // Try to get user data from localStorage first
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         try {
@@ -54,7 +47,6 @@ export const AuthProvider = ({ children }) => {
         }
       }
 
-      // If no user in localStorage, try to fetch from API
       try {
         console.log('Fetching user data from API');
         const userData = await authService.getCurrentUser();
@@ -62,7 +54,6 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
       } catch (error) {
         console.error('Failed to fetch user data:', error);
-        // If token is invalid, clear it
         if (error.response?.status === 401) {
           console.log('Token invalid, logging out');
           await authService.logout();
@@ -77,12 +68,10 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Initialize auth state on mount
   useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
 
-  // Login function
   const login = async (credentials) => {
     try {
       setIsLoading(true);
@@ -94,10 +83,8 @@ export const AuthProvider = ({ children }) => {
         throw new Error('No user data received');
       }
       
-      // Set the user from the login response
       setUser(response.user);
       
-      // Store the user data in localStorage
       localStorage.setItem('user', JSON.stringify(response.user));
       
       console.log('User logged in:', response.user);
@@ -111,7 +98,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Logout function
   const logout = async () => {
     try {
       setIsLoading(true);
@@ -126,7 +112,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Refresh user data
   const refreshUser = async () => {
     try {
       if (!authService.isAuthenticated()) {
@@ -140,20 +125,17 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Failed to refresh user data:', error);
       if (error.response?.status === 401) {
-        // Token expired or invalid
         await logout();
       }
       throw error;
     }
   };
 
-  // Check if user has specific role
   const hasRole = (role) => {
     if (!user) return false;
     return user.role === role;
   };
 
-  // Context value
   const value = {
     user,
     isAuthenticated,

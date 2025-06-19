@@ -11,19 +11,16 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
     ownership_experience: false
   });
 
-  // Pet type options
   const petTypes = [
     { value: 'Dog', label: 'Dog' },
     { value: 'Cat', label: 'Cat' }
   ];
 
-  // Pet purpose options
   const petPurposes = [
     { value: 'Myself', label: 'Myself' },
     { value: 'MyFamily', label: 'My Family' }
   ];
 
-  // Current pets options
   const currentPetsOptions = [
     { value: 'none', label: 'None' },
     { value: 'Dog', label: 'Dog(s)' },
@@ -31,21 +28,18 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
     { value: 'Both', label: 'Both dog(s) and cat(s)' }
   ];
 
-  // Ownership experience options
   const experienceLevels = [
     { value: 'FirstTime', label: 'First-time' },
     { value: 'HadBefore', label: 'Had pets before' },
     { value: 'CurrentlyHave', label: 'Currently have pets' }
   ];
 
-  // Initialize showChildrenQuestion based on initial form data
   useEffect(() => {
     if (formData.pet_purpose === 'MyFamily') {
       setShowChildrenQuestion(true);
     }
   }, []);
 
-  // Validate form whenever formData changes
   useEffect(() => {
     if (error) validateForm();
   }, [formData]);
@@ -54,26 +48,22 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
     const { name, value, type, checked } = e.target;
     const newValue = type === 'checkbox' ? checked : value;
     
-    // Show/hide children question based on pet purpose
     if (name === 'pet_purpose') {
       const willShowChildren = value === 'MyFamily';
       setShowChildrenQuestion(willShowChildren);
       
-      // Update form data with the new purpose and reset has_children if needed
       setFormData(prev => ({
         ...prev,
         [name]: value,
         has_children: willShowChildren ? prev.has_children : undefined
       }));
     } else {
-      // For all other fields
       setFormData(prev => ({
         ...prev,
         [name]: type === 'checkbox' ? newValue : value
       }));
     }
     
-    // Mark the field as touched
     setTouched(prev => ({ ...prev, [name]: true }));
   };
 
@@ -112,7 +102,6 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
     }
   };
 
-  // Show error only after the field is touched
   const shouldShowError = (field) => {
     return touched[field] && error.toLowerCase().includes(field.replace('_', ' '));
   };
