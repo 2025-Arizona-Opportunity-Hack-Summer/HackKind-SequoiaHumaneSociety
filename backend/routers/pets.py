@@ -12,7 +12,7 @@ from backend.logic.image_uploader import upload_pet_photo_local
 from backend.schemas.pet_schema import PetCreate, PetResponse, PetUpdate
 from pydantic.networks import HttpUrl
 from backend.core.dependencies import get_current_user
-from backend.models.user import User
+from backend.models.user import User, UserRole
 from backend.models.pet import Pet
 from backend.models.pet_vector import PetVector
 from backend.models.match import Match
@@ -147,17 +147,38 @@ async def get_pet_photo(pet_id: int, db: Session = Depends(get_db)):
         )
 
 @router.post("/{pet_id}/photo")
-async def upload_pet_photo(pet_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def upload_pet_photo(
+    pet_id: int, 
+    file: UploadFile = File(...), 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user) 
+):
     pet = db.query(models.Pet).filter(models.Pet.id == pet_id).first()
     if not pet:
         raise HTTPException(status_code=404, detail="Pet not found")
     
-    file_path = upload_pet_photo_local(file.file, pet_id)
+    if current_user.role != UserRole.Admin:
+        raise HTTPException(status_code=403, detail="Only admins can upload pet photos")
     
-    pet.image_url = file_path
-    db.commit()
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No file provided")
     
-    return {"message": "Photo uploaded successfully", "image_url": file_path}
+    try:
+        file_url = upload_pet_photo_local(file.file, pet_id, file.filename)
+        
+        pet.image_url = file_url
+        db.commit()
+        
+        return {"message": "Photo uploaded successfully", "image_url": file_url}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to upload photo. Please try again."
+        )
 
 @router.patch("/{pet_id}", response_model=PetResponse)
 def update_pet(

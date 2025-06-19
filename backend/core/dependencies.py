@@ -14,13 +14,29 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         payload = jwt.decode(raw_token, settings.SECRET_KEY, algorithms=["HS256"])
         user_id = payload.get("sub")
         if user_id is None:
-            raise HTTPException(status_code=401, detail="Missing sub in token")
+            raise HTTPException(status_code=401, detail="Invalid token: missing user ID")
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-    user = db.query(User).filter(User.id == int(user_id)).first()
+    try:
+        if not isinstance(user_id, (str, int)):
+            raise HTTPException(status_code=401, detail="Invalid token: malformed user ID")
+        
+        user_id_str = str(user_id)
+        
+        if not user_id_str.isdigit():
+            raise HTTPException(status_code=401, detail="Invalid token: invalid user ID format")
+        
+        user_id_int = int(user_id_str)
+        
+        if user_id_int <= 0:
+            raise HTTPException(status_code=401, detail="Invalid token: invalid user ID")
+            
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid token: user ID conversion error")
+
+    user = db.query(User).filter(User.id == user_id_int).first()
     if user is None:
         raise HTTPException(status_code=401, detail="User not found")
 
     return user
-
