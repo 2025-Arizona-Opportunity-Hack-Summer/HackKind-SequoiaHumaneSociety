@@ -1,7 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { authService } from './services/authService';
-import { API_BASE_URL } from './config/api';
 
 // Pages
 import LandingPage from "./pages/LandingPage";

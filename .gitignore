@@ -2,8 +2,7 @@
 .env
 
 /backend/.venv
-
-/backend/scripts
+/scripts
 
 # Node.js dependencies and builds
 node_modules/

@@ -3,7 +3,6 @@ from sqlalchemy.orm import relationship
 from backend.core.database import Base
 import enum
 from sqlalchemy.sql import func
-from typing import List, Optional
 
 class PetSpecies(str, enum.Enum):
     Dog = "Dog"

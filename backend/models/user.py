@@ -1,9 +1,8 @@
-from sqlalchemy import Column, Integer, String, Text, Enum, TIMESTAMP, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, Enum, TIMESTAMP
 from sqlalchemy.orm import relationship
 from backend.core.database import Base
 import enum
 from sqlalchemy.sql import func
-from typing import List, Optional
 
 class UserRole(str, enum.Enum):
     Adopter = "Adopter"

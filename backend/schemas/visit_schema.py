@@ -1,6 +1,5 @@
 import datetime
 from datetime import datetime, timezone
-from typing import List
 from pydantic import BaseModel, ConfigDict, field_validator
 from backend.models.visit_request import VisitRequestStatus
 

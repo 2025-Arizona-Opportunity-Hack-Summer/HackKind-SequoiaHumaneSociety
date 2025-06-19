@@ -3,10 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Union
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import OAuth2PasswordBearer
-from backend.logic.scheduler import start_scheduler  # Changed from backend.logic.scheduler
+from backend.logic.scheduler import start_scheduler  
 from fastapi.staticfiles import StaticFiles
 import os
-from backend.routers import (  # Changed from backend.routers
+from backend.routers import (  
     auth_router,
     user_profile_router,
     preferences_router,
@@ -20,22 +20,19 @@ from backend.routers import (  # Changed from backend.routers
 
 app = FastAPI()
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",  # Default React port
-        "http://localhost:3001",  # Common alternate React port
-        "http://127.0.0.1:3000", # Localhost IP
+        "http://localhost:3000",  
+        "http://localhost:3001",  
+        "http://127.0.0.1:3000", 
         "http://127.0.0.1:3001",
-        # Add your production domain here when ready
-        # "https://your-production-domain.com"
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
     expose_headers=["Content-Length", "X-Foo", "X-Bar"],
-    max_age=600,  # Cache preflight requests for 10 minutes
+    max_age=600,  
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -63,7 +60,6 @@ def custom_openapi():
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
-# Include all API routes with /api prefix
 app.include_router(auth_router, prefix="/api")
 app.include_router(user_profile_router, prefix="/api")
 app.include_router(preferences_router, prefix="/api")
