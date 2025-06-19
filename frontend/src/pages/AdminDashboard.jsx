@@ -58,22 +58,31 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
 
+  // Fetch pets and visit requests when component mounts
   useEffect(() => {
-    const fetchPets = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const data = await petService.getPets(0, 100); // Fetch first 100 pets
-        setPets(data.items || data); // Handle both paginated and non-paginated responses
+        
+        // Fetch pets
+        const petsData = await petService.getPets(0, 100); // Fetch first 100 pets
+        setPets(petsData.items || petsData); // Handle both paginated and non-paginated responses
+        
+        // Fetch visit requests using admin endpoint
+        const response = await api.get('/admin/visit-requests');
+        console.log('Visit requests response:', response.data);
+        setVisits(response.data || []);
+        
       } catch (err) {
-        console.error('Failed to fetch pets:', err);
-        setError('Failed to load pets. Please try again later.');
+        console.error('Failed to fetch data:', err);
+        setError('Failed to load data. Please try again later.');
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchPets();
+    fetchData();
   }, []);
 
   const handleInputChange = (e) => {
@@ -345,8 +354,26 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleApproveVisit = (id) => {
-    setVisits((prev) => prev.map((v) => (v.id === id ? { ...v, status: "Approved" } : v)));
+  const handleUpdateVisitStatus = async (id, newStatus) => {
+    try {
+      // Call the API to update the visit request status using PUT
+      // The backend expects the status to be embedded in the request body
+      await api.put(`/admin/visit-requests/${id}/status`, { status: newStatus });
+      
+      // Update the local state to reflect the change
+      setVisits(prevVisits => 
+        prevVisits.map(visit => 
+          visit.id === id ? { ...visit, status: newStatus } : visit
+        )
+      );
+      
+      // Show success message
+      alert(`Visit request status updated to ${newStatus} successfully!`);
+      
+    } catch (err) {
+      console.error(`Failed to update visit request status to ${newStatus}:`, err);
+      alert(`Failed to update visit request status. Please try again.`);
+    }
   };
 
   return (
@@ -548,21 +575,106 @@ export default function AdminDashboard() {
       </div>
 
       {/* Visit Requests */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Visit Requests</h2>
+      <div className="mt-12">
+        <h2 className="text-2xl font-bold mb-6">Visit Requests</h2>
         {visits.length === 0 ? (
-          <p>No visit requests yet.</p>
+          <p className="text-gray-600">No visit requests found.</p>
         ) : (
-          <ul>
-            {visits.map((visit) => (
-              <li key={visit.id} className="mb-2 flex justify-between">
-                <span>{visit.adopterName} requested to visit {visit.petName} on {visit.date} — Status: {visit.status}</span>
-                {visit.status !== "Approved" && (
-                  <button onClick={() => handleApproveVisit(visit.id)} className="text-green-600">Approve</button>
-                )}
-              </li>
-            ))}
-          </ul>
+          <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Pet
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Requester
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Requested Date
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th scope="col" className="relative px-6 py-3">
+                    <span className="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {visits.map((visit) => {
+                  const requestedDate = new Date(visit.requested_at);
+                  const formattedDate = requestedDate.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  });
+                  
+                  return (
+                    <tr key={visit.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          {visit.pet_image_url && (
+                            <div className="flex-shrink-0 h-10 w-10">
+                              <img 
+                                className="h-10 w-10 rounded-full object-cover" 
+                                src={visit.pet_image_url.startsWith('http') ? visit.pet_image_url : `http://localhost:8000${visit.pet_image_url}`} 
+                                alt={visit.pet_name}
+                              />
+                            </div>
+                          )}
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">{visit.pet_name}</div>
+                            <div className="text-sm text-gray-500">{visit.pet_breed}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{visit.user_name || 'N/A'}</div>
+                        <div className="text-sm text-gray-500">{visit.user_email}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formattedDate}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <select
+                          value={visit.status}
+                          onChange={(e) => handleUpdateVisitStatus(visit.id, e.target.value)}
+                          className={`px-2 py-1 text-xs font-semibold rounded-md border ${
+                            visit.status === 'Pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
+                            visit.status === 'Confirmed' ? 'bg-green-100 text-green-800 border-green-300' :
+                            'bg-red-100 text-red-800 border-red-300'
+                          }`}
+                        >
+                          <option value="Pending">Pending</option>
+                          <option value="Confirmed">Confirmed</option>
+                          <option value="Cancelled">Cancelled</option>
+                        </select>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => {
+                            // Show visit request details in a modal or expandable section
+                            alert(`Visit Request Details:\n\n` +
+                              `Pet: ${visit.pet_name}\n` +
+                              `Requester: ${visit.user_name || 'N/A'}\n` +
+                              `Email: ${visit.user_email}\n` +
+                              `Requested: ${new Date(visit.requested_at).toLocaleString()}\n` +
+                              `Status: ${visit.status.charAt(0).toUpperCase() + visit.status.slice(1)}`);
+                          }}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          View Details
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
