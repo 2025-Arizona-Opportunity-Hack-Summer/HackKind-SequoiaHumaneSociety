@@ -49,7 +49,10 @@ export default function Login() {
           return location.state.from.pathname;
         }
         // Otherwise, redirect based on role
-        return userRole === 'admin' ? '/admin' : '/dashboard';
+        if (userRole === 'admin') {
+          return '/admin/dashboard';
+        }
+        return '/dashboard';
       })();
       
       console.log('Redirecting to:', redirectPath);

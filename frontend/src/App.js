@@ -73,7 +73,7 @@ const PublicRoute = ({ children }) => {
     
     // If no intended path, redirect based on role
     if (!redirectTo || redirectTo === '/login' || redirectTo === '/') {
-      redirectTo = user.role?.toLowerCase() === 'admin' ? '/admin' : '/dashboard';
+      redirectTo = user.role?.toLowerCase() === 'admin' ? '/admin/dashboard' : '/dashboard';
     }
     
     console.log('Redirecting authenticated user to:', redirectTo);
@@ -141,10 +141,15 @@ function AppContent() {
         </ProtectedRoute>
       } />
       
-      <Route path="/admin" element={
+      <Route path="/admin/dashboard" element={
         <ProtectedRoute requiredRole="admin">
           <AdminDashboard />
         </ProtectedRoute>
+      } />
+      
+      {/* Redirect old /admin to /admin/dashboard */}
+      <Route path="/admin" element={
+        <Navigate to="/admin/dashboard" replace />
       } />
       
       <Route path="/match-results" element={

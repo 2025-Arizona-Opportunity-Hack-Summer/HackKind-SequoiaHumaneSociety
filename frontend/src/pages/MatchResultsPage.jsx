@@ -743,14 +743,16 @@ export default function MatchResultsPage() {
       const dateTime = new Date(`${visitDate}T${visitTime}`);
       
       // Send the visit request to the backend
-      await api.post(`/visit-requests`, {
-        pet_id: selectedPet.id,
-        requested_date: dateTime.toISOString(),
-        status: 'pending'
+      await api.post(`/visit-requests/${selectedPet.id}`, {
+        requested_at: dateTime.toISOString()
       });
       
       // Update local state
-      setRequestedVisits(prev => [...prev, selectedPet.id]);
+      setRequestedVisits(prev => [...prev, { 
+        pet_id: selectedPet.id, 
+        requested_at: dateTime.toISOString(),
+        status: 'Pending' 
+      }]);
       
       // Clear modal state
       const petName = selectedPet.name;
