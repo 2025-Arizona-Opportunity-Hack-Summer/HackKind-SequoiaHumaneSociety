@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { FaEnvelope, FaWhatsapp, FaLink, FaComment } from 'react-icons/fa';
 
 const getBadgeColor = (label, value) => {
   if (typeof value === 'boolean') {
@@ -26,6 +27,84 @@ const getBadgeColor = (label, value) => {
   };
   
   return colorMap[label.toLowerCase()] || colorMap.default;
+};
+
+const SocialShare = ({ pet }) => {
+  const petUrl = `${window.location.origin}/pets/${pet.id}`;
+  const shareText = `Check out ${pet.name || 'this adorable pet'} at Sequoia Humane Society!`;
+  const shareImage = pet.primary_photo_url;
+
+  const copyToClipboard = async (e) => {
+    e.stopPropagation(); // Prevent event from bubbling up
+    try {
+      await navigator.clipboard.writeText(petUrl);
+    } catch (err) {
+      console.error('Failed to copy link: ', err);
+    }
+  };
+
+  const shareOnPlatform = (platform, e) => {
+    e.stopPropagation(); // Prevent event from bubbling up
+    e.preventDefault();  // Prevent any default behavior
+    
+    let url = '';
+    
+    switch(platform) {
+      case 'whatsapp':
+        url = `https://wa.me/?text=${encodeURIComponent(`${shareText} ${petUrl}`)}`;
+        window.open(url, '_blank', 'width=600,height=400');
+        break;
+      case 'email':
+        const subject = `Check out ${pet.name || 'this pet'} for adoption!`;
+        const body = `${shareText}\n\n${petUrl}`;
+        window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        break;
+      case 'sms':
+        const smsBody = `${shareText} ${petUrl}`;
+        window.location.href = `sms:?&body=${encodeURIComponent(smsBody)}`;
+        break;
+      default:
+        return;
+    }
+  };
+
+  // Check if device is mobile
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  return (
+    <div className="flex items-center justify-center space-x-2 mt-3 pt-3 border-t border-gray-100">
+      <button 
+        onClick={(e) => shareOnPlatform('whatsapp', e)}
+        className="p-2 rounded-full hover:bg-red-100 text-red-500 transition-colors"
+        aria-label="Share on WhatsApp"
+      >
+        <FaWhatsapp size={18} />
+      </button>
+      {isMobile && (
+        <button 
+          onClick={(e) => shareOnPlatform('sms', e)}
+          className="p-2 rounded-full hover:bg-red-100 text-red-500 transition-colors"
+          aria-label="Share via SMS"
+        >
+          <FaComment size={18} />
+        </button>
+      )}
+      <button 
+        onClick={(e) => shareOnPlatform('email', e)}
+        className="p-2 rounded-full hover:bg-red-100 text-red-500 transition-colors"
+        aria-label="Share via Email"
+      >
+        <FaEnvelope size={18} />
+      </button>
+      <button 
+        onClick={copyToClipboard}
+        className="p-2 rounded-full hover:bg-red-100 text-red-500 transition-colors"
+        aria-label="Copy link to clipboard"
+      >
+        <FaLink size={16} />
+      </button>
+    </div>
+  );
 };
 
 const PetCard = ({ pet, onSelect, isSelected, isRequested }) => {
@@ -221,6 +300,7 @@ const PetCard = ({ pet, onSelect, isSelected, isRequested }) => {
           <p className="text-sm text-gray-600">
             {pet.shelter_notes || 'No additional notes available for this pet.'}
           </p>
+          <SocialShare pet={pet} />
         </div>
       </div>
     </div>
