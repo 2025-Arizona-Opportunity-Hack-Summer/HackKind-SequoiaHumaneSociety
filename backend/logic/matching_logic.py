@@ -153,7 +153,6 @@ def get_top_pet_matches(adopter_vector: List[float], pet_vectors: List[Tuple[int
     return similarities[:top_k]
 
 
-
 def save_matches_for_user(user_id: int, matches: List[Tuple[int, float]], db):
     try:
         db.begin()
