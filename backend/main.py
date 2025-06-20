@@ -10,6 +10,8 @@ import os
 from contextlib import asynccontextmanager
 from fastapi.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.types import ASGIApp
+from typing import Dict, List, Optional, Tuple, Union, Callable, Awaitable
 from backend.routers import (  
     auth_router,
     user_profile_router,
@@ -22,7 +24,24 @@ from backend.routers import (
     admin_visit_requests_router
 )
 
-# Create middleware for CORS and rate limiting
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app: ASGIApp):
+        super().__init__(app)
+        self.security_headers = {
+            "X-Content-Type-Options": "nosniff",
+            "X-Frame-Options": "DENY",
+            "Strict-Transport-Security": "max-age=63072000; includeSubDomains",
+            "Content-Security-Policy": "default-src 'self'",
+            "Referrer-Policy": "same-origin",
+            "Permissions-Policy": "geolocation=(), microphone=()"
+        }
+
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        response = await call_next(request)
+        response.headers.update(self.security_headers)
+        return response
+
+# Create middleware for CORS, security headers, and rate limiting
 middleware = [
     Middleware(
         CORSMiddleware,
@@ -36,6 +55,7 @@ middleware = [
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
         allow_headers=["*"],
     ),
+    Middleware(SecurityHeadersMiddleware),
 ]
 
 app = FastAPI(middleware=middleware)
