@@ -161,13 +161,15 @@ export default function MatchResultsPage() {
 
   const handleRequestVisit = useCallback(async (date, time) => {
     if (!date || !time) {
-      setError("Please select both a date and time.");
-      return;
+      const errorMessage = "Please select both a date and time.";
+      setError(errorMessage);
+      return { success: false, error: 'validation_error', message: errorMessage };
     }
 
     if (!selectedPet) {
-      setError("No pet selected for visit.");
-      return;
+      const errorMessage = "No pet selected for visit.";
+      setError(errorMessage);
+      return { success: false, error: 'no_pet_selected', message: errorMessage };
     }
 
     setIsSubmitting(true);
@@ -176,50 +178,51 @@ export default function MatchResultsPage() {
     try {
       const dateTime = new Date(`${date}T${time}`);
       
-      await api.post(`/visit-requests/${selectedPet.id}`, {
+      const response = await api.post(`/visit-requests/${selectedPet.id}`, {
         requested_at: dateTime.toISOString()
       });
       
-      setRequestedVisits(prev => [...prev, selectedPet.id]);
-      closeModal();
+      // If we get a response with success: false, it's a handled error case
+      if (response.data && response.data.success === false) {
+        return { 
+          success: false, 
+          error: 'api_error',
+          message: response.data.message || 'Could not schedule visit'
+        };
+      }
       
-      toast.success(`Visit request submitted for ${selectedPet.name}!`, {
-        position: "top-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      // Success case - update requested visits and close modal will be handled by the modal
+      setRequestedVisits(prev => [...prev, selectedPet.id]);
+      
+      return { 
+        success: true, 
+        message: `Visit request submitted for ${selectedPet.name}!`,
+        petName: selectedPet.name
+      };
+      
     } catch (err) {
-      // Extract error message from response or use a default message
+      console.error('Error in handleRequestVisit:', err);
       let errorMessage = 'Failed to submit visit request. Please try again.';
       
       if (err.response) {
-        // Check for scheduling conflict error
-        if (err.response.status === 400 && err.response.data?.error === 'Scheduling conflict') {
-          errorMessage = 'This time slot is already booked. Please choose another time.';
-        } 
-        // Check for duplicate request error
-        else if (err.response.status === 400 && err.response.data?.error === 'Duplicate request') {
-          errorMessage = err.response.data.message || 'You already have a pending visit request for this pet.';
-        }
-        // Fallback to server message if available
-        else if (err.response.data?.message) {
-          errorMessage = err.response.data.message;
+        // Handle specific error cases
+        if (err.response.status === 400) {
+          if (err.response.data?.error === 'Scheduling conflict') {
+            errorMessage = 'This time slot is already booked. Please choose another time.';
+          } else if (err.response.data?.error === 'Duplicate request') {
+            errorMessage = 'You already have a pending visit request for this pet.';
+          } else if (err.response.data?.message) {
+            errorMessage = err.response.data.message;
+          }
         }
       }
       
-      setError(errorMessage);
-      
-      toast.error(errorMessage, {
-        position: "top-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      return { 
+        success: false, 
+        error: 'request_error',
+        message: errorMessage,
+        details: err.message 
+      };
     } finally {
       setIsSubmitting(false);
     }

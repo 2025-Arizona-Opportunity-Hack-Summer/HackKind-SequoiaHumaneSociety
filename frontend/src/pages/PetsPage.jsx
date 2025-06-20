@@ -150,13 +150,18 @@ export default function PetsPage() {
       if (response.data && response.data.success === false) {
         console.log('Handled error response:', response.data);
         setError(response.data.message || 'Could not schedule visit');
-        return response.data;
+        return { 
+          success: false, 
+          error: 'api_error',
+          message: response.data.message || 'Could not schedule visit'
+        };
       }
       
       // Success case
       return { 
         success: true, 
-        message: `Visit request submitted for ${selectedPet.name}!` 
+        message: `Visit request submitted for ${selectedPet.name}!`,
+        petName: selectedPet.name
       };
       
     } catch (err) {

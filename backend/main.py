@@ -1,11 +1,15 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Union
+from typing import Union, Callable, Awaitable
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import OAuth2PasswordBearer
 from backend.logic.scheduler import start_scheduler  
 from fastapi.staticfiles import StaticFiles
+from backend.rate_limiter import apply_rate_limiting, limiter
 import os
+from contextlib import asynccontextmanager
+from fastapi.middleware import Middleware
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from backend.routers import (  
     auth_router,
     user_profile_router,
@@ -18,21 +22,26 @@ from backend.routers import (
     admin_visit_requests_router
 )
 
-app = FastAPI()
+# Create middleware for CORS and rate limiting
+middleware = [
+    Middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://localhost:3000",  
+            "http://localhost:3001",  
+            "http://127.0.0.1:3000", 
+            "http://127.0.0.1:3001",
+        ],
+        allow_credentials=True,  # CRITICAL for cookies
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+        allow_headers=["*"],
+    ),
+]
 
-# CRITICAL: CORS must be added BEFORE routes
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  
-        "http://localhost:3001",  
-        "http://127.0.0.1:3000", 
-        "http://127.0.0.1:3001",
-    ],
-    allow_credentials=True,  # CRITICAL for cookies
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allow_headers=["*"],
-)
+app = FastAPI(middleware=middleware)
+
+# Apply rate limiting
+app = apply_rate_limiting(app)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
@@ -72,11 +81,11 @@ app.include_router(visit_requests_router, prefix="/api")
 app.include_router(admin_visit_requests_router, prefix="/api")
 
 @app.get("/")
-def read_root():
+async def read_root():
     return {"Hello": "World"}
 
 @app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
+async def read_item(item_id: int, q: Union[str, None] = None):
     return {"item_id": item_id, "q": q}    
 
 app.mount("/static", StaticFiles(directory=os.path.join("backend", "static")), name="static")
