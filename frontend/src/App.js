@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdopterDashboard from './pages/AdopterDashboard';
 import MatchResultsPage from './pages/MatchResultsPage';
+import PetsPage from './pages/PetsPage';
 import NotFoundPage from "./pages/NotFoundPage";
 
 import LoadingSpinner from './components/common/LoadingSpinner';
@@ -154,6 +155,11 @@ function AppContent() {
           <ProtectedRoute>
             <MatchResultsPage />
           </ProtectedRoute>
+        } />
+        
+        {/* Public pets page */}
+        <Route path="/pets" element={
+          <PetsPage />
         } />
         
         {/* Redirect old /admin to /admin/dashboard */}
