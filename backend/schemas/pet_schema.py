@@ -10,8 +10,7 @@ class PetSpecies(str, Enum):
 
 class PetAgeGroup(str, Enum):
     NoPreference = "NoPreference"
-    Puppy = "Puppy"
-    Kitten = "Kitten"
+    Baby = "Baby"
     Young = "Young"
     Adult = "Adult"
     Senior = "Senior"

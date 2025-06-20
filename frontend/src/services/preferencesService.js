@@ -207,10 +207,11 @@ export const preferencesService = {
     // Determine if we should use 'NoPreference' for species
     const hasNoPreferenceSpecies = formData.pet_type === 'NoPreference';
     
-    // Age mapping - use 'Baby' when no preference is selected for species
+    // Age mapping - map 'Puppy' and 'Kitten' to 'Baby' for the backend
     const ageMap = {
-      'Baby': hasNoPreferenceSpecies ? 'Baby' : 
-             (formData.pet_type || '').toLowerCase() === 'dog' ? 'Puppy' : 'Kitten',
+      'Baby': 'Baby',
+      'Puppy': 'Baby',
+      'Kitten': 'Baby',
       'Young': 'Young',
       'Adult': 'Adult', 
       'Senior': 'Senior',
@@ -250,8 +251,8 @@ export const preferencesService = {
     };
     
     const preferences = {
-      // Set preferred_species to null when 'NoPreference' is selected
-      preferred_species: hasNoPreferenceSpecies ? null : (formData.pet_type || 'Dog'),
+      // Set preferred_species to 'NoPreference' when no preference is selected
+      preferred_species: hasNoPreferenceSpecies ? 'NoPreference' : (formData.pet_type || 'Dog'),
       pet_purpose: purposeMap[formData.pet_purpose] || 'Myself',
       has_children: Boolean(formData.has_children),
       has_dogs: hasDogs,

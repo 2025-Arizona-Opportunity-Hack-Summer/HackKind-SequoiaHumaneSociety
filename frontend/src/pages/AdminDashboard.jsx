@@ -5,10 +5,28 @@ import { petService } from '../services/petService';
 import api from '../services/api';
 import toast, { Toaster } from 'react-hot-toast';
 
+// Helper function to get display age group
+const getDisplayAgeGroup = (ageGroup, species) => {
+  if (ageGroup === 'Baby') {
+    return species === 'Dog' ? 'Puppy' : 'Kitten';
+  }
+  return ageGroup;
+};
+
+// Helper function to get backend age group
+const getBackendAgeGroup = (displayAgeGroup) => {
+  return displayAgeGroup === 'Puppy' || displayAgeGroup === 'Kitten' 
+    ? 'Baby' 
+    : displayAgeGroup;
+};
+
 const ENUMS = {
   species: ["Dog", "Cat"],
   sex: ["Male", "Female"],
-  age_group: [ "Puppy", "Kitten", "Young", "Adult", "Senior"],
+  // For display in the UI
+  age_group_display: ["Puppy", "Kitten", "Young", "Adult", "Senior"],
+  // For backend operations
+  age_group_values: ["Baby", "Young", "Adult", "Senior"],
   size: ["Small", "Medium", "Large", "ExtraLarge"],
   energy_level: ["Lap Pet", "Calm", "Moderate", "Very Active"],
   experience_level: ["Beginner", "Intermediate", "Advanced"],
@@ -287,16 +305,23 @@ export default function AdminDashboard() {
   };
 
   const handleEditPet = (pet) => {
+    setEditId(pet.id);
+    
+    // Convert backend age group to display value if needed
+    const displayAgeGroup = pet.age_group === 'Baby' 
+      ? pet.species === 'Dog' ? 'Puppy' : 'Kitten'
+      : pet.age_group;
+    
     setFormData({
-      name: pet.name,
-      species: pet.species,
-      breed: pet.breed,
-      age_group: pet.age_group,
-      sex: pet.sex,
-      size: pet.size,
-      energy_level: pet.energy_level,
-      experience_level: pet.experience_level,
-      hair_length: pet.hair_length,
+      name: pet.name || "",
+      species: pet.species || "",
+      breed: pet.breed || "",
+      age_group: displayAgeGroup || "",
+      sex: pet.sex || "",
+      size: pet.size || "",
+      energy_level: pet.energy_level || "",
+      experience_level: pet.experience_level || "",
+      hair_length: pet.hair_length || "",
       allergy_friendly: pet.allergy_friendly || false,
       special_needs: pet.special_needs || false,
       kid_friendly: pet.kid_friendly || false,
@@ -304,11 +329,17 @@ export default function AdminDashboard() {
       shelter_notes: pet.shelter_notes || "",
       status: pet.status || "Available",
       image: null,
-      existingImageUrl: pet.image_url
     });
-    setEditId(pet.id);
-    setImagePreview(null);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Set image preview if available
+    if (pet.primary_photo_url) {
+      setImagePreview(pet.primary_photo_url);
+    } else {
+      setImagePreview(null);
+    }
+    
+    // Open the modal
+    setIsModalOpen(true);
   };
 
   const handleDeletePet = async (id) => {
@@ -461,10 +492,19 @@ export default function AdminDashboard() {
               {ENUMS.species.map((v) => <option key={v}>{v}</option>)}
             </select>
             <input name="breed" placeholder="Breed" value={formData.breed} onChange={handleInputChange} className="p-2 border rounded" />
-            <select name="age_group" value={formData.age_group} onChange={handleInputChange} className="p-2 border rounded">
-              <option value="">Select Age Group</option>
-              {ENUMS.age_group.map((v) => <option key={v}>{v}</option>)}
-            </select>
+            <select 
+                name="age_group" 
+                value={formData.age_group} 
+                onChange={handleInputChange} 
+                className="p-2 border rounded"
+              >
+                <option value="">Select Age Group</option>
+                {ENUMS.age_group_display.map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
             <select name="sex" value={formData.sex} onChange={handleInputChange} className="p-2 border rounded">
               <option value="">Select Sex</option>
               {ENUMS.sex.map((v) => <option key={v}>{v}</option>)}

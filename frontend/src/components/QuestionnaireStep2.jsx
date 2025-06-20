@@ -14,10 +14,11 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
 
   const petType = formData.pet_type || 'dog';
   const isNoPreference = petType === 'NoPreference';
+  const isDog = petType.toLowerCase() === 'dog';
 
   const ageOptions = [
     { value: 'NoPreference', label: 'No preference' },
-    { value: 'Baby', label: isNoPreference ? 'Baby' : (petType === 'Dog' ? 'Puppy' : 'Kitten') },
+    { value: 'Baby', label: isNoPreference ? 'Baby' : (isDog ? 'Puppy' : 'Kitten') },
     { value: 'Young', label: 'Young' },
     { value: 'Adult', label: 'Adult' },
     { value: 'Senior', label: 'Senior' }

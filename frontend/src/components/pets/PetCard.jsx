@@ -146,10 +146,15 @@ const PetCard = ({ pet, onSelect, isSelected, isRequested }) => {
   };
   
   const generatePrimaryBadges = () => {
+    // Map age group for display
+    const displayAgeGroup = pet.age_group === 'Baby' 
+      ? pet.species === 'Dog' ? 'Puppy' : 'Kitten'
+      : pet.age_group;
+      
     const primaryBadges = [
       { label: 'Species', value: pet.species },
       { label: 'Breed', value: pet.breed },
-      { label: 'Age', value: pet.age_group },
+      { label: 'Age', value: displayAgeGroup },
       { label: 'Sex', value: pet.sex },
       { label: 'Size', value: pet.size },
       { label: 'Energy', value: pet.energy_level },

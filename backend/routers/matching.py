@@ -122,8 +122,8 @@ def get_pet_recommendations(
 
         print(f"Found {len(pet_vectors)} pet vectors")
         
-        # Filter pets by preferred species if specified
-        if preferences.preferred_species:
+        # Filter pets by preferred species if specified and not NoPreference
+        if preferences.preferred_species and preferences.preferred_species != "NoPreference":
             print(f"Filtering pets by preferred species: {preferences.preferred_species}")
             # Get all pets that match the preferred species
             matching_pets = db.query(Pet.id).filter(
@@ -139,11 +139,12 @@ def get_pet_recommendations(
             ]
             print(f"Found {len(filtered_pet_vectors)} pets matching preferred species")
             
-            if not filtered_pet_vectors:
+            if filtered_pet_vectors:
+                pet_vectors = filtered_pet_vectors
+            else:
                 print("No pets match the preferred species, falling back to all pets")
-                filtered_pet_vectors = pet_vectors
-            
-            pet_vectors = filtered_pet_vectors
+        elif preferences.preferred_species == "NoPreference":
+            print("No preference for species, considering all available pets")
 
         top_matches = get_top_pet_matches(adopter_vector, pet_vectors, top_k=50)
         print(f"Generated {len(top_matches)} matches")
