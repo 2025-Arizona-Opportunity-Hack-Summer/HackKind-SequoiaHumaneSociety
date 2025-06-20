@@ -1,3 +1,4 @@
+from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from backend.core.database import get_db
@@ -18,10 +19,86 @@ def request_visit(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
+    # Ensure requested_at is timezone-aware
+    from datetime import datetime, timezone
+    if payload.requested_at.tzinfo is None:
+        requested_at = payload.requested_at.replace(tzinfo=timezone.utc)
+    else:
+        requested_at = payload.requested_at.astimezone(timezone.utc)
+    
+    # Define time window for conflict checking
+    time_window_start = requested_at - timedelta(minutes=30)
+    time_window_end = requested_at + timedelta(minutes=30)
+    
+    # Check for any existing visits in the time window (both pending and confirmed)
+    existing_visits = db.query(VisitRequest).filter(
+        VisitRequest.pet_id == pet_id,
+        VisitRequest.status.in_(["Pending", "Confirmed"]),
+        VisitRequest.requested_at.between(time_window_start, time_window_end)
+    ).all()
+    
+    if existing_visits:
+        # Check if any of the existing visits are from the same user
+        user_existing_visit = next(
+            (v for v in existing_visits if v.user_id == user.id),
+            None
+        )
+        
+        if user_existing_visit:
+            error_msg = f"You already have a {user_existing_visit.status.lower()} visit request for this pet at {user_existing_visit.requested_at}."
+            print(f"Duplicate request: {error_msg}")
+            return {
+                "success": False,
+                "error": "duplicate_request",
+                "message": error_msg,
+                "existing_visit": {
+                    "id": user_existing_visit.id,
+                    "status": user_existing_visit.status,
+                    "requested_at": user_existing_visit.requested_at.isoformat()
+                }
+            }
+        
+        # If no user-specific conflict, but other users have visits
+        conflict_details = [
+            {
+                "id": v.id,
+                "requested_at": v.requested_at.isoformat(),
+                "status": v.status
+            } for v in existing_visits
+        ]
+        error_msg = "This time slot is no longer available. Please choose another time."
+        print(f"Scheduling conflict: {error_msg}")
+        print(f"Conflicting visits: {conflict_details}")
+        return {
+            "success": False,
+            "error": "scheduling_conflict",
+            "message": error_msg,
+            "conflicting_visits": conflict_details
+        }
+    
+    # Check if the same user has already requested a visit for this pet
+    existing_user_visit = db.query(VisitRequest).filter(
+        VisitRequest.user_id == user.id,
+        VisitRequest.pet_id == pet_id,
+        VisitRequest.status == "Pending"  # Only block if they have a pending request
+    ).first()
+    
+    if existing_user_visit:
+        return {
+            "success": False,
+            "error": "pending_request_exists",
+            "message": "You already have a pending visit request for this pet.",
+            "existing_request": {
+                "id": existing_user_visit.id,
+                "status": existing_user_visit.status,
+                "requested_at": existing_user_visit.requested_at.isoformat()
+            }
+        }
+    
     visit = VisitRequest(
         user_id=user.id,
         pet_id=pet_id,
-        requested_at=payload.requested_at,  
+        requested_at=payload.requested_at,
         status="Pending"
     )
     db.add(visit)

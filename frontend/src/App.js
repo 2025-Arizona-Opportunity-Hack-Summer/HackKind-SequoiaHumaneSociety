@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import LandingPage from "./pages/LandingPage";
 import Questionnaire from "./pages/Questionnaire";
@@ -175,9 +177,28 @@ function AppContent() {
 }
 
 function App() {
+  useEffect(() => {
+    window.toast = toast;
+    return () => {
+      delete window.toast;
+    };
+  }, []);
+
   return (
     <Router>
       <AuthProvider>
+        <ToastContainer
+          position="top-center"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
         <AppContent />
       </AuthProvider>
     </Router>

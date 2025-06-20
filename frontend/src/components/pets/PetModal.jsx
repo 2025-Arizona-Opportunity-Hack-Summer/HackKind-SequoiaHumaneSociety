@@ -113,22 +113,77 @@ const PetModal = ({ pet, onClose, onNext, onPrev, hasNext, hasPrev, onRequestVis
 
   const handleSubmitVisit = async (e) => {
     e.preventDefault();
+    
+    // Reset any previous errors
+    setError('');
+    
+    // Validate inputs
     if (!visitDate || !visitTime) {
-      setError('Please select both date and time');
+      const errorMsg = 'Please select both date and time';
+      setError(errorMsg);
+      if (window.toast) {
+        window.toast.error(errorMsg, { position: 'top-center', autoClose: 5000 });
+      }
       return;
     }
 
     setIsSubmitting(true);
-    setError('');
 
     try {
       // Call the onRequestVisit prop with the selected date and time
-      await onRequestVisit(visitDate, visitTime);
+      const result = await onRequestVisit(visitDate, visitTime);
       
-      // Close the modal or show success message
-      onClose();
+      // Check the result object for success/error
+      if (result && result.success) {
+        // Show success toast with the message from the result or a default one
+        const successMessage = result.message || 'Visit request submitted successfully!';
+        if (window.toast) {
+          window.toast.success(successMessage, {
+            position: 'top-center',
+            autoClose: 5000,
+          });
+        }
+        
+        // Close the modal after a short delay to allow the toast to be seen
+        setTimeout(() => {
+          onClose();
+        }, 500);
+      } else {
+        // Handle error case from the result object
+        const errorMessage = result?.message || 'Failed to schedule visit. Please try again.';
+        
+        // Show error toast
+        if (window.toast) {
+          window.toast.error(errorMessage, {
+            position: 'top-center',
+            autoClose: 5000,
+          });
+        }
+        
+        // Close the modal after showing the error
+        setTimeout(() => {
+          onClose();
+        }, 1000);
+      }
+      
     } catch (err) {
-      setError(err.message || 'Failed to schedule visit. Please try again.');
+      // This catch block is now only for unexpected errors
+      console.error('Unexpected error in handleSubmitVisit:', err);
+      
+      // Show a generic error message for unexpected errors
+      const errorMessage = 'An unexpected error occurred. Please try again.';
+      
+      if (window.toast) {
+        window.toast.error(errorMessage, {
+          position: 'top-center',
+          autoClose: 5000,
+        });
+      }
+      
+      // Close the modal on any error
+      setTimeout(() => {
+        onClose();
+      }, 1000);
     } finally {
       setIsSubmitting(false);
     }

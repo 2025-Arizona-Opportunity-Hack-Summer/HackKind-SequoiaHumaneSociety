@@ -67,7 +67,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
         email=user_data.email,
         full_name=user_data.full_name,
         phone_number=user_data.phone_number,
-        hashed_password=hashed_password,
+        password_hash=hashed_password,
         role='adopter'
     )
     

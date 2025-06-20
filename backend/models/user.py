@@ -7,6 +7,13 @@ from sqlalchemy.sql import func
 class UserRole(str, enum.Enum):
     Adopter = "adopter"
     Admin = "admin"
+    
+    @classmethod
+    def _missing_(cls, value):
+        for member in cls:
+            if member.value.lower() == str(value).lower():
+                return member
+        return None
 
 class User(Base):
     __tablename__ = "users"

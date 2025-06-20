@@ -192,7 +192,24 @@ export default function MatchResultsPage() {
         draggable: true,
       });
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Failed to submit visit request. Please try again.';
+      // Extract error message from response or use a default message
+      let errorMessage = 'Failed to submit visit request. Please try again.';
+      
+      if (err.response) {
+        // Check for scheduling conflict error
+        if (err.response.status === 400 && err.response.data?.error === 'Scheduling conflict') {
+          errorMessage = 'This time slot is already booked. Please choose another time.';
+        } 
+        // Check for duplicate request error
+        else if (err.response.status === 400 && err.response.data?.error === 'Duplicate request') {
+          errorMessage = err.response.data.message || 'You already have a pending visit request for this pet.';
+        }
+        // Fallback to server message if available
+        else if (err.response.data?.message) {
+          errorMessage = err.response.data.message;
+        }
+      }
+      
       setError(errorMessage);
       
       toast.error(errorMessage, {

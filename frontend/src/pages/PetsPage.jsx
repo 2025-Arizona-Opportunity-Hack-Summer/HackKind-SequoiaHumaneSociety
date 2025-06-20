@@ -125,13 +125,15 @@ export default function PetsPage() {
 
   const handleRequestVisit = useCallback(async (date, time) => {
     if (!date || !time) {
-      setError("Please select both a date and time.");
-      return;
+      const errorMessage = "Please select both a date and time.";
+      setError(errorMessage);
+      return { success: false, error: 'validation_error', message: errorMessage };
     }
 
     if (!selectedPet) {
-      setError("No pet selected for visit.");
-      return;
+      const errorMessage = "No pet selected for visit.";
+      setError(errorMessage);
+      return { success: false, error: 'no_pet_selected', message: errorMessage };
     }
 
     setIsSubmitting(true);
@@ -140,36 +142,33 @@ export default function PetsPage() {
     try {
       const dateTime = new Date(`${date}T${time}`);
       
-      await api.post(`/visit-requests/${selectedPet.id}`, {
+      const response = await api.post(`/visit-requests/${selectedPet.id}`, {
         requested_at: dateTime.toISOString()
       });
       
-      // Show success toast
-      toast.success(`Visit request submitted for ${selectedPet.name}!`, {
-        position: "top-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      // If we get a response with success: false, it's a handled error case
+      if (response.data && response.data.success === false) {
+        console.log('Handled error response:', response.data);
+        setError(response.data.message || 'Could not schedule visit');
+        return response.data;
+      }
       
-      // Close the modals
-      setShowVisitRequest(false);
-      handleCloseModal();
+      // Success case
+      return { 
+        success: true, 
+        message: `Visit request submitted for ${selectedPet.name}!` 
+      };
+      
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Failed to submit visit request. Please try again.';
+      console.error('Unexpected error in handleRequestVisit:', err);
+      const errorMessage = 'An unexpected error occurred. Please try again.';
       setError(errorMessage);
-      
-      // Show error toast
-      toast.error(errorMessage, {
-        position: "top-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      return { 
+        success: false, 
+        error: 'unexpected_error', 
+        message: errorMessage,
+        details: err.message 
+      };
     } finally {
       setIsSubmitting(false);
     }
@@ -201,9 +200,8 @@ export default function PetsPage() {
     return <LoadingSpinner />;
   }
 
-  if (error) {
-    return <ErrorState message={error} onRetry={() => fetchPets(1)} />;
-  }
+  // We'll handle errors via toast notifications instead of showing an error page
+  // The error state is managed locally in the component for form validation
 
   if (!isLoading && !pets.length) {
     return <EmptyState message="No pets found" />;
