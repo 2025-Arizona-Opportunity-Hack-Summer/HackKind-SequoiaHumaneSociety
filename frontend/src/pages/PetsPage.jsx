@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { petService } from '../services/petService';
 import PetCard from '../components/pets/PetCard';
@@ -12,6 +12,8 @@ import VisitRequestModal from '../components/visits/VisitRequestModal';
 export default function PetsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const petIdFromUrl = searchParams.get('petId');
   const [pets, setPets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -84,17 +86,58 @@ export default function PetsPage() {
     }
   };
 
-  const handlePetClick = (pet) => {
-    if (!user) {
-      // Redirect to sign-up if not logged in
-      navigate('/signup');
-      return;
+  // Handle URL changes and auto-open modal
+  useEffect(() => {
+    if (petIdFromUrl) {
+      console.log('Pet ID from URL:', petIdFromUrl);
+      console.log('Available pets:', pets.map(p => ({ id: p.id, name: p.name })));
+      
+      const petToShow = pets.find(pet => String(pet.id) === String(petIdFromUrl));
+      
+      if (petToShow) {
+        console.log('Found pet to show:', petToShow.name);
+        setSelectedPet(petToShow);
+      } else if (pets.length > 0) {
+        console.log('Pet not found in current page. Fetching pet details...');
+        // If pet not found in current page, try to fetch it directly
+        const fetchPetDetails = async () => {
+          try {
+            const pet = await petService.getPet(petIdFromUrl);
+            if (pet) {
+              console.log('Fetched pet details:', pet.name);
+              setSelectedPet(pet);
+              // Add to pets list if not already there
+              setPets(prevPets => {
+                if (!prevPets.some(p => String(p.id) === String(pet.id))) {
+                  return [...prevPets, pet];
+                }
+                return prevPets;
+              });
+            }
+          } catch (error) {
+            console.error('Error fetching pet details:', error);
+          }
+        };
+        
+        fetchPetDetails();
+      }
     }
+  }, [petIdFromUrl, pets]);
+
+  const handlePetClick = (pet) => {
     setSelectedPet(pet);
+    // Update URL with petId
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set('petId', pet.id);
+    setSearchParams(newSearchParams);
   };
 
   const handleCloseModal = () => {
     setSelectedPet(null);
+    // Remove petId from URL when closing modal
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.delete('petId');
+    setSearchParams(newSearchParams);
   };
 
   if (isLoading && !pets.length) {
@@ -115,7 +158,7 @@ export default function PetsPage() {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {pets.map((pet) => (
-          <div key={pet.id} onClick={() => handlePetClick(pet)}>
+          <div key={pet.id} onClick={() => handlePetClick(pet)} className="cursor-pointer">
             <PetCard 
               pet={pet} 
               onSelect={() => {}} 
@@ -135,11 +178,12 @@ export default function PetsPage() {
         </div>
       )}
 
-      {selectedPet && user && (
+      {selectedPet && (
         <VisitRequestModal
           pet={selectedPet}
           onClose={handleCloseModal}
           onSuccess={handleCloseModal}
+          showSignUpPrompt={!user}
         />
       )}
     </div>

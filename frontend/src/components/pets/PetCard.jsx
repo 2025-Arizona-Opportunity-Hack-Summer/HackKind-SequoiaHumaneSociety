@@ -30,7 +30,7 @@ const getBadgeColor = (label, value) => {
 };
 
 const SocialShare = ({ pet }) => {
-  const petUrl = `${window.location.origin}/pets/${pet.id}`;
+  const petUrl = `${window.location.origin}/pets?petId=${pet.id}`;
   const shareText = `Check out ${pet.name || 'this adorable pet'} at Sequoia Humane Society!`;
   const shareImage = pet.primary_photo_url;
 
@@ -240,28 +240,15 @@ const PetCard = ({ pet, onSelect, isSelected, isRequested }) => {
       </div>
       
       <div className="p-5">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h3 className="text-xl font-bold text-gray-800 group-hover:text-red-600 transition-colors">
-              {pet.name}
-            </h3>
-            <div className="flex items-center text-sm text-gray-500 mt-1">
-              <span className="capitalize">{pet.species}</span>
-              {pet.breed && (
-                <>
-                  <span className="mx-1.5">•</span>
-                  <span>{pet.breed}</span>
-                </>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center">
-            {pet.special_needs && (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
-                Special Needs
-              </span>
-            )}
-          </div>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-bold text-gray-800 group-hover:text-red-600 transition-colors">
+            {pet.name}
+          </h3>
+          {pet.special_needs && (
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+              Special Needs
+            </span>
+          )}
         </div>
         
         <div className="flex flex-wrap gap-2 mb-3">
