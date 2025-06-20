@@ -3,23 +3,11 @@ import api from './api';
 const PREFERENCES_ENDPOINT = '/users/me/preferences';
 
 const logErrorDetails = (error, context) => {
-  console.error(`[${context}] Error:`, error);
-  if (error.response) {
-
-    console.error('Response data:', error.response.data);
-    console.error('Response status:', error.response.status);
-    console.error('Response headers:', error.response.headers);
-  } else if (error.request) {
-    console.error('Request was made but no response received:', error.request);
-  } else {
-    console.error('Error message:', error.message);
-  }
-  console.error('Error config:', error.config);
+  // Error details are now handled by the error handling in the API layer
 };
 
 export const preferencesService = {
   async savePreferences(preferencesData) {
-    console.log('Saving preferences with data:', preferencesData);
     
     let preferences, trainingTraits;
     if (preferencesData.preferences && preferencesData.trainingTraits !== undefined) {
@@ -31,12 +19,9 @@ export const preferencesService = {
     }
     
     const fullUrl = `${api.defaults.baseURL}${PREFERENCES_ENDPOINT}`.replace('//api', '/api');
-    console.log('Full API URL:', fullUrl);
-    
     try {
       let preferencesResult;
       try {
-        console.log('Attempting to update existing preferences...');
         const response = await api.put(PREFERENCES_ENDPOINT, preferences, {
           baseURL: api.defaults.baseURL,
           url: PREFERENCES_ENDPOINT,
@@ -44,21 +29,18 @@ export const preferencesService = {
           validateStatus: status => status < 400 || status === 404
         });
         
-        console.log('Successfully updated preferences:', response.data);
         preferencesResult = response.data;
         
       } catch (updateError) {
         logErrorDetails(updateError, 'Update Preferences');
         
         if (updateError.response?.status === 404) {
-          console.log('No existing preferences found, creating new...');
           try {
             const response = await api.post(PREFERENCES_ENDPOINT, preferences, {
               baseURL: api.defaults.baseURL,
               url: PREFERENCES_ENDPOINT,
               maxRedirects: 0
             });
-            console.log('Successfully created new preferences:', response.data);
             preferencesResult = response.data;
           } catch (createError) {
             logErrorDetails(createError, 'Create Preferences');
@@ -79,9 +61,7 @@ export const preferencesService = {
       
       if (trainingTraits && trainingTraits.length > 0) {
         try {
-          console.log('About to save training traits:', trainingTraits);
           await this.saveTrainingTraits(trainingTraits);
-          console.log('Successfully saved training traits');
         } catch (traitsError) {
           console.error('Failed to save training traits, but preferences were saved:', traitsError);
         }
@@ -126,19 +106,15 @@ export const preferencesService = {
 
   async saveTrainingTraits(traitsArray) {
     try {
-      console.log('1. Starting saveTrainingTraits with traitsArray:', traitsArray);
       
       if (!traitsArray || !Array.isArray(traitsArray)) {
         console.error('Invalid traitsArray:', traitsArray);
         return;
       }
       
-      console.log('2. Fetching current training traits...');
       const currentTraits = await this.getTrainingTraits();
-      console.log('3. Current traits from server:', currentTraits);
       
       const currentTraitNames = currentTraits.map(t => t.trait || t);
-      console.log('4. Current trait names:', currentTraitNames);
       
       const traitsToSave = traitsArray
         .filter(trait => {
@@ -156,13 +132,9 @@ export const preferencesService = {
           return !isDuplicate;
         });
       
-      console.log('5. Traits to save after filtering:', traitsToSave);
-      
       const savePromises = traitsToSave.map(trait => {
-        console.log(`6. Preparing API call for trait:`, { trait });
         return api.post('/preferences/training-traits', { trait })
           .then(response => {
-            console.log(`Successfully saved trait: ${trait}`, response.data);
             return response;
           })
           .catch(error => {
@@ -176,16 +148,14 @@ export const preferencesService = {
       });
       
       if (savePromises.length > 0) {
-        console.log(`7. Sending ${savePromises.length} traits to server...`);
         const results = await Promise.all(savePromises);
-        console.log('8. Successfully saved all training traits:', results.map(r => r.data));
         return results;
       } else {
-        console.log('9. No new training traits to save');
+        console.log('No new training traits to save');
         return [];
       }
     } catch (error) {
-      console.error('10. Error in saveTrainingTraits:', error);
+      console.error('Error in saveTrainingTraits:', error);
       logErrorDetails(error, 'Save Training Traits');
       throw new Error('Failed to save training traits');
     }
@@ -205,9 +175,6 @@ export const preferencesService = {
   },
 
   mapQuestionnaireToPreferences(formData) {
-    console.log('=== MAPPING FORM DATA TO PREFERENCES ===');
-    console.log('Raw form data:', formData);
-
     const trainingTraitMap = {
       'house_trained': 'HouseTrained',
       'litter_trained': 'LitterTrained',
@@ -219,8 +186,6 @@ export const preferencesService = {
     .filter(trait => trait !== 'none' && trait !== 'allergy_friendly')
     .map(trait => trainingTraitMap[trait])
     .filter(trait => trait); 
-   console.log('Raw required_traits:', formData.required_traits);
-   console.log('Mapped training traits:', trainingTraits);
     
     let hasDogs = false;
     let hasCats = false;
@@ -279,17 +244,6 @@ export const preferencesService = {
       'MyFamily': 'MyFamily'
     };
     
-    console.log('Mapping details:');
-    console.log('- pet_type:', formData.pet_type);
-    console.log('- pet_purpose:', formData.pet_purpose, '->', purposeMap[formData.pet_purpose]);
-    console.log('- ownership_experience:', formData.ownership_experience, '->', ownershipMap[formData.ownership_experience]);
-    console.log('- preferred_age:', formData.preferred_age, '->', ageMap[formData.preferred_age]);
-    console.log('- preferred_sex:', formData.preferred_sex, '->', sexMap[formData.preferred_sex]);
-    console.log('- preferred_size:', formData.preferred_size, '->', sizeMap[formData.preferred_size]);
-    console.log('- activity_level:', formData.activity_level, '->', energyLevelMap[formData.activity_level]);
-    console.log('- hair_length:', formData.hair_length, '->', hairLengthMap[formData.hair_length]);
-    console.log('- has_pets:', formData.has_pets, '-> hasDogs:', hasDogs, 'hasCats:', hasCats);
-    
     const preferences = {
       preferred_species: formData.pet_type || 'Dog',
       pet_purpose: purposeMap[formData.pet_purpose] || 'Myself',
@@ -317,7 +271,6 @@ export const preferencesService = {
     requiredFields.forEach(field => {
       if (preferences[field] === undefined) {
         undefinedFields.push(field);
-        console.warn(`Missing required field in preferences: ${field}`);
       }
     });
 
@@ -325,9 +278,6 @@ export const preferencesService = {
       console.error('CRITICAL: Undefined fields detected:', undefinedFields);
     }
 
-    console.log('Final mapped preferences:', preferences);
-    console.log('Training traits to save:', trainingTraits);
-    console.log('=== END MAPPING ===');
     return { preferences, trainingTraits };
   }
 };

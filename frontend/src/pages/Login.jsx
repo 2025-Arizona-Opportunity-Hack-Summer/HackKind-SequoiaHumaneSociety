@@ -28,7 +28,6 @@ export default function Login() {
     setError("");
 
     try {
-      console.log('Attempting login with:', formData);
       const response = await login(formData);
       
       if (!response.user) {
@@ -36,7 +35,6 @@ export default function Login() {
       }
       
       const userRole = response.user.role?.toLowerCase() || 'adopter';
-      console.log('Login successful, user role:', userRole, 'Full response:', response);
       
       const redirectPath = (() => {
         if (location.state?.from?.pathname && 
@@ -50,17 +48,10 @@ export default function Login() {
         return '/dashboard';
       })();
       
-      console.log('Redirecting to:', redirectPath);
       navigate(redirectPath, { replace: true });
       
     } catch (err) {
-      console.error('Login error:', {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-        statusText: err.response?.statusText,
-      });
-      
+      // Login error occurred
       const errorMessage = err.response?.data?.detail || 
                          err.response?.data?.message || 
                          err.message || 

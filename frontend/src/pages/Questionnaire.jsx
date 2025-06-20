@@ -17,13 +17,8 @@ export default function Questionnaire() {
 
     setIsSubmitting(true);
     try {
-      console.log('Form data before mapping:', formData);
-      
       const preferencesData = preferencesService.mapQuestionnaireToPreferences(formData);
-      console.log('Mapped preferences data:', preferencesData);
-
-      const response = await preferencesService.savePreferences(preferencesData);
-      console.log('Save preferences response:', response);
+      await preferencesService.savePreferences(preferencesData);
       
       toast.success('Preferences saved successfully! Redirecting to your matches...');
       
@@ -34,25 +29,17 @@ export default function Questionnaire() {
         },
       });
     } catch (error) {
-      console.error('Error saving preferences:', error);
-      
       let errorMessage = 'Failed to save preferences. Please try again.';
       
       if (error.response) {
-        console.error('Error response data:', error.response.data);
-        console.error('Error status:', error.response.status);
-        
         if (error.response.status === 422) {
           errorMessage = 'Validation error. Please check your inputs and try again.';
-          console.error('Validation errors:', error.response.data.detail);
         } else if (error.response.status >= 500) {
           errorMessage = 'Server error. Please try again later.';
         }
       } else if (error.request) {
-        console.error('No response received:', error.request);
         errorMessage = 'No response from server. Please check your connection and try again.';
       } else {
-        console.error('Error message:', error.message);
         errorMessage = error.message || errorMessage;
       }
       

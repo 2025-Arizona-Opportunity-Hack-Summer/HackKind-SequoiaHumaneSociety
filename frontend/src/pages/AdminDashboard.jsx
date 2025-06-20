@@ -60,24 +60,12 @@ export default function AdminDashboard() {
         setPets(petsData.items || petsData); 
         
         const response = await api.get('/admin/visit-requests');
-        console.log('Visit requests response:', response.data);
-        
-        if (response.data && response.data.length > 0) {
-          console.log('First visit data:', response.data[0]);
-          console.log('First visit pet data:', response.data[0].pet);
-          console.log('First visit pet ID:', response.data[0].pet?.id);
-          console.log('First visit pet photo URL:', response.data[0].pet?.photo_url);
-          
-          const petId = response.data[0].pet?.id;
-          if (petId) {
-            console.log('Constructed image URL:', `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/pets/${petId}/photo`);
-          }
-        }
+        // Visit requests data loaded
         
         setVisits(response.data || []);
         
       } catch (err) {
-        console.error('Failed to fetch data:', err);
+        // Error fetching data
         setError('Failed to load data. Please try again later.');
       } finally {
         setIsLoading(false);
@@ -203,18 +191,12 @@ export default function AdminDashboard() {
         }
       });
       
-      console.log('Prepared pet data:', JSON.stringify(petData, null, 2));
-
       let response;
       if (editId !== null) {
-        console.log(`Updating pet with ID: ${editId}`);
         try {
           response = await api.put(`/pets/${editId}`, petData);
-          console.log('Update response:', response);
           
           if (formData.image) {
-            console.log('Uploading new image...');
-            
             validateImageFile(formData.image);
             
             const imageFormData = new FormData();
@@ -230,25 +212,18 @@ export default function AdminDashboard() {
                 timeout: 30000,
               }
             );
-            console.log('Image upload successful');
             toast.success('Pet updated successfully with new image');
           } else {
             toast.success('Pet updated successfully');
           }
         } catch (updateError) {
-          console.error('Update error:', updateError);
           throw updateError;
         }
       } else {
-        console.log('Creating new pet');
         try {
-          console.log('Creating pet with data:', petData);
           response = await api.post('/pets', petData);
-          console.log('Create response:', response);
           
           if (formData.image) {
-            console.log('Uploading image for new pet...');
-            
             validateImageFile(formData.image);
             
             const imageFormData = new FormData();
@@ -264,7 +239,6 @@ export default function AdminDashboard() {
                 timeout: 30000, 
               }
             );
-            console.log('Image upload successful');
             toast.success('Pet created successfully with image');
           } else {
             toast.success('Pet created successfully');
@@ -301,7 +275,7 @@ export default function AdminDashboard() {
       setImagePreview(null);
       
     } catch (err) {
-      console.error('Failed to save pet:', err);
+      // Error saving pet
       const errorMessage = err.response?.data?.detail || 
                            err.response?.data?.message || 
                            err.message || 
@@ -371,7 +345,7 @@ export default function AdminDashboard() {
       }
       toast.success('Pet deleted successfully');
     } catch (err) {
-      console.error('Failed to delete pet:', err);
+      // Error deleting pet
       toast.error('Failed to delete pet. Please try again.');
     } finally {
       setIsLoading(false);
@@ -699,7 +673,7 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {visits.map((visit) => {
-                    console.log('Visit object:', visit);
+                    // Visit object processed
                     
                     const requestedDate = new Date(visit.requested_at);
                     const formattedDate = requestedDate.toLocaleDateString('en-US', {

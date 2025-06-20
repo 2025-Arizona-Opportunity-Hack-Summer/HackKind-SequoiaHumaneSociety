@@ -20,43 +20,24 @@ api.interceptors.request.use(
   (config) => {
     config.url = ensureApiPrefix(config.url);
     
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`, {
-        data: config.data,
-        params: config.params,
-        headers: config.headers,
-      });
-    }
+    // Request interceptor - no logging in production
     
     return config;
   },
   (error) => {
-    console.error('[API] Request error:', error);
+    // Request error
     return Promise.reject(error);
   }
 );
 
 api.interceptors.response.use(
   (response) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[API] ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status}`, {
-        data: response.data,
-        headers: response.headers,
-      });
-    }
+    // Response interceptor - no logging in production
     return response;
   },
   (error) => {
     if (error.response) {
-      console.error(
-        `[API] ${error.response.status} ${error.config.method?.toUpperCase()} ${error.config.url}`,
-        {
-          status: error.response.status,
-          statusText: error.response.statusText,
-          data: error.response.data,
-          headers: error.response.headers,
-        }
-      );
+      // API error response
 
       if (error.response.status === 401) {
         if (!window.location.pathname.includes('/login')) {
@@ -66,9 +47,9 @@ api.interceptors.response.use(
         }
       }
     } else if (error.request) {
-      console.error('[API] No response received:', error.request);
+      // No response received from server
     } else {
-      console.error('[API] Error:', error.message);
+      // Error in request setup
     }
     return Promise.reject(error);
   }

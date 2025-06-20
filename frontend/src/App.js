@@ -29,14 +29,14 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
 
   if (!isAuthenticated) {
     const redirectTo = location.pathname + (location.search || '');
-    console.log('Storing redirect URL:', redirectTo);
+
     return <Navigate to="/login" state={{ from: { pathname: redirectTo } }} replace />;
   }
 
   if (requiredRole) {
     const userRole = user?.role?.toLowerCase();
     if (userRole !== requiredRole.toLowerCase()) {
-      console.warn(`User role ${userRole} does not have access to this route. Required role: ${requiredRole}`);
+
       const redirectTo = userRole === 'admin' ? '/admin' : '/dashboard';
       return <Navigate to={redirectTo} replace />;
     }
@@ -64,7 +64,7 @@ const PublicRoute = ({ children }) => {
       redirectTo = user.role?.toLowerCase() === 'admin' ? '/admin' : '/dashboard';
     }
     
-    console.log('Redirecting authenticated user to:', redirectTo);
+
     return <Navigate to={redirectTo} replace />;
   }
 
@@ -94,7 +94,7 @@ function AppContent() {
       try {
         await initializeAuth();
       } catch (error) {
-        console.error('Failed to initialize auth:', error);
+        // Error initializing auth
       } finally {
         setIsInitialized(true);
       }

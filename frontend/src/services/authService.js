@@ -1,7 +1,6 @@
 import api from './api';
 
 const handleApiError = (error, defaultMessage = 'An error occurred') => {
-  console.error('[Auth Service]', error);
   
   if (!error.response) {
     throw new Error('Network error. Please check your connection and try again.');
@@ -37,13 +36,11 @@ export const authService = {
       const { user: userData } = loginResponse.data;
       
       if (!userData || !userData.role) {
-        console.warn('No user role received in login response');
         userData.role = 'adopter'; 
       }
       
       localStorage.setItem('user', JSON.stringify(userData));
       
-      console.log('User logged in successfully:', userData);
       return { user: userData };
     } catch (error) {
       throw handleApiError(error, 'Login failed. Please check your credentials and try again.');
@@ -66,10 +63,10 @@ export const authService = {
       try {
         await api.post('/auth/logout');
       } catch (error) {
-        console.warn('Logout API call failed, but local session was cleared', error);
+        // Logout API call failed, but local session was cleared
       }
     } catch (error) {
-      console.error('Error during logout:', error);
+      // Error during logout
       localStorage.removeItem('user');
       throw error;
     }
@@ -88,7 +85,7 @@ export const authService = {
       }
       return response.data;
     } catch (error) {
-      console.error('Error getting current user:', error);
+      // Error getting current user
       if (error.response?.status === 401) {
         authService.logout();
       }

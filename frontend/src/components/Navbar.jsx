@@ -6,19 +6,14 @@ export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   
-  console.log('Navbar - User:', user);
-  console.log('Navbar - isAuthenticated:', isAuthenticated);
-  if (user) {
-    console.log('Navbar - User role:', user.role);
-    console.log('Navbar - Is admin:', user.role?.toLowerCase() === 'admin');
-  }
+  // User authentication state is managed by the AuthContext
 
   const handleLogout = async () => {
     try {
       await logout();
       navigate('/login');
     } catch (error) {
-      console.error('Failed to log out', error);
+      // Error during logout
     }
   };
 

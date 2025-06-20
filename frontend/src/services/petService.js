@@ -30,7 +30,7 @@ export const petService = {
       } else if (error.response?.status === 404) {
         return [];
       }
-      console.error('Error fetching matches:', error);
+      // Error fetching matches
       throw new Error(error.response?.data?.message || 'Failed to load pet matches. Please try again later.');
     }
   }

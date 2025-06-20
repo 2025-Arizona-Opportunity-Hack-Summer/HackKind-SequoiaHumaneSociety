@@ -62,18 +62,14 @@ export default function Signup() {
         role: "Adopter"  
       });
       
-      console.log('Registration successful, logging in...');
-      
       await authService.login({
         email: formData.email,
         password: formData.password
       });
-      
-      console.log('Login successful, navigating to questionnaire...');
       navigate('/questionnaire', { replace: true });
 
     } catch (err) {
-      console.error("Signup error:", err);
+      // Signup error
       setError(err.message || "Failed to create account. Please try again.");
     } finally {
       setIsLoading(false);

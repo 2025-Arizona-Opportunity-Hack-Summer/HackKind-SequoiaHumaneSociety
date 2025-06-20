@@ -25,11 +25,7 @@ export default function AdopterDashboard() {
         setPreferences(hasPreferences ? prefsData : null);
         setTrainingTraits(traitsRes || []);
       } catch (err) {
-        console.error("Error fetching dashboard data:", err);
-        if (err.response) {
-          console.error('Response data:', err.response.data);
-          console.error('Status:', err.response.status);
-        }
+        // Error fetching dashboard data
       } finally {
         setLoading(false);
       }

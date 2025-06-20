@@ -101,7 +101,7 @@ const PetCard = ({ pet, onSelect, isSelected, isRequested }) => {
     const trainingBadges = pet.training_traits?.map(trait => ({
       label: trait.replace(/([A-Z])/g, ' $1').trim(),
       value: true,
-      color: 'bg-emerald-50 text-emerald-700 border-emerald-100'
+      color: 'bg-green-50 text-green-700 border-green-100'
     })) || [];
     
     const allAdditionalBadges = [
@@ -477,7 +477,7 @@ export default function MatchResultsPage() {
       
       return hasPreferences || hasTrainingTraits; 
     } catch (error) {
-      console.error('Error checking user profile:', error);
+      // Error checking user profile
       return false;
     }
   }, []);
@@ -601,7 +601,7 @@ export default function MatchResultsPage() {
         draggable: true,
       });
     } catch (err) {
-      console.error('Error submitting visit request:', err);
+      // Error submitting visit request
       const errorMessage = err.response?.data?.message || 'Failed to submit visit request. Please try again.';
       setError(errorMessage);
       

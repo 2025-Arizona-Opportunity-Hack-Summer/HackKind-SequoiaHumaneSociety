@@ -19,9 +19,4 @@ const env = environment === 'test' ? 'test' : environment === 'production' ? 'pr
 export const API_BASE_URL = API_CONFIG[env].baseURL;
 export const API_TIMEOUT = API_CONFIG[env].timeout;
 
-if (process.env.NODE_ENV === 'development') {
-  console.log(`[API] Environment: ${env}`, {
-    baseURL: API_BASE_URL,
-    timeout: API_TIMEOUT,
-  });
-}
+// Environment configuration is set based on NODE_ENV

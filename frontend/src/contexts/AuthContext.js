@@ -31,7 +31,6 @@ export const AuthProvider = ({ children }) => {
       if (storedUser) {
         try {
           const userData = JSON.parse(storedUser);
-          console.log('Found user in localStorage:', userData);
           setUser(userData);
           
           try {
@@ -40,31 +39,29 @@ export const AuthProvider = ({ children }) => {
               setUser(freshUserData);
             }
           } catch (error) {
-            console.log('Session invalid, clearing user data');
+            // Session invalid, clearing user data
             localStorage.removeItem('user');
             setUser(null);
           }
           return;
         } catch (e) {
-          console.error('Error parsing stored user data:', e);
+          // Error parsing stored user data
         }
       }
 
       try {
-        console.log('Fetching user data from API');
         const userData = await authService.getCurrentUser();
-        console.log('Fetched user data:', userData);
         setUser(userData);
       } catch (error) {
-        console.error('Failed to fetch user data:', error);
+        // Failed to fetch user data
         if (error.response?.status === 401) {
-          console.log('Token invalid, logging out');
+          // Token invalid, logging out
           await authService.logout();
         }
         setUser(null);
       }
     } catch (error) {
-      console.error('Auth initialization error:', error);
+      // Auth initialization error
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -88,10 +85,9 @@ export const AuthProvider = ({ children }) => {
       
       setUser(response.user);
       
-      console.log('User logged in:', response.user);
       return response.user;
     } catch (error) {
-      console.error('Login error:', error);
+      // Login error
       setError(error.message || 'Login failed');
       throw error;
     } finally {
@@ -106,7 +102,7 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       setError(null);
     } catch (error) {
-      console.error('Logout error:', error);
+      // Logout error
       setError('Failed to logout');
     } finally {
       setIsLoading(false);
@@ -125,7 +121,7 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       return userData;
     } catch (error) {
-      console.error('Failed to refresh user data:', error);
+      // Failed to refresh user data
       if (error.response?.status === 401) {
         await logout();
       }
