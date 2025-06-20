@@ -8,7 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 // Components
 import PetCard from '../components/pets/PetCard';
-import VisitRequestModal from '../components/visits/VisitRequestModal';
+import PetModal from '../components/pets/PetModal';
 import MatchResultsHeader from '../components/MatchResultsHeader';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ErrorState from '../components/ui/ErrorState';
@@ -129,8 +129,38 @@ export default function MatchResultsPage() {
     }
   };
 
-  const handleSubmitRequest = async () => {
-    if (!visitDate || !visitTime) {
+  // handleSubmitRequest has been replaced with handleRequestVisit
+
+  const handlePetSelect = (pet) => {
+    setSelectedPet(pet);
+    setError('');
+  };
+
+  const closeModal = () => {
+    setSelectedPet(null);
+    setVisitDate('');
+    setVisitTime('');
+    setError('');
+  };
+
+  const handleNextPet = useCallback(() => {
+    if (!selectedPet) return;
+    const currentIndex = pets.findIndex(pet => pet.id === selectedPet.id);
+    if (currentIndex < pets.length - 1) {
+      setSelectedPet(pets[currentIndex + 1]);
+    }
+  }, [pets, selectedPet]);
+
+  const handlePrevPet = useCallback(() => {
+    if (!selectedPet) return;
+    const currentIndex = pets.findIndex(pet => pet.id === selectedPet.id);
+    if (currentIndex > 0) {
+      setSelectedPet(pets[currentIndex - 1]);
+    }
+  }, [pets, selectedPet]);
+
+  const handleRequestVisit = useCallback(async (date, time) => {
+    if (!date || !time) {
       setError("Please select both a date and time.");
       return;
     }
@@ -144,20 +174,16 @@ export default function MatchResultsPage() {
     setError("");
 
     try {
-      const dateTime = new Date(`${visitDate}T${visitTime}`);
+      const dateTime = new Date(`${date}T${time}`);
       
       await api.post(`/visit-requests/${selectedPet.id}`, {
         requested_at: dateTime.toISOString()
       });
       
       setRequestedVisits(prev => [...prev, selectedPet.id]);
+      closeModal();
       
-      const petName = selectedPet.name;
-      setSelectedPet(null);
-      setVisitDate("");
-      setVisitTime("");
-      
-      toast.success(`Visit request submitted for ${petName}!`, {
+      toast.success(`Visit request submitted for ${selectedPet.name}!`, {
         position: "top-center",
         autoClose: 5000,
         hideProgressBar: false,
@@ -180,19 +206,7 @@ export default function MatchResultsPage() {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handlePetSelect = (pet) => {
-    setSelectedPet(pet);
-    setError('');
-  };
-
-  const closeModal = () => {
-    setSelectedPet(null);
-    setVisitDate('');
-    setVisitTime('');
-    setError('');
-  };
+  }, [selectedPet]);
 
   // Render loading state
   if (isLoading) {
@@ -304,18 +318,17 @@ export default function MatchResultsPage() {
         />
       </div>
 
-      <VisitRequestModal
-        isOpen={!!selectedPet}
-        onClose={closeModal}
-        pet={selectedPet}
-        onSubmit={handleSubmitRequest}
-        isLoading={isSubmitting}
-        error={error}
-        visitDate={visitDate}
-        setVisitDate={setVisitDate}
-        visitTime={visitTime}
-        setVisitTime={setVisitTime}
-      />
+      {selectedPet && (
+        <PetModal
+          pet={selectedPet}
+          onClose={closeModal}
+          onNext={handleNextPet}
+          onPrev={handlePrevPet}
+          hasNext={pets.findIndex(pet => pet.id === selectedPet.id) < pets.length - 1}
+          hasPrev={pets.findIndex(pet => pet.id === selectedPet.id) > 0}
+          onRequestVisit={handleRequestVisit}
+        />
+      )}
 
       <ToastContainer
         position="top-center"

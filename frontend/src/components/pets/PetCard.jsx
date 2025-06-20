@@ -244,11 +244,13 @@ const PetCard = ({ pet, onSelect, isSelected, isRequested }) => {
           <h3 className="text-xl font-bold text-gray-800 group-hover:text-red-600 transition-colors">
             {pet.name}
           </h3>
-          {pet.special_needs && (
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
-              Special Needs
-            </span>
-          )}
+          <div className="flex items-center">
+            {pet.special_needs && (
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                Special Needs
+              </span>
+            )}
+          </div>
         </div>
         
         <div className="flex flex-wrap gap-2 mb-3">
