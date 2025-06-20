@@ -156,7 +156,7 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
                       : 'border-medium-gray hover:bg-light-gray'
                   }`}
                   onClick={() => {
-                    const willShowChildren = purpose.value === 'family';
+                    const willShowChildren = purpose.value === 'MyFamily';
                     setShowChildrenQuestion(willShowChildren);
                     setFormData(prev => ({
                       ...prev,
