@@ -1,11 +1,9 @@
 from pydantic import BaseModel, ConfigDict
-from backend.models.pet import (
+from backend.models.user_preferences import (
     PetSpecies,
     PetEnergyLevel,
     PetAgeGroup,
     HairLength,
-)
-from backend.models.user_preferences import (
     PetPurpose,
     OwnershipExperience,
     PreferredSex,

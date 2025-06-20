@@ -201,7 +201,7 @@ export const preferencesService = {
       'Calm': 'Calm',
       'Moderate': 'Moderate',
       'VeryActive': 'VeryActive',
-      'NoPreference': 'NoPreference'
+      'NoPreference': 'NoPreference'  // User's PetEnergyLevel enum includes NoPreference
     };
     
     const ageMap = {
@@ -230,7 +230,7 @@ export const preferencesService = {
       'Short': 'Short',
       'Medium': 'Medium',
       'Long': 'Long',
-      'NoPreference': 'NoPreference'
+      'NoPreference': 'NoPreference'  // User's HairLength enum includes NoPreference
     };
 
     const ownershipMap = {
@@ -260,22 +260,36 @@ export const preferencesService = {
       accepts_special_needs: Boolean(formData.special_needs)
     };
 
+    // These fields are required but some can be null
     const requiredFields = [
       'preferred_species', 'pet_purpose', 'has_children', 'has_dogs', 'has_cats',
       'ownership_experience', 'preferred_age', 'preferred_sex', 'preferred_size',
-      'preferred_energy_level', 'preferred_hair_length', 'wants_allergy_friendly',
-      'accepts_special_needs'
+      'wants_allergy_friendly', 'accepts_special_needs'
+    ];
+    
+    // These fields are optional and can be null
+    const optionalFields = [
+      'preferred_energy_level', 'preferred_hair_length'
     ];
 
     const undefinedFields = [];
+    
+    // Check required fields
     requiredFields.forEach(field => {
       if (preferences[field] === undefined) {
         undefinedFields.push(field);
       }
     });
 
+    // Check that optional fields are either valid or null
+    optionalFields.forEach(field => {
+      if (preferences[field] === undefined) {
+        preferences[field] = null; // Ensure optional fields are explicitly set to null if undefined
+      }
+    });
+
     if (undefinedFields.length > 0) {
-      console.error('CRITICAL: Undefined fields detected:', undefinedFields);
+      console.error('CRITICAL: Required fields are undefined:', undefinedFields);
     }
 
     return { preferences, trainingTraits };

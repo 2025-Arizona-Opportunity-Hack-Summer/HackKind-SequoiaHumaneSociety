@@ -50,6 +50,12 @@ def build_pet_vector(pet_info: PetResponse, training_traits: list[TrainingTrait]
 
 
 def build_adopter_vector(preferences: PreferencesSchema, training_traits: list[TraitInput]):
+    def encode_enum(value, enum_cls):
+        if value == "NoPreference":
+            return 0.5
+        codes = pd.Categorical([value], categories=[e.name for e in enum_cls], ordered=True).codes
+        return codes[0] / (len(enum_cls) - 1)
+
     df = pd.DataFrame([{
         "age_group": preferences.preferred_age.name,
         "size": preferences.preferred_size.name,
@@ -63,23 +69,24 @@ def build_adopter_vector(preferences: PreferencesSchema, training_traits: list[T
         "kid_friendly": float(preferences.has_children),
         "pet_friendly": float(preferences.has_dogs or preferences.has_cats)
     }])
-    
+
     experience_mapping = {
         "FirstTime": "Beginner",
         "HadBefore": "Intermediate", 
         "CurrentlyHave": "Advanced"
     }
-    
+
     mapped_experience = experience_mapping.get(preferences.ownership_experience.name, "Beginner")
     df["experience_level"] = mapped_experience
-    
+
     df["experience_level_encoded"] = pd.Categorical(df["experience_level"], categories=[e.name for e in ExperienceLevel], ordered=True).codes / (len(ExperienceLevel) - 1)
-    df["sex_encoded"] = df["sex"].map({"Female": 0, "Male": 1, "NoPreference": 0.5}).astype(float)
-    df["species_encoded"] = df["species"].map({"Cat": 0, "Dog": 1}).astype(float)
-    df["size_encoded"] = pd.Categorical(df["size"], categories=[e.name for e in PetSize], ordered=True).codes / (len(PetSize) - 1)
-    df["energy_level_encoded"] = pd.Categorical(df["energy_level"], categories=[e.name for e in PetEnergyLevel], ordered=True).codes / (len(PetEnergyLevel) - 1)
-    df["age_group_encoded"] = pd.Categorical(df["age_group"], categories=[e.name for e in PetAgeGroup], ordered=True).codes / (len(PetAgeGroup) - 1)
-    df["hair_length_encoded"] = pd.Categorical(df["hair_length"], categories=[e.name for e in HairLength], ordered=True).codes / (len(HairLength) - 1)
+    df["sex_encoded"] = {"Female": 0.0, "Male": 1.0, "NoPreference": 0.5}.get(df["sex"].iloc[0], 0.5)
+    df["species_encoded"] = {"Cat": 0.0, "Dog": 1.0}.get(df["species"].iloc[0], 0.5)
+
+    df["size_encoded"] = encode_enum(df["size"].iloc[0], PetSize)
+    df["energy_level_encoded"] = encode_enum(df["energy_level"].iloc[0], PetEnergyLevel)
+    df["age_group_encoded"] = encode_enum(df["age_group"].iloc[0], PetAgeGroup)
+    df["hair_length_encoded"] = encode_enum(df["hair_length"].iloc[0], HairLength)
 
     df.drop(columns=[
         "size", "energy_level", "age_group", "experience_level",
@@ -91,6 +98,7 @@ def build_adopter_vector(preferences: PreferencesSchema, training_traits: list[T
     trait_vector = [1.0 if trait in selected_traits else 0.0 for trait in all_traits]
 
     return np.concatenate([df.to_numpy().flatten(), np.array(trait_vector)])
+
 
 #--------Saver Functions--------#
 def save_pet_vector(pet, training_traits, db):
