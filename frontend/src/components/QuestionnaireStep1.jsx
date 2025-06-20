@@ -13,7 +13,8 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
 
   const petTypes = [
     { value: 'Dog', label: 'Dog' },
-    { value: 'Cat', label: 'Cat' }
+    { value: 'Cat', label: 'Cat' },
+    { value: 'NoPreference', label: 'No Preference' }
   ];
 
   const petPurposes = [
@@ -71,7 +72,7 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
     const errors = [];
     
     if (!formData.pet_type) {
-      errors.push("Please select a pet type");
+      errors.push("Please select a pet type or choose 'No Preference'");
     }
     
     if (!formData.pet_purpose) {
@@ -117,7 +118,7 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               1. What type of pet do you want to adopt? <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-2 gap-3 mt-2">
+            <div className="grid grid-cols-3 gap-3 mt-2">
               {petTypes.map((pet) => (
                 <button
                   key={pet.value}

@@ -201,11 +201,16 @@ export const preferencesService = {
       'Calm': 'Calm',
       'Moderate': 'Moderate',
       'VeryActive': 'VeryActive',
-      'NoPreference': 'NoPreference'  // User's PetEnergyLevel enum includes NoPreference
+      'NoPreference': 'NoPreference'
     };
     
+    // Determine if we should use 'NoPreference' for species
+    const hasNoPreferenceSpecies = formData.pet_type === 'NoPreference';
+    
+    // Age mapping - use 'Baby' when no preference is selected for species
     const ageMap = {
-      'Baby': (formData.pet_type || '').toLowerCase() === 'dog' ? 'Puppy' : 'Kitten',
+      'Baby': hasNoPreferenceSpecies ? 'Baby' : 
+             (formData.pet_type || '').toLowerCase() === 'dog' ? 'Puppy' : 'Kitten',
       'Young': 'Young',
       'Adult': 'Adult', 
       'Senior': 'Senior',
@@ -230,7 +235,7 @@ export const preferencesService = {
       'Short': 'Short',
       'Medium': 'Medium',
       'Long': 'Long',
-      'NoPreference': 'NoPreference'  // User's HairLength enum includes NoPreference
+      'NoPreference': 'NoPreference'
     };
 
     const ownershipMap = {
@@ -245,12 +250,14 @@ export const preferencesService = {
     };
     
     const preferences = {
-      preferred_species: formData.pet_type || 'Dog',
+      // Set preferred_species to null when 'NoPreference' is selected
+      preferred_species: hasNoPreferenceSpecies ? null : (formData.pet_type || 'Dog'),
       pet_purpose: purposeMap[formData.pet_purpose] || 'Myself',
       has_children: Boolean(formData.has_children),
       has_dogs: hasDogs,
       has_cats: hasCats,
       ownership_experience: ownershipMap[formData.ownership_experience] || 'FirstTime',
+      // Use ageMap to determine the correct age label based on pet type preference
       preferred_age: ageMap[formData.preferred_age] || 'NoPreference',
       preferred_sex: sexMap[formData.preferred_sex] || 'NoPreference',
       preferred_size: sizeMap[formData.preferred_size] || 'NoPreference',

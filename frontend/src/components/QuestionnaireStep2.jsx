@@ -13,10 +13,11 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
   });
 
   const petType = formData.pet_type || 'dog';
+  const isNoPreference = petType === 'NoPreference';
 
   const ageOptions = [
     { value: 'NoPreference', label: 'No preference' },
-    { value: 'Baby', label: petType === 'Dog' ? 'Puppy' : 'Kitten' },
+    { value: 'Baby', label: isNoPreference ? 'Baby' : (petType === 'Dog' ? 'Puppy' : 'Kitten') },
     { value: 'Young', label: 'Young' },
     { value: 'Adult', label: 'Adult' },
     { value: 'Senior', label: 'Senior' }
@@ -60,7 +61,7 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
     { 
       id: 'litter_trained', 
       label: 'Litter-trained',
-      visible: petType === 'cat'
+      visible: petType.toLowerCase() === 'cat'
     },
     { 
       id: 'allergy_friendly', 

@@ -4,6 +4,7 @@ import enum
 from sqlalchemy.sql import func
 
 class PetSpecies(str, enum.Enum):
+    NoPreference = "NoPreference"
     Dog = "Dog"
     Cat = "Cat"
 
