@@ -12,4 +12,3 @@ class UserTrainingPreference(Base):
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
     trait = Column(Enum(TrainingTrait), primary_key=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
-

@@ -72,4 +72,3 @@ class Pet(Base):
     image_url = Column(Text)
     status = Column(Enum(PetStatus), default=PetStatus.Available)
     created_at = Column(TIMESTAMP, server_default=func.now())
-
