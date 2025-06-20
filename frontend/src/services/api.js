@@ -20,11 +20,6 @@ api.interceptors.request.use(
   (config) => {
     config.url = ensureApiPrefix(config.url);
     
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    
     if (process.env.NODE_ENV === 'development') {
       console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`, {
         data: config.data,
@@ -65,7 +60,7 @@ api.interceptors.response.use(
 
       if (error.response.status === 401) {
         if (!window.location.pathname.includes('/login')) {
-          localStorage.removeItem('authToken');
+          localStorage.removeItem('user');
           sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
           window.location.href = '/login';
         }
@@ -73,9 +68,8 @@ api.interceptors.response.use(
     } else if (error.request) {
       console.error('[API] No response received:', error.request);
     } else {
-      console.error('[API] Request setup error:', error.message);
+      console.error('[API] Error:', error.message);
     }
-
     return Promise.reject(error);
   }
 );

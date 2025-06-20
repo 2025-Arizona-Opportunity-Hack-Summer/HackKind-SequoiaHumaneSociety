@@ -5,8 +5,8 @@ import enum
 from sqlalchemy.sql import func
 
 class UserRole(str, enum.Enum):
-    Adopter = "Adopter"
-    Admin = "Admin"
+    Adopter = "adopter"
+    Admin = "admin"
 
 class User(Base):
     __tablename__ = "users"

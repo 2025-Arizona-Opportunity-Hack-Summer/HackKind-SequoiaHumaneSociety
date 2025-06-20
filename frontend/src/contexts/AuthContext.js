@@ -27,20 +27,23 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsLoading(true);
       
-      // Check if we have a token
-      const token = authService.getToken();
-      if (!token) {
-        console.log('No auth token found');
-        setUser(null);
-        return;
-      }
-
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         try {
           const userData = JSON.parse(storedUser);
           console.log('Found user in localStorage:', userData);
           setUser(userData);
+          
+          try {
+            const freshUserData = await authService.getCurrentUser();
+            if (freshUserData) {
+              setUser(freshUserData);
+            }
+          } catch (error) {
+            console.log('Session invalid, clearing user data');
+            localStorage.removeItem('user');
+            setUser(null);
+          }
           return;
         } catch (e) {
           console.error('Error parsing stored user data:', e);
@@ -85,8 +88,6 @@ export const AuthProvider = ({ children }) => {
       
       setUser(response.user);
       
-      localStorage.setItem('user', JSON.stringify(response.user));
-      
       console.log('User logged in:', response.user);
       return response.user;
     } catch (error) {
@@ -114,7 +115,8 @@ export const AuthProvider = ({ children }) => {
 
   const refreshUser = async () => {
     try {
-      if (!authService.isAuthenticated()) {
+      const isAuth = await authService.isAuthenticated();
+      if (!isAuth) {
         setUser(null);
         return null;
       }

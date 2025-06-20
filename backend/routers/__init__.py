@@ -10,12 +10,12 @@ from .admin_visit_requests import router as admin_visit_requests_router
 
 __all__ = [
     "auth_router",
-    "user_profile_router",
+    "user_profile_router", 
     "preferences_router",
     "training_traits_router",
     "pets_router",
     "pet_training_traits_router",
     "matching_router",
     "visit_requests_router",
-    "admin_visit_requests_router",
+    "admin_visit_requests_router"
 ]

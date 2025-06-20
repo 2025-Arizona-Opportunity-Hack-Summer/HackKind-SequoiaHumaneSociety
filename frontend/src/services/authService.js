@@ -30,47 +30,26 @@ const handleApiError = (error, defaultMessage = 'An error occurred') => {
 };
 
 export const authService = {
-  /**
-   * Logs in a user with the provided credentials
-   * @param {Object} credentials - User credentials (email and password)
-   * @returns {Promise<Object>} User data and auth token
-   */
   login: async (credentials) => {
     try {
-      // First, get the auth token and user data
       const loginResponse = await api.post('/auth/login', credentials);
       
-      if (!loginResponse.data.access_token) {
-        throw new Error('No access token received');
-      }
-      
-      const { access_token, user: userData } = loginResponse.data;
+      const { user: userData } = loginResponse.data;
       
       if (!userData || !userData.role) {
         console.warn('No user role received in login response');
         userData.role = 'adopter'; 
       }
       
-      localStorage.setItem('authToken', access_token);
       localStorage.setItem('user', JSON.stringify(userData));
       
-      const expiresIn = loginResponse.data.expires_in || 3600; 
-      const expiresAt = new Date();
-      expiresAt.setSeconds(expiresAt.getSeconds() + expiresIn);
-      localStorage.setItem('tokenExpiresAt', expiresAt.toISOString());
-      
       console.log('User logged in successfully:', userData);
-      return { ...loginResponse.data, user: userData };
+      return { user: userData };
     } catch (error) {
       throw handleApiError(error, 'Login failed. Please check your credentials and try again.');
     }
   },
 
-  /**
-   * Registers a new user with the provided data
-   * @param {Object} userData - User data (email, password, etc.)
-   * @returns {Promise<Object>} User data
-   */
   register: async (userData) => {
     try {
       const response = await api.post('/auth/register', userData);
@@ -80,14 +59,8 @@ export const authService = {
     }
   },
 
-  /**
-   * Logs out the current user
-   * @returns {Promise<void>}
-   */
   logout: async () => {
     try {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('tokenExpiresAt');
       localStorage.removeItem('user');
       
       try {
@@ -97,17 +70,11 @@ export const authService = {
       }
     } catch (error) {
       console.error('Error during logout:', error);
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('tokenExpiresAt');
       localStorage.removeItem('user');
       throw error;
     }
   },
   
-  /**
-   * Gets the current user's profile
-   * @returns {Promise<Object>} User profile data
-   */
   getCurrentUser: async () => {
     try {
       const storedUser = localStorage.getItem('user');
@@ -129,27 +96,16 @@ export const authService = {
     }
   },
   
-  /**
-   * Checks if the user is authenticated
-   * @returns {boolean} True if authenticated, false otherwise
-   */
-  isAuthenticated: () => {
-    const token = localStorage.getItem('authToken');
-    if (!token) return false;
-    
-    const expiresAt = localStorage.getItem('tokenExpiresAt');
-    if (expiresAt) {
-      return new Date(expiresAt) > new Date();
+  isAuthenticated: async () => {
+    try {
+      await api.get('/users/me');
+      return true;
+    } catch (error) {
+      if (error.response?.status === 401) {
+        localStorage.removeItem('user');
+        return false;
+      }
+      return false;
     }
-    
-    return true; 
-  },
-  
-  /**
-   * Gets the stored auth token
-   * @returns {string|null} The auth token or null if not available
-   */
-  getToken: () => {
-    return localStorage.getItem('authToken');
   }
 };

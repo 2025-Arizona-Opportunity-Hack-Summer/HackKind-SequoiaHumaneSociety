@@ -20,6 +20,7 @@ from backend.routers import (
 
 app = FastAPI()
 
+# CRITICAL: CORS must be added BEFORE routes
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -28,15 +29,12 @@ app.add_middleware(
         "http://127.0.0.1:3000", 
         "http://127.0.0.1:3001",
     ],
-    allow_credentials=True,
+    allow_credentials=True,  # CRITICAL for cookies
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
-    expose_headers=["Content-Length", "X-Foo", "X-Bar"],
-    max_age=600,  
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
-
 
 def custom_openapi():
     if app.openapi_schema:
@@ -60,6 +58,9 @@ def custom_openapi():
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
+app.openapi = custom_openapi
+
+# Router registration - keep existing order
 app.include_router(auth_router, prefix="/api")
 app.include_router(user_profile_router, prefix="/api")
 app.include_router(preferences_router, prefix="/api")

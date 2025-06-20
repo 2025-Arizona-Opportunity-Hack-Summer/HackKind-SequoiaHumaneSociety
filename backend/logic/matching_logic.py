@@ -10,6 +10,8 @@ from sqlalchemy.sql import func
 from typing import List, Tuple
 from backend.models.match import Match
 from backend.models.pet import Pet
+from sqlalchemy.exc import SQLAlchemyError
+from typing import List, Tuple
 
 #------Vector Building Functions------#
 def build_pet_vector(pet_info: PetResponse, training_traits: list[TrainingTrait]):
@@ -143,14 +145,26 @@ def get_top_pet_matches(adopter_vector: List[float], pet_vectors: List[Tuple[int
     return similarities[:top_k]
 
 
+
 def save_matches_for_user(user_id: int, matches: List[Tuple[int, float]], db):
     try:
-        for pet_id, score in matches:
-            match = Match(user_id=user_id, pet_id=pet_id, match_score=score)
-            db.merge(match)
-        db.commit()  
-    except Exception:
+        db.begin()
+
+        db.query(Match).filter(Match.user_id == user_id).delete(synchronize_session=False)
+
+        new_matches = [
+            {"user_id": user_id, "pet_id": pet_id, "match_score": score}
+            for pet_id, score in matches
+        ]
+
+        db.bulk_insert_mappings(Match, new_matches)
+
+        db.commit()
+        print(f"✅ Saved {len(new_matches)} matches for user {user_id}")
+
+    except SQLAlchemyError as e:
         db.rollback()
+        print(f"❌ Failed to save matches for user {user_id}: {e}")
         raise
 
 #--------Loader Functions--------#
