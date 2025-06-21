@@ -80,11 +80,22 @@ export const petService = {
   },
 
   // Update an existing pet
-  updatePet: async (petId, petData) => {
+  updatePet: async (petId, petData, existingPet = null) => {
     try {
       console.log(`[petService] Updating pet ${petId} with data:`, petData);
       
-      const isFormData = petData instanceof FormData;
+      // If we're only updating the status and have the existing pet data,
+      // include all required fields from the existing pet to avoid validation errors
+      let updateData = { ...petData };
+      if (existingPet && Object.keys(petData).length === 1 && 'status' in petData) {
+        console.log('[petService] Status-only update detected, including all required fields');
+        updateData = {
+          ...existingPet,
+          status: petData.status
+        };
+      }
+      
+      const isFormData = updateData instanceof FormData;
       const config = {
         headers: {
           'Content-Type': isFormData ? 'multipart/form-data' : 'application/json'
@@ -95,19 +106,19 @@ export const petService = {
       let dataToSend;
       if (isFormData) {
         console.log('[petService] Sending FormData');
-        dataToSend = petData;
+        dataToSend = updateData;
         // Log FormData entries if possible
-        for (let pair of petData.entries()) {
+        for (let pair of updateData.entries()) {
           console.log(`[petService] FormData entry: ${pair[0]} = ${pair[1]}`);
         }
       } else {
         console.log('[petService] Sending JSON data');
-        dataToSend = createFormData(petData);
+        dataToSend = createFormData(updateData);
         console.log('[petService] Created FormData from object:', Object.fromEntries(dataToSend));
       }
       
-      console.log(`[petService] Sending PUT request to /pets/${petId}`);
-      const response = await api.put(`/pets/${petId}`, dataToSend, config);
+      console.log(`[petService] Sending PATCH request to /pets/${petId}`);
+      const response = await api.patch(`/pets/${petId}`, dataToSend, config);
       console.log('[petService] Update response:', response);
       
       if (!response || !response.data) {

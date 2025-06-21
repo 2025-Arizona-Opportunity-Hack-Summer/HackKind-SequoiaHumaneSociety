@@ -11,7 +11,7 @@ from backend import models
 from backend.logic.image_uploader import upload_pet_photo_local
 from backend.schemas.pet_schema import PetCreate, PetResponse, PetUpdate
 from pydantic.networks import HttpUrl
-from backend.core.dependencies import get_current_user
+from backend.core.dependencies import get_optional_user, get_current_user
 from backend.models.user import User, UserRole
 from backend.models.pet import Pet
 from backend.models.pet_vector import PetVector
@@ -28,15 +28,15 @@ def read_pets(
     limit: int = 100,  # Increased default limit to return more pets
     status: str = None,  # Optional status filter
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_optional_user)
 ):
     query = db.query(models.Pet)
     
     # If status is provided, filter by status
     if status:
         query = query.filter(models.Pet.status == status)
-    # If no status provided and user is not admin, show only available pets
-    elif not current_user or current_user.role != UserRole.Admin:
+    # If no status provided and user is not admin (or not logged in), show only available pets
+    elif current_user is None or current_user.role != UserRole.Admin:
         query = query.filter(models.Pet.status == "Available")
     
     # Apply pagination
@@ -210,7 +210,7 @@ def update_pet(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    if current_user.role != "Admin":
+    if current_user.role.lower() != "admin":
         raise HTTPException(status_code=403, detail="Only admins can update pets")
 
     pet = db.query(Pet).filter_by(id=pet_id).first()
@@ -243,4 +243,5 @@ def update_pet(
     return pet
 
     return pet
+
 

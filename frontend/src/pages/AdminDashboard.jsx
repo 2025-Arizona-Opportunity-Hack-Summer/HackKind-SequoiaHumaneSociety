@@ -410,30 +410,38 @@ const AdminDashboard = () => {
         return;
       }
       
-      // Handle status updates
-      console.log(`Updating status to '${action}' for ${selectedIds.length} pets`);
+      // Format status to match backend's expected format (PascalCase)
+      const formattedStatus = action.charAt(0).toUpperCase() + action.slice(1).toLowerCase();
+      console.log(`Updating status to '${formattedStatus}' for ${selectedIds.length} pets`);
+      
+      // Get the current pets data to include required fields in the update
+      const petsToUpdate = allPets.filter(pet => selectedIds.includes(pet.id));
       
       // Update each pet's status using the petService
-      const updatePromises = selectedIds.map(id => 
-        petService.updatePet(id, { status: action })
+      const updatePromises = selectedIds.map(id => {
+        const existingPet = petsToUpdate.find(pet => pet.id === id);
+        return petService.updatePet(id, { status: formattedStatus }, existingPet)
           .then(() => ({ success: true, id }))
           .catch(error => {
             console.error(`Error updating pet ${id}:`, error);
             return { success: false, id, error: error.message };
-          })
-      );
+          });
+      });
       
       const results = await Promise.all(updatePromises);
       const failedUpdates = results.filter(result => !result.success);
       
       if (failedUpdates.length > 0) {
         console.error(`Failed to update ${failedUpdates.length} pets`);
+        failedUpdates.forEach(failed => {
+          console.error(`Failed to update pet ${failed.id}:`, failed.error);
+        });
         toast.error(`Failed to update ${failedUpdates.length} pet(s). See console for details.`);
       }
       
       const successCount = selectedIds.length - failedUpdates.length;
       if (successCount > 0) {
-        toast.success(`Successfully updated ${successCount} pet(s)`);
+        toast.success(`Successfully updated ${successCount} pet(s) to ${formattedStatus}`);
         // Update the pets list to reflect the changes
         await fetchPets();
       }

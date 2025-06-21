@@ -15,9 +15,21 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  withCredentials: true,
+  withCredentials: true, // Required for cookies, authorization headers with credentials
   crossDomain: true,
   timeout: 10000, // 10 second timeout
+  xsrfCookieName: 'csrftoken',
+  xsrfHeaderName: 'X-CSRFToken',
+});
+
+// Ensure credentials are included in all requests
+api.defaults.withCredentials = true;
+
+// Debugging: Log axios defaults
+console.log('Axios defaults:', {
+  baseURL: api.defaults.baseURL,
+  withCredentials: api.defaults.withCredentials,
+  headers: api.defaults.headers
 });
 
 api.interceptors.request.use(
@@ -29,7 +41,19 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
-    // Request error
+    // Request error with detailed logging
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Request error:', {
+        message: error.message,
+        config: error.config,
+        response: error.response ? {
+          status: error.response.status,
+          data: error.response.data,
+          headers: error.response.headers
+        } : 'No response',
+        request: error.request
+      });
+    }
     return Promise.reject(error);
   }
 );
