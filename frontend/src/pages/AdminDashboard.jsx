@@ -375,11 +375,23 @@ const AdminDashboard = () => {
       
       if (currentVisit) {
         // Update existing visit
-        await api.put(`/visits/${currentVisit.id}`, visitData);
+        // The VisitModal already formats the date as ISO string
+        await api.put(`/visit-requests/${currentVisit.id}`, {
+          requested_at: visitData.requested_at,
+          status: visitData.status
+        });
         toast.success('Visit request updated successfully');
       } else {
-        // Create new visit
-        await api.post('/visits', visitData);
+        // Create new visit - use the visit-requests endpoint with pet ID
+        // The VisitModal already formats the date as ISO string
+        const response = await api.post(`/visit-requests/${visitData.pet_id}`, {
+          requested_at: visitData.requested_at
+        });
+        
+        if (response.data && response.data.success === false) {
+          throw new Error(response.data.message || 'Could not schedule visit');
+        }
+        
         toast.success('Visit request created successfully');
       }
       
@@ -388,7 +400,7 @@ const AdminDashboard = () => {
       await fetchVisits();
     } catch (error) {
       console.error('Error saving visit:', error);
-      toast.error(`Failed to ${currentVisit ? 'update' : 'create'} visit request`);
+      toast.error(error.message || `Failed to ${currentVisit ? 'update' : 'create'} visit request`);
     } finally {
       setIsProcessing(false);
     }
@@ -904,13 +916,13 @@ const AdminDashboard = () => {
         isProcessing={isProcessing}
       />
 
-      {/* Visit Modal */}
+      {/* Visit Modal - Using allPets to show all available pets in the dropdown */}
       <VisitModal
         isOpen={showVisitModal}
         onClose={() => setShowVisitModal(false)}
         onSubmit={handleVisitSubmit}
         visit={currentVisit}
-        pets={displayedPets}
+        pets={allPets}
         isProcessing={isProcessing}
       />
 
