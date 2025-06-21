@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { petService } from '../services/petService';
 import { visitService } from '../services/visitService';
+import petTrainingTraitsService from '../services/petTrainingTraitsService';
 import api from '../services/api';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -198,90 +199,85 @@ const AdminDashboard = () => {
   };
 
   // Handle pet submission
-  const handlePetSubmit = async (petData) => {
+  const handlePetSubmit = async (submissionData) => {
     try {
       console.log('=== Starting handlePetSubmit ===');
       setIsProcessing(true);
       
+      // Extract training traits if they exist in the submission data
+      const { trainingTraits = [], ...petData } = submissionData;
+      
       // Log the incoming data
       console.log('Pet data received:', JSON.parse(JSON.stringify(petData)));
+      console.log('Training traits:', trainingTraits);
       
       // If petData is FormData, we need to handle it differently
       const isFormData = petData instanceof FormData;
       console.log('Is FormData:', isFormData);
+      
+      let updatedPet;
       
       if (currentPet) {
         // Get the correct ID (trying both _id and id)
         const petId = currentPet._id || currentPet.id;
         console.log('Updating pet with ID:', petId);
         
-        if (!petId) {
-          const error = new Error('No pet ID found for update');
+        // Prepare the update data with validated status
+        const updateData = isFormData ? petData : {
+          ...petData,
+          // Ensure status is one of the allowed values
+          status: ['Available', 'Pending', 'Adopted'].includes(petData.status) 
+            ? petData.status 
+            : 'Available' // Default to 'Available' if invalid status
+        };
+        
+        console.log('Update data prepared:', isFormData ? 'FormData object' : updateData);
+        
+        // Update existing pet
+        console.log('Calling petService.updatePet...');
+        updatedPet = await petService.updatePet(petId, updateData);
+        console.log('Update response received:', updatedPet);
+        
+        if (!updatedPet) {
+          const error = new Error('No data returned from update');
           console.error('Update error:', error);
           throw error;
         }
         
-        try {
-          // Prepare the update data with validated status
-          const updateData = isFormData ? petData : {
-            ...petData,
-            // Ensure status is one of the allowed values
-            status: ['Available', 'Pending', 'Adopted'].includes(petData.status) 
-              ? petData.status 
-              : 'Available' // Default to 'Available' if invalid status
-          };
-          
-          console.log('Update data prepared:', isFormData ? 'FormData object' : updateData);
-          
-          // Update existing pet
-          console.log('Calling petService.updatePet...');
-          const updatedPet = await petService.updatePet(petId, updateData);
-          console.log('Update response received:', updatedPet);
-          
-          if (!updatedPet) {
-            const error = new Error('No data returned from update');
-            console.error('Update error:', error);
-            throw error;
+        // Handle training traits if they were provided
+        if (Array.isArray(trainingTraits)) {
+          try {
+            console.log('Updating training traits:', trainingTraits);
+            await petTrainingTraitsService.updateTrainingTraits(petId, trainingTraits);
+            console.log('Training traits updated successfully');
+          } catch (traitsError) {
+            console.error('Error updating training traits:', traitsError);
+            // Don't fail the entire operation if traits update fails
+            toast.error('Pet updated, but there was an error updating training traits');
           }
-          
-          console.log('Fetching updated pet data...');
-          // Fetch the updated pet to ensure we have all the latest data
-          const refreshedPet = await petService.getPet(petId);
-          console.log('Refreshed pet data:', refreshedPet);
-          
-          // Update local state
-          console.log('Updating local state...');
-          setAllPets(prevPets => 
-            prevPets.map(pet => 
-              (pet._id === petId || pet.id === petId) ? { ...pet, ...refreshedPet } : pet
-            )
-          );
-          
-          setDisplayedPets(prevPets => 
-            prevPets.map(pet => 
-              (pet._id === petId || pet.id === petId) ? { ...pet, ...refreshedPet } : pet
-            )
-          );
-          
-          console.log('Pet update successful');
-          toast.success('Pet updated successfully');
-        } catch (updateError) {
-          console.error('Error in updatePet:', updateError);
-          console.error('Error details:', {
-            message: updateError.message,
-            response: updateError.response?.data,
-            stack: updateError.stack
-          });
-          
-          const errorMessage = updateError.response?.data?.message || 
-                              updateError.message || 
-                              'Failed to update pet';
-          
-          console.error('Error message to display:', errorMessage);
-          throw new Error(errorMessage);
-        } finally {
-          console.log('=== End of updatePet try block ===');
         }
+        
+        console.log('Fetching updated pet data...');
+        // Fetch the updated pet to ensure we have all the latest data
+        const refreshedPet = await petService.getPet(petId);
+        console.log('Refreshed pet data:', refreshedPet);
+        
+        // Update local state
+        console.log('Updating local state...');
+        setAllPets(prevPets => 
+          prevPets.map(pet => 
+            (pet._id === petId || pet.id === petId) ? { ...pet, ...refreshedPet } : pet
+          )
+        );
+        
+        setDisplayedPets(prevPets => 
+          prevPets.map(pet => 
+            (pet._id === petId || pet.id === petId) ? { ...pet, ...refreshedPet } : pet
+          )
+        );
+        
+        console.log('Pet update successful');
+        toast.success('Pet updated successfully');
       } else {
         // Create new pet with validated status
         const newPetData = isFormData ? petData : {
@@ -292,7 +288,25 @@ const AdminDashboard = () => {
             : 'Available' // Default to 'Available' if invalid status
         };
         
+        // Create the pet first
         const createdPet = await petService.createPet(newPetData);
+        
+        // Handle training traits for the new pet if they were provided
+        if (Array.isArray(trainingTraits) && trainingTraits.length > 0) {
+          try {
+            console.log('Adding training traits to new pet:', trainingTraits);
+            await petTrainingTraitsService.updateTrainingTraits(createdPet.id || createdPet._id, trainingTraits);
+            console.log('Training traits added to new pet');
+            
+            // Refresh the pet data to include the new traits
+            const refreshedPet = await petService.getPet(createdPet.id || createdPet._id);
+            createdPet.trainingTraits = refreshedPet.trainingTraits || [];
+          } catch (traitsError) {
+            console.error('Error adding training traits to new pet:', traitsError);
+            // Don't fail the entire operation if traits update fails
+            toast.error('Pet created, but there was an error adding training traits');
+          }
+        }
         
         // Add new pet to the beginning of the lists
         setAllPets(prevPets => [createdPet, ...prevPets]);
@@ -301,14 +315,14 @@ const AdminDashboard = () => {
         toast.success('Pet created successfully');
       }
       
-      // Close modal and reset state
+      // Close the modal and reset state
       setShowPetModal(false);
       setCurrentPet(null);
+      
     } catch (error) {
-      console.error('Error saving pet:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to save pet';
+      console.error('Error in handlePetSubmit:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
       toast.error(errorMessage);
-      throw error; // Re-throw to allow form to handle validation errors
     } finally {
       setIsProcessing(false);
     }

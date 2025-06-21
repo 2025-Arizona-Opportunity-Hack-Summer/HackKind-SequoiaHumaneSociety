@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ENUMS } from '../../utils/enums';
+import petTrainingTraitsService from '../../services/petTrainingTraitsService';
 
 const initialFormData = {
   name: '',
@@ -36,13 +37,36 @@ const PetModal = ({
 
   useEffect(() => {
     if (pet) {
+      // Fetch training traits for the pet
+      const fetchTrainingTraits = async () => {
+        try {
+          const traits = await petTrainingTraitsService.getTrainingTraits(pet.id || pet._id);
+          const traitNames = traits.map(t => t.trait || t);
+          
+          setFormData(prev => ({
+            ...prev,
+            house_trained: traitNames.includes('HouseTrained'),
+            litter_trained: traitNames.includes('LitterTrained')
+          }));
+        } catch (error) {
+          console.error('Error fetching training traits:', error);
+        }
+      };
+      
+      fetchTrainingTraits();
+      
       const petData = {
         ...initialFormData,
         ...pet,
         // Ensure status is properly capitalized to match enums
         status: pet.status ? pet.status.charAt(0).toUpperCase() + pet.status.slice(1) : 'Available'
       };
-      setFormData(petData);
+      
+      setFormData(prev => ({
+        ...prev,
+        ...petData
+      }));
+      
       // Check if it's a kitten
       const isPetKitten = pet.species?.toLowerCase() === 'cat' && 
                         pet.age_group?.toLowerCase().includes('kitten');
@@ -125,17 +149,24 @@ const PetModal = ({
   const handleSubmit = (e) => {
     e.preventDefault();
     
+    // Extract training traits from the form data
+    const trainingTraits = [];
+    if (formData.house_trained) trainingTraits.push('HouseTrained');
+    if (formData.litter_trained) trainingTraits.push('LitterTrained');
+    
+    // Create a copy of form data without the training traits
+    const { house_trained, litter_trained, ...petData } = formData;
+    
     // Prepare form data for submission
-    const submissionData = { ...formData };
     const formDataToSubmit = new FormData();
     
     // Handle file uploads separately
-    if (formData.image && formData.image instanceof File) {
-      formDataToSubmit.append('image', formData.image);
+    if (petData.image && petData.image instanceof File) {
+      formDataToSubmit.append('image', petData.image);
     }
     
     // Append all other fields
-    Object.entries(submissionData).forEach(([key, value]) => {
+    Object.entries(petData).forEach(([key, value]) => {
       // Skip image field if it's a string (URL) and no new image was selected
       if (key === 'image') {
         return;
@@ -146,12 +177,17 @@ const PetModal = ({
         return;
       }
       
+      // Skip training traits as they're handled separately
+      if (key === 'house_trained' || key === 'litter_trained') {
+        return;
+      }
+      
       // Append to form data
       formDataToSubmit.append(key, value);
     });
     
     // If it's an edit and no new image was selected, ensure we keep the existing image_url
-    if (pet?.image_url && !formData.image) {
+    if (pet?.image_url && !petData.image) {
       formDataToSubmit.append('image_url', pet.image_url);
     }
     
@@ -172,7 +208,11 @@ const PetModal = ({
       });
     }
     
-    onSubmit(dataToSubmit);
+    // Pass both the pet data and training traits to the parent component
+    onSubmit({
+      ...dataToSubmit,
+      trainingTraits
+    });
   };
 
   if (!isOpen) return null;
