@@ -202,10 +202,15 @@ const AdminDashboard = () => {
   const handlePetSubmit = async (submissionData) => {
     try {
       console.log('=== Starting handlePetSubmit ===');
+      console.log('Raw submission data:', JSON.parse(JSON.stringify(submissionData)));
       setIsProcessing(true);
       
       // Extract training traits if they exist in the submission data
       const { trainingTraits = [], ...petData } = submissionData;
+      
+      // Log the pet data that will be sent to the API
+      console.log('Pet data to send to API:', JSON.parse(JSON.stringify(petData)));
+      console.log('Training traits to process separately:', trainingTraits);
       
       // Log the incoming data
       console.log('Pet data received:', JSON.parse(JSON.stringify(petData)));
@@ -214,6 +219,14 @@ const AdminDashboard = () => {
       // If petData is FormData, we need to handle it differently
       const isFormData = petData instanceof FormData;
       console.log('Is FormData:', isFormData);
+      
+      // Log form data entries if it's FormData
+      if (isFormData) {
+        console.log('FormData entries:');
+        for (let pair of petData.entries()) {
+          console.log(pair[0] + ':', pair[1]);
+        }
+      }
       
       let updatedPet;
       
@@ -279,14 +292,22 @@ const AdminDashboard = () => {
         console.log('Pet update successful');
         toast.success('Pet updated successfully');
       } else {
-        // Create new pet with validated status
-        const newPetData = isFormData ? petData : {
+        // Create new pet with validated status and ensure required fields are included
+        const newPetData = {
+          // Include all form data
           ...petData,
+          // Ensure required fields are included, even if empty
+          name: petData.name || '',
+          age_group: petData.age_group || '',
+          sex: petData.sex || '',
+          species: petData.species || '',
           // Ensure status is one of the allowed values
           status: ['Available', 'Pending', 'Adopted'].includes(petData.status) 
             ? petData.status 
             : 'Available' // Default to 'Available' if invalid status
         };
+        
+        console.log('Creating pet with data:', JSON.parse(JSON.stringify(newPetData)));
         
         // Create the pet first
         const createdPet = await petService.createPet(newPetData);

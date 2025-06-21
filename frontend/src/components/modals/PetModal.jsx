@@ -149,6 +149,8 @@ const PetModal = ({
   const handleSubmit = (e) => {
     e.preventDefault();
     
+    console.log('Form data before submission:', formData);
+    
     // Extract training traits from the form data
     const trainingTraits = [];
     if (formData.house_trained) trainingTraits.push('HouseTrained');
@@ -160,20 +162,10 @@ const PetModal = ({
     // Prepare form data for submission
     const formDataToSubmit = new FormData();
     
-    // Handle file uploads separately
-    if (petData.image && petData.image instanceof File) {
-      formDataToSubmit.append('image', petData.image);
-    }
-    
-    // Append all other fields
+    // Add all form fields to FormData
     Object.entries(petData).forEach(([key, value]) => {
       // Skip image field if it's a string (URL) and no new image was selected
-      if (key === 'image') {
-        return;
-      }
-      
-      // Skip undefined or null values for new pets to avoid sending empty strings
-      if (value === null || value === undefined || (typeof value === 'string' && value.trim() === '' && !pet)) {
+      if (key === 'image' && (typeof value === 'string' || value === null || value === undefined)) {
         return;
       }
       
@@ -182,35 +174,41 @@ const PetModal = ({
         return;
       }
       
-      // Append to form data
-      formDataToSubmit.append(key, value);
+      // For file uploads, handle specially
+      if (key === 'image' && value instanceof File) {
+        formDataToSubmit.append('image', value);
+        return;
+      }
+      
+      // For checkboxes, ensure they're properly converted to booleans
+      if (typeof value === 'boolean') {
+        formDataToSubmit.append(key, value ? 'true' : 'false');
+        return;
+      }
+      
+      // For all other fields, include them even if they're empty strings
+      formDataToSubmit.append(key, value || '');
     });
     
     // If it's an edit and no new image was selected, ensure we keep the existing image_url
-    if (pet?.image_url && !petData.image) {
+    if (pet?.image_url && !formData.image) {
       formDataToSubmit.append('image_url', pet.image_url);
     }
     
-    // Only include status if it's being edited or explicitly set for a new pet
-    if (pet || formData.status) {
-      formDataToSubmit.append('status', formData.status || 'Available');
-    }
+    // Ensure status is always included
+    formDataToSubmit.append('status', formData.status || 'Available');
     
-    // Convert FormData to object if not a file upload
-    const dataToSubmit = formData.image ? formDataToSubmit : Object.fromEntries(formDataToSubmit.entries());
+    // Log the FormData being sent
+    const formDataObj = {};
+    formDataToSubmit.forEach((value, key) => {
+      formDataObj[key] = value;
+    });
+    console.log('Submitting form data:', formDataObj);
     
-    // For new pets, ensure we don't send empty strings for optional fields
-    if (!pet) {
-      Object.keys(dataToSubmit).forEach(key => {
-        if (dataToSubmit[key] === '') {
-          delete dataToSubmit[key];
-        }
-      });
-    }
-    
-    // Pass both the pet data and training traits to the parent component
+    // Pass both the FormData and training traits to the parent component
+    // The parent component will handle whether to send as FormData or JSON
     onSubmit({
-      ...dataToSubmit,
+      ...Object.fromEntries(formDataToSubmit.entries()),
       trainingTraits
     });
   };
