@@ -250,17 +250,8 @@ const VisitItem = ({
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
-        <div className="text-sm font-medium text-gray-900 flex items-center">
-          <UserIcon className="h-4 w-4 mr-1 text-gray-500" />
+        <div className="text-sm font-medium text-gray-900">
           {requesterName}
-        </div>
-        <div className="text-sm text-gray-500 flex items-center">
-          <EnvelopeIcon className="h-4 w-4 mr-1 text-gray-500" />
-          <span className="text-gray-900">{requesterEmail}</span>
-        </div>
-        <div className="text-sm text-gray-500 mt-1 flex items-center">
-          <PhoneIcon className="h-4 w-4 mr-1 text-gray-500" />
-          <span className="text-gray-900">{requesterPhone}</span>
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
