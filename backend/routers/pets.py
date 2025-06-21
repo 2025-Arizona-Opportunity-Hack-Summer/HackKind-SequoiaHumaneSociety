@@ -240,10 +240,20 @@ async def update_pet(
     return pet
 
 @router.delete("/{pet_id}", response_model=PetResponse)
-def delete_pet(pet_id: int, db: Session = Depends(get_db)):
+def delete_pet(pet_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if current_user.role.lower() != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can delete pets")
+        
     pet = db.query(models.Pet).filter(models.Pet.id == pet_id).first()
     if not pet:
         raise HTTPException(status_code=404, detail="Pet not found")
+    
+    # Delete related records first
+    db.query(models.PetTrainingTrait).filter(models.PetTrainingTrait.pet_id == pet_id).delete()
+    db.query(models.PetVector).filter(models.PetVector.pet_id == pet_id).delete()
+    db.query(models.Match).filter(models.Match.pet_id == pet_id).delete()
+    
+    # Now delete the pet
     db.delete(pet)
     db.commit()
     return pet
