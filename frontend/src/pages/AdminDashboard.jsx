@@ -222,10 +222,13 @@ const AdminDashboard = () => {
         }
         
         try {
-          // Prepare the update data with normalized status
+          // Prepare the update data with validated status
           const updateData = isFormData ? petData : {
             ...petData,
-            status: petData.status ? normalizeStatus(petData.status) : undefined
+            // Ensure status is one of the allowed values
+            status: ['Available', 'Pending', 'Adopted'].includes(petData.status) 
+              ? petData.status 
+              : 'Available' // Default to 'Available' if invalid status
           };
           
           console.log('Update data prepared:', isFormData ? 'FormData object' : updateData);
@@ -280,10 +283,13 @@ const AdminDashboard = () => {
           console.log('=== End of updatePet try block ===');
         }
       } else {
-        // Create new pet
+        // Create new pet with validated status
         const newPetData = isFormData ? petData : {
           ...petData,
-          status: normalizeStatus(petData.status)
+          // Ensure status is one of the allowed values
+          status: ['Available', 'Pending', 'Adopted'].includes(petData.status) 
+            ? petData.status 
+            : 'Available' // Default to 'Available' if invalid status
         };
         
         const createdPet = await petService.createPet(newPetData);
