@@ -52,8 +52,9 @@ middleware = [
             "http://127.0.0.1:3001",
         ],
         allow_credentials=True,  # CRITICAL for cookies
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-        allow_headers=["*"],
+        allow_methods=["*"],  # Allow all methods
+        allow_headers=["*"],  # Allow all headers
+        expose_headers=["*"],  # Expose all headers to the client
     ),
     Middleware(SecurityHeadersMiddleware),
 ]

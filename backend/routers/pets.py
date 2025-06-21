@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Response
-from typing import List
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Response, Form
+from typing import List, Optional
 import requests
 from sqlalchemy.orm import Session
 from fastapi.responses import FileResponse
@@ -50,63 +50,192 @@ def read_pet(pet_id: int, db: Session = Depends(get_db)):
     return pet
 
 @router.post("/", response_model=PetResponse)
-def create_pet(pet: PetCreate, db: Session = Depends(get_db)):
-    data = pet.model_dump()
-    if isinstance(data.get("image_url"), HttpUrl):
-        data["image_url"] = str(data["image_url"])
-    db_pet = models.Pet(**data)
-    db.add(db_pet)
-    db.commit()
-    db.refresh(db_pet)
+async def create_pet(
+    name: str = Form(...),
+    age_group: str = Form(...),
+    sex: str = Form(...),
+    species: str = Form(...),
+    size: Optional[str] = Form(None),
+    energy_level: Optional[str] = Form(None),
+    experience_level: Optional[str] = Form(None),
+    hair_length: Optional[str] = Form(None),
+    breed: Optional[str] = Form(None),
+    allergy_friendly: Optional[bool] = Form(None),
+    special_needs: Optional[bool] = Form(None),
+    kid_friendly: Optional[bool] = Form(None),
+    pet_friendly: Optional[bool] = Form(None),
+    shelter_notes: Optional[str] = Form(None),
+    status: Optional[str] = Form("Available"),
+    image: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # Check if user is admin
+    if current_user.role != UserRole.Admin:
+        raise HTTPException(status_code=403, detail="Only admins can create pets")
     
     try:
-        traits = db.query(PetTrainingTrait).filter_by(pet_id=db_pet.id).all()
-        trait_enums = [t.trait for t in traits]
-        pet_response = PetResponse(**{k: v for k, v in db_pet.__dict__.items() if not k.startswith("_")})
-        vector = build_pet_vector(pet_response, trait_enums)
+        # Handle file upload if present
+        image_url = None
+        if image and image.filename:
+            try:
+                # Ensure we're at the start of the file
+                await image.seek(0)
+                # Upload the image
+                image_url = await upload_pet_photo_local(image, 0, image.filename)  # 0 is a temporary ID
+                # Close the file
+                await image.close()
+            except Exception as e:
+                print(f"Error uploading image: {str(e)}")
+                # Continue without image if upload fails
         
-        pet_vector = PetVector(pet_id=db_pet.id, vector=vector.tolist())
-        db.add(pet_vector)
+        # Create pet data dictionary
+        pet_data = {
+            "name": name,
+            "age_group": age_group,
+            "sex": sex,
+            "species": species,
+            "size": size,
+            "energy_level": energy_level,
+            "experience_level": experience_level,
+            "hair_length": hair_length,
+            "breed": breed,
+            "allergy_friendly": allergy_friendly,
+            "special_needs": special_needs,
+            "kid_friendly": kid_friendly,
+            "pet_friendly": pet_friendly,
+            "shelter_notes": shelter_notes,
+            "status": status,
+            "image_url": image_url
+        }
+        
+        # Create the pet
+        db_pet = models.Pet(**{k: v for k, v in pet_data.items() if v is not None})
+        db.add(db_pet)
         db.commit()
-        print(f"✅ Auto-created vector for {db_pet.name}")
+        db.refresh(db_pet)
+        
+        # If we have an image URL, update the pet with the correct ID in the URL
+        if image_url and "0" in image_url:
+            new_image_url = image_url.replace("pet_0_", f"pet_{db_pet.id}_")
+            db_pet.image_url = new_image_url
+            db.commit()
+            db.refresh(db_pet)
+        
+        try:
+            # Create pet vector
+            traits = db.query(PetTrainingTrait).filter_by(pet_id=db_pet.id).all()
+            trait_enums = [t.trait for t in traits]
+            pet_response = PetResponse(**{k: v for k, v in db_pet.__dict__.items() if not k.startswith("_")})
+            vector = build_pet_vector(pet_response, trait_enums)
+            
+            pet_vector = PetVector(pet_id=db_pet.id, vector=vector.tolist())
+            db.add(pet_vector)
+            db.commit()
+            print(f"✅ Auto-created vector for {db_pet.name}")
+        except Exception as e:
+            print(f"❌ Vector creation failed for {db_pet.name}: {e}")
+        
+        return db_pet
+        
     except Exception as e:
-        print(f"❌ Vector creation failed for {db_pet.name}: {e}")
-    
-    return db_pet
+        db.rollback()
+        print(f"Error creating pet: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create pet: {str(e)}")
 
 @router.put("/{pet_id}", response_model=PetResponse)
-def update_pet(pet_id: int, pet_update: PetCreate, db: Session = Depends(get_db)):
+async def update_pet(
+    pet_id: int,
+    name: str = Form(None),
+    age_group: str = Form(None),
+    sex: str = Form(None),
+    species: str = Form(None),
+    size: Optional[str] = Form(None),
+    energy_level: Optional[str] = Form(None),
+    experience_level: Optional[str] = Form(None),
+    hair_length: Optional[str] = Form(None),
+    breed: Optional[str] = Form(None),
+    allergy_friendly: Optional[bool] = Form(None),
+    special_needs: Optional[bool] = Form(None),
+    kid_friendly: Optional[bool] = Form(None),
+    pet_friendly: Optional[bool] = Form(None),
+    shelter_notes: Optional[str] = Form(None),
+    status: Optional[str] = Form(None),
+    image: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # Check if user is admin
+    if current_user.role != UserRole.Admin:
+        raise HTTPException(status_code=403, detail="Only admins can update pets")
+    
     pet = db.query(models.Pet).filter(models.Pet.id == pet_id).first()
     if not pet:
         raise HTTPException(status_code=404, detail="Pet not found")
     
-    # Convert HttpUrl to string if necessary
-    update_data = pet_update.model_dump()
-    if "image_url" in update_data and isinstance(update_data["image_url"], HttpUrl):
-        update_data["image_url"] = str(update_data["image_url"])
-    
-    for key, value in update_data.items():
-        setattr(pet, key, value)
-    
-    db.commit()
-    db.refresh(pet)
-    
     try:
-        traits = db.query(PetTrainingTrait).filter_by(pet_id=pet_id).all()
-        trait_enums = [t.trait for t in traits]
-        pet_response = PetResponse(**{k: v for k, v in pet.__dict__.items() if not k.startswith("_")})
-        vector = build_pet_vector(pet_response, trait_enums)
+        # Handle file upload if present
+        if image and image.filename:
+            try:
+                await image.seek(0)
+                image_url = await upload_pet_photo_local(image, pet_id, image.filename)
+                await image.close()
+                pet.image_url = image_url
+            except Exception as e:
+                print(f"Error updating pet image: {str(e)}")
+                # Continue without updating the image if upload fails
         
-        existing_vector = db.query(PetVector).filter_by(pet_id=pet_id).first()
-        if existing_vector:
-            existing_vector.vector = vector.tolist()
-        else:
-            pet_vector = PetVector(pet_id=pet_id, vector=vector.tolist())
-            db.add(pet_vector)
+        # Update pet fields
+        update_data = {
+            "name": name,
+            "age_group": age_group,
+            "sex": sex,
+            "species": species,
+            "size": size,
+            "energy_level": energy_level,
+            "experience_level": experience_level,
+            "hair_length": hair_length,
+            "breed": breed,
+            "allergy_friendly": allergy_friendly,
+            "special_needs": special_needs,
+            "kid_friendly": kid_friendly,
+            "pet_friendly": pet_friendly,
+            "shelter_notes": shelter_notes,
+            "status": status
+        }
+        
+        # Only update fields that were provided
+        for key, value in update_data.items():
+            if value is not None:
+                setattr(pet, key, value)
+        
         db.commit()
-        print(f"✅ Auto-updated vector for {pet.name}")
+        db.refresh(pet)
+        
+        # Update pet vector
+        try:
+            traits = db.query(PetTrainingTrait).filter_by(pet_id=pet_id).all()
+            trait_enums = [t.trait for t in traits]
+            pet_response = PetResponse(**{k: v for k, v in pet.__dict__.items() if not k.startswith("_")})
+            vector = build_pet_vector(pet_response, trait_enums)
+            
+            existing_vector = db.query(PetVector).filter_by(pet_id=pet_id).first()
+            if existing_vector:
+                existing_vector.vector = vector.tolist()
+            else:
+                pet_vector = PetVector(pet_id=pet_id, vector=vector.tolist())
+                db.add(pet_vector)
+            db.commit()
+            print(f"✅ Auto-updated vector for {pet.name}")
+        except Exception as e:
+            print(f"❌ Vector update failed for {pet.name}: {e}")
+        
+        return pet
+        
     except Exception as e:
-        print(f"❌ Vector update failed for {pet.name}: {e}")
+        db.rollback()
+        print(f"Error updating pet: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update pet: {str(e)}")
     
     return pet
 
@@ -187,20 +316,36 @@ async def upload_pet_photo(
         raise HTTPException(status_code=400, detail="No file provided")
     
     try:
-        file_url = upload_pet_photo_local(file.file, pet_id, file.filename)
+        # Read the file content once
+        file_content = await file.read()
         
+        # Create a BytesIO object from the content
+        from io import BytesIO
+        file_obj = BytesIO(file_content)
+        
+        # Upload the file using our local function
+        file_url = upload_pet_photo_local(file_obj, pet_id, file.filename)
+        
+        # Update the pet record
         pet.image_url = file_url
         db.commit()
+        db.refresh(pet)
         
         return {"message": "Photo uploaded successfully", "image_url": file_url}
         
-    except HTTPException:
-        raise
+    except HTTPException as http_exc:
+        raise http_exc
     except Exception as e:
         db.rollback()
+        error_detail = "Failed to process the uploaded file. Please try again with a different image."
+        if hasattr(e, 'detail'):
+            error_detail = str(e.detail)
+        elif hasattr(e, 'args') and e.args:
+            error_detail = str(e.args[0])
+        
         raise HTTPException(
-            status_code=500,
-            detail="Failed to upload photo. Please try again."
+            status_code=500 if not isinstance(e, HTTPException) else e.status_code,
+            detail=error_detail
         )
 
 @router.patch("/{pet_id}", response_model=PetResponse)

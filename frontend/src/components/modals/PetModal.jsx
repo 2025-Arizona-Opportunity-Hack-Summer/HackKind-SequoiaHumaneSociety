@@ -328,94 +328,147 @@ const PetModal = ({
               </div>
             </div>
             
-            {/* Training and Additional Info */}
+            {/* Additional Pet Attributes */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-b border-gray-200 pb-6 px-6">
-              {/* Training Traits */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-4">Training</label>
-                <div className="space-y-4">
+                <label className="block text-sm font-medium text-gray-700">Energy Level</label>
+                <select
+                  name="energy_level"
+                  value={formData.energy_level}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-red focus:border-primary-red"
+                >
+                  <option value="">Select energy level</option>
+                  {ENUMS.energyLevels?.map(level => (
+                    <option key={level} value={level}>{level}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Experience Level</label>
+                <select
+                  name="experience_level"
+                  value={formData.experience_level}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-red focus:border-primary-red"
+                >
+                  <option value="">Select experience level</option>
+                  {ENUMS.experienceLevels?.map(level => (
+                    <option key={level} value={level}>{level}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Hair Length</label>
+                <select
+                  name="hair_length"
+                  value={formData.hair_length}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-red focus:border-primary-red"
+                >
+                  <option value="">Select hair length</option>
+                  {ENUMS.hairLengths?.map(length => (
+                    <option key={length} value={length}>{length}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Pet Traits Section */}
+            <div className="border-b border-gray-200 pb-6 px-6">
+              <label className="block text-sm font-medium text-gray-700 mb-4">Pet Traits</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center">
+                  <input
+                    id="house_trained"
+                    name="house_trained"
+                    type="checkbox"
+                    checked={formData.house_trained || false}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-primary-red focus:ring-primary-red border-gray-300 rounded"
+                  />
+                  <label htmlFor="house_trained" className="ml-2 block text-sm text-gray-700">
+                    House Trained
+                  </label>
+                </div>
+                
+                {formData.species?.toLowerCase() === 'cat' && !isKitten && (
                   <div className="flex items-center">
                     <input
-                      id="house_trained"
-                      name="house_trained"
+                      id="litter_trained"
+                      name="litter_trained"
                       type="checkbox"
-                      checked={formData.house_trained || false}
+                      checked={formData.litter_trained || false}
                       onChange={handleChange}
                       className="h-4 w-4 text-primary-red focus:ring-primary-red border-gray-300 rounded"
                     />
-                    <label htmlFor="house_trained" className="ml-2 block text-sm text-gray-700">
-                      House Trained
+                    <label htmlFor="litter_trained" className="ml-2 block text-sm text-gray-700">
+                      Litter Trained
                     </label>
                   </div>
-                  
-                  {formData.species?.toLowerCase() === 'cat' && !isKitten && (
-                    <div className="flex items-center">
-                      <input
-                        id="litter_trained"
-                        name="litter_trained"
-                        type="checkbox"
-                        checked={formData.litter_trained || false}
-                        onChange={handleChange}
-                        className="h-4 w-4 text-primary-red focus:ring-primary-red border-gray-300 rounded"
-                      />
-                      <label htmlFor="litter_trained" className="ml-2 block text-sm text-gray-700">
-                        Litter Trained
-                      </label>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Additional Pet Attributes */}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Energy Level</label>
-                  <select
-                    name="energy_level"
-                    value={formData.energy_level}
+                )}
+                
+                <div className="flex items-center">
+                  <input
+                    id="kid_friendly"
+                    name="kid_friendly"
+                    type="checkbox"
+                    checked={formData.kid_friendly || false}
                     onChange={handleChange}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-red focus:border-primary-red"
-                  >
-                    <option value="">Select energy level</option>
-                    {ENUMS.energyLevels?.map(level => (
-                      <option key={level} value={level}>{level}</option>
-                    ))}
-                  </select>
+                    className="h-4 w-4 text-primary-red focus:ring-primary-red border-gray-300 rounded"
+                  />
+                  <label htmlFor="kid_friendly" className="ml-2 block text-sm text-gray-700">
+                    Kid Friendly
+                  </label>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Experience Level</label>
-                  <select
-                    name="experience_level"
-                    value={formData.experience_level}
+                
+                <div className="flex items-center">
+                  <input
+                    id="pet_friendly"
+                    name="pet_friendly"
+                    type="checkbox"
+                    checked={formData.pet_friendly || false}
                     onChange={handleChange}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-red focus:border-primary-red"
-                  >
-                    <option value="">Select experience level</option>
-                    {ENUMS.experienceLevels?.map(level => (
-                      <option key={level} value={level}>{level}</option>
-                    ))}
-                  </select>
+                    className="h-4 w-4 text-primary-red focus:ring-primary-red border-gray-300 rounded"
+                  />
+                  <label htmlFor="pet_friendly" className="ml-2 block text-sm text-gray-700">
+                    Pet Friendly
+                  </label>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Hair Length</label>
-                  <select
-                    name="hair_length"
-                    value={formData.hair_length}
+                
+                <div className="flex items-center">
+                  <input
+                    id="special_needs"
+                    name="special_needs"
+                    type="checkbox"
+                    checked={formData.special_needs || false}
                     onChange={handleChange}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-red focus:border-primary-red"
-                  >
-                    <option value="">Select hair length</option>
-                    {ENUMS.hairLengths?.map(length => (
-                      <option key={length} value={length}>{length}</option>
-                    ))}
-                  </select>
+                    className="h-4 w-4 text-primary-red focus:ring-primary-red border-gray-300 rounded"
+                  />
+                  <label htmlFor="special_needs" className="ml-2 block text-sm text-gray-700">
+                    Special Needs
+                  </label>
+                </div>
+                
+                <div className="flex items-center">
+                  <input
+                    id="allergy_friendly"
+                    name="allergy_friendly"
+                    type="checkbox"
+                    checked={formData.allergy_friendly || false}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-primary-red focus:ring-primary-red border-gray-300 rounded"
+                  />
+                  <label htmlFor="allergy_friendly" className="ml-2 block text-sm text-gray-700">
+                    Allergy-friendly
+                  </label>
                 </div>
               </div>
             </div>
 
-                    {/* Pet Image Upload Section */}
+            {/* Pet Image Upload Section */}
             <div className="col-span-2 bg-gray-50 p-6 rounded-lg mt-4">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Pet Image</h3>
               <div className="flex items-center">
