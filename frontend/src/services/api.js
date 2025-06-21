@@ -8,12 +8,16 @@ const ensureApiPrefix = (url) => {
   return url.startsWith('/') ? `/api${url}` : `/api/${url}`;
 };
 
+// Create axios instance with default config
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
   withCredentials: true,
+  crossDomain: true,
+  timeout: 10000, // 10 second timeout
 });
 
 api.interceptors.request.use(
@@ -38,10 +42,30 @@ api.interceptors.response.use(
   (error) => {
     console.log('API Error Interceptor:', error);
     
+    // Handle network errors (no response from server)
+    if (error.code === 'ERR_NETWORK') {
+      console.error('Network Error:', error.message);
+      error.message = 'Unable to connect to the server. Please check your internet connection and try again.';
+      return Promise.reject(error);
+    }
+    
+    // Handle CORS errors
+    if (error.code === 'ERR_CORS') {
+      console.error('CORS Error:', error.message);
+      error.message = 'Cross-origin request blocked. Please ensure the backend server is properly configured for CORS.';
+      return Promise.reject(error);
+    }
+    
     // If we have a response from the server
     if (error.response) {
       console.log('Error response data:', error.response.data);
       console.log('Error status:', error.response.status);
+      console.log('Error headers:', error.response.headers);
+      
+      // Handle CORS preflight issues
+      if (error.response.status === 0) {
+        error.message = 'Failed to connect to the server. Please check if the backend server is running and accessible.';
+      }
       
       // Handle 401 Unauthorized
       if (error.response.status === 401) {

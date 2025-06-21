@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
-  const [error, setError] = useState("");
+export default function QuestionnaireStep1({ onNext, formData, setFormData, errors = {} }) {
   const [showChildrenQuestion, setShowChildrenQuestion] = useState(false);
   const [touched, setTouched] = useState({
     pet_type: false,
@@ -10,6 +9,23 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
     has_pets: false,
     ownership_experience: false
   });
+
+  const shouldShowError = (field) => {
+    return touched[field] && errors[field];
+  };
+
+  // Update touched state when errors change
+  useEffect(() => {
+    if (Object.keys(errors).length > 0) {
+      const newTouched = { ...touched };
+      Object.keys(errors).forEach(field => {
+        if (errors[field] && !touched[field]) {
+          newTouched[field] = true;
+        }
+      });
+      setTouched(newTouched);
+    }
+  }, [errors]);
 
   const petTypes = [
     { value: 'Dog', label: 'Dog' },
@@ -41,9 +57,12 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
     }
   }, []);
 
+  // Initialize showChildrenQuestion based on saved data
   useEffect(() => {
-    if (error) validateForm();
-  }, [formData]);
+    if (formData.pet_purpose === 'MyFamily') {
+      setShowChildrenQuestion(true);
+    }
+  }, [formData.pet_purpose]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -68,43 +87,24 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
     setTouched(prev => ({ ...prev, [name]: true }));
   };
 
-  const validateForm = () => {
-    const errors = [];
-    
-    if (!formData.pet_type) {
-      errors.push("Please select a pet type or choose 'No Preference'");
-    }
-    
-    if (!formData.pet_purpose) {
-      errors.push("Please select who this pet is for");
-    }
-    
-    if (showChildrenQuestion && formData.has_children === undefined) {
-      errors.push("Please indicate if there are children in the home");
-    }
-    
-    if (!formData.has_pets) {
-      errors.push("Please indicate if you currently own any pets");
-    }
-    
-    if (!formData.ownership_experience) {
-      errors.push("Please select your previous pet ownership experience");
-    }
+  const hasError = (field) => {
+    return touched[field] && errors[field];
+  };
 
-    setError(errors.length > 0 ? errors[0] : "");
-    return errors.length === 0;
+  const getErrorClass = (field) => {
+    return hasError(field) ? 'border-red-500' : 'border-medium-gray';
   };
 
   const handleNext = (e) => {
     e.preventDefault();
+    // Mark all fields as touched to show all errors
+    const allTouched = Object.keys(touched).reduce((acc, key) => ({
+      ...acc,
+      [key]: true
+    }), {});
+    setTouched(allTouched);
     
-    if (validateForm()) {
-      onNext();
-    }
-  };
-
-  const shouldShowError = (field) => {
-    return touched[field] && error.toLowerCase().includes(field.replace('_', ' '));
+    onNext();
   };
 
   return (
@@ -130,15 +130,15 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
                   className={`p-4 border rounded-lg text-center transition-colors ${
                     formData.pet_type === pet.value 
                       ? 'border-primary-red bg-accent-blush' 
-                      : 'border-medium-gray hover:bg-light-gray'
+                      : `${hasError('pet_type') ? 'border-red-500' : 'border-medium-gray'} hover:bg-light-gray`
                   }`}
                 >
                   {pet.label}
                 </button>
               ))}
             </div>
-            {shouldShowError('pet_type') && (
-              <p className="mt-1 text-sm text-red-600">{error}</p>
+            {hasError('pet_type') && (
+              <p className="mt-1 text-sm text-red-600">{errors.pet_type}</p>
             )}
           </div>
 
@@ -154,7 +154,7 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
                   className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                     formData.pet_purpose === purpose.value 
                       ? 'border-primary-red bg-accent-blush' 
-                      : 'border-medium-gray hover:bg-light-gray'
+                      : `${hasError('pet_purpose') ? 'border-red-500' : 'border-medium-gray'} hover:bg-light-gray`
                   }`}
                   onClick={() => {
                     const willShowChildren = purpose.value === 'MyFamily';
@@ -183,8 +183,8 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
                 </div>
               ))}
             </div>
-            {shouldShowError('pet_purpose') && (
-              <p className="mt-1 text-sm text-red-600">{error}</p>
+            {hasError('pet_purpose') && (
+              <p className="mt-1 text-sm text-red-600">{errors.pet_purpose}</p>
             )}
           </div>
 
@@ -215,7 +215,7 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
                 ))}
               </div>
               {shouldShowError('has_children') && (
-                <p className="mt-1 text-sm text-red-600">{error}</p>
+                <p className="mt-1 text-sm text-red-600">{errors.has_children}</p>
               )}
             </div>
           )}
@@ -245,7 +245,7 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
               ))}
             </div>
             {shouldShowError('has_pets') && (
-              <p className="mt-1 text-sm text-red-600">{error}</p>
+              <p className="mt-1 text-sm text-red-600">{errors.has_pets}</p>
             )}
           </div>
 
@@ -285,7 +285,7 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
               ))}
             </div>
             {shouldShowError('ownership_experience') && (
-              <p className="mt-1 text-sm text-red-600">{error}</p>
+              <p className="mt-1 text-sm text-red-600">{errors.ownership_experience}</p>
             )}
           </div>
           
@@ -298,8 +298,10 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData }) {
               Next: Pet Preferences
             </button>
             
-            {error && !Object.values(touched).some(t => t) && (
-              <p className="mt-2 text-sm text-red-600 text-center">{error}</p>
+            {Object.keys(errors).length > 0 && !Object.values(touched).some(t => t) && (
+              <p className="mt-2 text-sm text-red-600 text-center">
+                {Object.values(errors).filter(Boolean)[0]}
+              </p>
             )}
           </div>
         </div>

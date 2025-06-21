@@ -23,8 +23,24 @@ from backend.models.pet_training_traits import PetTrainingTrait
 router = APIRouter(prefix="/pets", tags=["Pets"])
 
 @router.get("/", response_model=List[PetResponse])
-def read_pets(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    return db.query(models.Pet).filter(models.Pet.status == "Available").offset(skip).limit(limit).all()
+def read_pets(
+    skip: int = 0, 
+    limit: int = 100,  # Increased default limit to return more pets
+    status: str = None,  # Optional status filter
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    query = db.query(models.Pet)
+    
+    # If status is provided, filter by status
+    if status:
+        query = query.filter(models.Pet.status == status)
+    # If no status provided and user is not admin, show only available pets
+    elif not current_user or current_user.role != UserRole.Admin:
+        query = query.filter(models.Pet.status == "Available")
+    
+    # Apply pagination
+    return query.offset(skip).limit(limit).all()
 
 @router.get("/{pet_id}", response_model=PetResponse)
 def read_pet(pet_id: int, db: Session = Depends(get_db)):
@@ -63,8 +79,15 @@ def update_pet(pet_id: int, pet_update: PetCreate, db: Session = Depends(get_db)
     pet = db.query(models.Pet).filter(models.Pet.id == pet_id).first()
     if not pet:
         raise HTTPException(status_code=404, detail="Pet not found")
-    for key, value in pet_update.model_dump().items():
+    
+    # Convert HttpUrl to string if necessary
+    update_data = pet_update.model_dump()
+    if "image_url" in update_data and isinstance(update_data["image_url"], HttpUrl):
+        update_data["image_url"] = str(update_data["image_url"])
+    
+    for key, value in update_data.items():
         setattr(pet, key, value)
+    
     db.commit()
     db.refresh(pet)
     

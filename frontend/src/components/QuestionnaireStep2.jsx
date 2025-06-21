@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export default function QuestionnaireStep2({ onNext, onBack, formData, setFormData, isSubmitting = false }) {
-  const [error, setError] = useState('');
+export default function QuestionnaireStep2({ onNext, onBack, formData, setFormData, isSubmitting = false, errors = {} }) {
   const [touched, setTouched] = useState({
     preferred_age: false,
     preferred_sex: false,
@@ -11,6 +10,23 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
     required_traits: false,
     special_needs: false
   });
+
+  const shouldShowError = (field) => {
+    return touched[field] && errors[field];
+  };
+
+  // Update touched state when errors change
+  useEffect(() => {
+    if (Object.keys(errors).length > 0) {
+      const newTouched = { ...touched };
+      Object.keys(errors).forEach(field => {
+        if (errors[field] && !touched[field]) {
+          newTouched[field] = true;
+        }
+      });
+      setTouched(newTouched);
+    }
+  }, [errors]);
 
   const petType = formData.pet_type || 'dog';
   const isNoPreference = petType === 'NoPreference';
@@ -78,9 +94,13 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
     }
   ];
 
-  useEffect(() => {
-    if (error) validateForm();
-  }, [formData]);
+  const hasError = (field) => {
+    return touched[field] && errors[field];
+  };
+
+  const getErrorClass = (field) => {
+    return shouldShowError(field) ? 'border-red-500' : 'border-medium-gray';
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked, dataset } = e.target;
@@ -124,42 +144,16 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
     setTouched(prev => ({ ...prev, [name]: true }));
   };
 
-  const validateForm = () => {
-    const errors = [];
-    
-    const requiredFields = [
-      { name: 'preferred_age', label: 'preferred age' },
-      { name: 'preferred_sex', label: 'preferred gender' },
-      { name: 'preferred_size', label: 'preferred size' },
-      { name: 'activity_level', label: 'activity level' },
-      { name: 'hair_length', label: 'hair length' },
-      { name: 'special_needs', label: 'special needs preference' }
-    ];
-    
-    requiredFields.forEach(field => {
-      if (formData[field.name] === undefined || formData[field.name] === '') {
-        errors.push(`Please select a ${field.label}`);
-      }
-    });
-    
-    if (!formData.required_traits || formData.required_traits.length === 0) {
-      errors.push('Please select at least one required trait or "None"');
-    }
-    
-    setError(errors.length > 0 ? errors[0] : '');
-    return errors.length === 0;
-  };
-
   const handleNext = (e) => {
     e.preventDefault();
+    // Mark all fields as touched to show all errors
+    const allTouched = Object.keys(touched).reduce((acc, key) => ({
+      ...acc,
+      [key]: true
+    }), {});
+    setTouched(allTouched);
     
-    if (validateForm()) {
-      onNext();
-    }
-  };
-
-  const shouldShowError = (field) => {
-    return touched[field] && error.toLowerCase().includes(field.replace('_', ' '));
+    onNext();
   };
 
   return (
@@ -185,15 +179,15 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
                   className={`p-4 border rounded-lg text-center transition-colors ${
                     formData.preferred_age === option.value 
                       ? 'border-primary-red bg-accent-blush' 
-                      : 'border-medium-gray hover:bg-light-gray'
+                      : `${hasError('preferred_age') ? 'border-red-500' : 'border-medium-gray'} hover:bg-light-gray`
                   }`}
                 >
                   {option.label}
                 </button>
               ))}
             </div>
-            {shouldShowError('preferred_age') && (
-              <p className="mt-1 text-sm text-red-600">{error}</p>
+            {hasError('preferred_age') && (
+              <p className="mt-1 text-sm text-red-600">{errors.preferred_age}</p>
             )}
           </div>
 
@@ -211,18 +205,18 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
                     setFormData(prev => ({ ...prev, preferred_sex: option.value }));
                     setTouched(prev => ({ ...prev, preferred_sex: true }));
                   }}
-                  className={`p-4 border rounded-lg text-center transition-colors ${
-                    formData.preferred_sex === option.value
-                      ? 'border-primary-red bg-accent-blush'
-                      : 'border-medium-gray hover:bg-light-gray'
+                  className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                    formData.preferred_sex === option.value 
+                      ? 'border-primary-red bg-accent-blush' 
+                      : `${hasError('preferred_sex') ? 'border-red-500' : 'border-medium-gray'} hover:bg-light-gray`
                   }`}
                 >
                   {option.label}
                 </button>
               ))}
             </div>
-            {shouldShowError('preferred_sex') && (
-              <p className="mt-1 text-sm text-red-600">{error}</p>
+            {hasError('preferred_sex') && (
+              <p className="mt-1 text-sm text-red-600">{errors.preferred_sex}</p>
             )}
           </div>
 
@@ -240,18 +234,18 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
                     setFormData(prev => ({ ...prev, preferred_size: option.value }));
                     setTouched(prev => ({ ...prev, preferred_size: true }));
                   }}
-                  className={`p-4 border rounded-lg text-center transition-colors ${
-                    formData.preferred_size === option.value
-                      ? 'border-primary-red bg-accent-blush'
-                      : 'border-medium-gray hover:bg-light-gray'
+                  className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                    formData.preferred_size === option.value 
+                      ? 'border-primary-red bg-accent-blush' 
+                      : `${hasError('preferred_size') ? 'border-red-500' : 'border-medium-gray'} hover:bg-light-gray`
                   }`}
                 >
                   {option.label}
                 </button>
               ))}
             </div>
-            {shouldShowError('preferred_size') && (
-              <p className="mt-1 text-sm text-red-600">{error}</p>
+            {hasError('preferred_size') && (
+              <p className="mt-1 text-sm text-red-600">{errors.preferred_size}</p>
             )}
           </div>
 
@@ -269,18 +263,18 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
                     setFormData(prev => ({ ...prev, activity_level: option.value }));
                     setTouched(prev => ({ ...prev, activity_level: true }));
                   }}
-                  className={`p-4 border rounded-lg text-center text-sm transition-colors ${
-                    formData.activity_level === option.value
-                      ? 'border-primary-red bg-accent-blush'
-                      : 'border-medium-gray hover:bg-light-gray'
+                  className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                    formData.activity_level === option.value 
+                      ? 'border-primary-red bg-accent-blush' 
+                      : `${hasError('activity_level') ? 'border-red-500' : 'border-medium-gray'} hover:bg-light-gray`
                   }`}
                 >
                   {option.label}
                 </button>
               ))}
             </div>
-            {shouldShowError('activity_level') && (
-              <p className="mt-1 text-sm text-red-600">{error}</p>
+            {hasError('activity_level') && (
+              <p className="mt-1 text-sm text-red-600">{errors.activity_level}</p>
             )}
           </div>
 
@@ -298,18 +292,18 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
                     setFormData(prev => ({ ...prev, hair_length: option.value }));
                     setTouched(prev => ({ ...prev, hair_length: true }));
                   }}
-                  className={`p-4 border rounded-lg text-center transition-colors ${
-                    formData.hair_length === option.value
-                      ? 'border-primary-red bg-accent-blush'
-                      : 'border-medium-gray hover:bg-light-gray'
+                  className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                    formData.hair_length === option.value 
+                      ? 'border-primary-red bg-accent-blush' 
+                      : `${hasError('hair_length') ? 'border-red-500' : 'border-medium-gray'} hover:bg-light-gray`
                   }`}
                 >
                   {option.label}
                 </button>
               ))}
             </div>
-            {shouldShowError('hair_length') && (
-              <p className="mt-1 text-sm text-red-600">{error}</p>
+            {hasError('hair_length') && (
+              <p className="mt-1 text-sm text-red-600">{errors.hair_length}</p>
             )}
           </div>
 
@@ -339,8 +333,8 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
                   </div>
                 ))}
             </div>
-            {shouldShowError('required_traits') && (
-              <p className="mt-1 text-sm text-red-600">{error}</p>
+            {hasError('required_traits') && (
+              <p className="mt-1 text-sm text-red-600">{errors.required_traits}</p>
             )}
           </div>
 
@@ -374,14 +368,14 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
               </label>
             </div>
             {shouldShowError('special_needs') && (
-              <p className="mt-1 text-sm text-red-600">{error}</p>
+              <p className="mt-1 text-sm text-red-600">{errors.special_needs}</p>
             )}
           </div>
 
           {/* Error message */}
-          {error && !Object.keys(touched).some(key => touched[key] && error.toLowerCase().includes(key.replace('_', ' '))) && (
+          {Object.keys(errors).length > 0 && !Object.keys(touched).some(key => touched[key] && errors[key]) && (
             <div className="p-3 bg-red-50 text-red-700 rounded-md border border-red-100">
-              {error}
+              {Object.values(errors).filter(Boolean)[0]}
             </div>
           )}
 
