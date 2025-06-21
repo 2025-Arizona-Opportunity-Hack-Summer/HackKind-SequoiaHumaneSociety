@@ -67,6 +67,8 @@ class PetBase(BaseModel):
     @field_validator("image_url", mode="before")
     @classmethod
     def convert_httpurl_to_str(cls, v):
+        if v == "":  # Convert empty string to None
+            return None
         return str(v) if v is not None else None
     status: Optional[PetStatus] = PetStatus.Available
 
