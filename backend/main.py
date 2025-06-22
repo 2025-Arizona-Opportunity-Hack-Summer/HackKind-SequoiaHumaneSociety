@@ -209,8 +209,8 @@ middleware = [
     Middleware(
         CSRFExemptMiddleware,
         cookie_secure=not settings.DEBUG,  # Only send over HTTPS in production
-        cookie_same_site="lax" if settings.DEBUG else "none",
-        cookie_http_only=True,  # More secure with httpOnly
+        cookie_same_site="lax",  # Use 'lax' for both dev and prod for better compatibility
+        cookie_http_only=False,  # Allow JavaScript to access the cookie
         safe_methods={"GET", "HEAD", "OPTIONS", "TRACE"},
     ),
 ]

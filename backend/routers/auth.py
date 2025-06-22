@@ -2,7 +2,7 @@ import re
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Union
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status, Cookie
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -39,6 +39,38 @@ COOKIE_CONFIG = {
     "max_age": int(settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60),  # in seconds
     "domain": "localhost" if settings.DEBUG else None,  # Explicitly set domain for development
 }
+
+@router.get("/csrf/")
+async def get_csrf_token(
+    request: Request,
+    response: Response,
+    csrftoken: Optional[str] = Cookie(None),
+):
+    """
+    Get a CSRF token. If no valid token exists in cookies, a new one will be generated.
+    The token is set in both a cookie and returned in the response.
+    """
+    from backend.main import CSRFMiddleware  # Import here to avoid circular import
+    
+    # If we already have a valid token, return it
+    if csrftoken:
+        return {"csrftoken": csrftoken}
+    
+    # Generate a new token
+    new_token = secrets.token_urlsafe(32)
+    
+    # Set the token in a cookie
+    response.set_cookie(
+        key="csrftoken",
+        value=new_token,
+        httponly=False,  # Allow JavaScript to read the cookie
+        secure=not settings.DEBUG,
+        samesite="lax",
+        max_age=60 * 60 * 24 * 7,  # 7 days
+        path="/",
+    )
+    
+    return {"csrftoken": new_token}
 
 # CORS settings for auth endpoints
 def get_cors_headers(request=None):

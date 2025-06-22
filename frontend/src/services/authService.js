@@ -217,13 +217,14 @@ export const authService = {
   },
   
   /**
-   * Check if the current user is an admin
+   * Check if the current user is an admin (case-insensitive check)
    */
   isAdmin: async () => {
     try {
       const user = await authService.getCurrentUser();
-      return user?.role === 'admin';
+      return user?.role?.toLowerCase() === 'admin';
     } catch (error) {
+      console.error('Error checking admin status:', error);
       return false;
     }
   },
