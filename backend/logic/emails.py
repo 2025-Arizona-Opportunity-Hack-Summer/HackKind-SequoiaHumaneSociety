@@ -10,7 +10,7 @@ def send_visit_confirmation(adopter_name: str, adopter_email: str, pet_name: str
     mail_body = {}
 
     mail_from = {
-        "name": "Nicolas",
+        "name": "Sequoia Humane Society",
         "email": origin_email,
     }
 
@@ -22,7 +22,7 @@ def send_visit_confirmation(adopter_name: str, adopter_email: str, pet_name: str
     ]
 
     reply_to = {
-        "name": "Nicolas",
+        "name": "Sequoia Humane Society",
         "email": origin_email,
     }
     
@@ -38,7 +38,7 @@ def send_visit_reminder(adopter_name: str, adopter_email: str, pet_name: str, vi
     mail_body = {}
 
     mail_from = {
-        "name": "Nicolas",
+        "name": "Sequoia Humane Society",
         "email": origin_email,
     }
 
@@ -50,7 +50,7 @@ def send_visit_reminder(adopter_name: str, adopter_email: str, pet_name: str, vi
     ]
 
     reply_to = {
-        "name": "Nicolas",
+        "name": "Sequoia Humane Society",
         "email": origin_email,
     }
 
