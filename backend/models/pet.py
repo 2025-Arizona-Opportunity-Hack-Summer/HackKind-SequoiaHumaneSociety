@@ -69,5 +69,6 @@ class Pet(Base):
     pet_friendly = Column(Boolean)
     shelter_notes = Column(Text)
     image_url = Column(Text)
+    summary = Column(Text)
     status = Column(Enum(PetStatus), default=PetStatus.Available)
     created_at = Column(TIMESTAMP, server_default=func.now())

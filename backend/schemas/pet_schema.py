@@ -62,6 +62,7 @@ class PetBase(BaseModel):
     pet_friendly: Optional[bool] = None
     shelter_notes: Optional[Annotated[str, constr(strip_whitespace=True, max_length=1000)]] = None
     image_url: Optional[HttpUrl] = None
+    summary: Optional[str] = None
 
 
     @field_validator("image_url", mode="before")

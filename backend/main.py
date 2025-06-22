@@ -1,17 +1,15 @@
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Union, Callable, Awaitable
+from typing import Union
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import OAuth2PasswordBearer
 from backend.logic.scheduler import start_scheduler  
 from fastapi.staticfiles import StaticFiles
-from backend.rate_limiter import apply_rate_limiting, limiter
+from backend.rate_limiter import apply_rate_limiting
 import os
-from contextlib import asynccontextmanager
 from fastapi.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
-from typing import Dict, List, Optional, Tuple, Union, Callable, Awaitable
 from backend.routers import (  
     auth_router,
     user_profile_router,
@@ -41,7 +39,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers.update(self.security_headers)
         return response
 
-# Create middleware for CORS, security headers, and rate limiting
 middleware = [
     Middleware(
         CORSMiddleware,
@@ -51,17 +48,16 @@ middleware = [
             "http://127.0.0.1:3000", 
             "http://127.0.0.1:3001",
         ],
-        allow_credentials=True,  # CRITICAL for cookies
-        allow_methods=["*"],  # Allow all methods
-        allow_headers=["*"],  # Allow all headers
-        expose_headers=["*"],  # Expose all headers to the client
+        allow_credentials=True,  
+        allow_methods=["*"],  
+        allow_headers=["*"],  
+        expose_headers=["*"],  
     ),
     Middleware(SecurityHeadersMiddleware),
 ]
 
 app = FastAPI(middleware=middleware)
 
-# Apply rate limiting
 app = apply_rate_limiting(app)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -90,7 +86,6 @@ def custom_openapi():
 
 app.openapi = custom_openapi
 
-# Router registration - keep existing order
 app.include_router(auth_router, prefix="/api")
 app.include_router(user_profile_router, prefix="/api")
 app.include_router(preferences_router, prefix="/api")

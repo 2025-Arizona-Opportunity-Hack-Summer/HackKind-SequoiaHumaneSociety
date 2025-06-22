@@ -224,7 +224,7 @@ const PetModal = ({ pet, onClose, onNext, onPrev, hasNext, hasPrev, onRequestVis
               <h3 className="text-lg font-semibold text-gray-900">About {pet.name}</h3>
               <div className="bg-red-50 p-6 rounded-lg border border-red-100">
                 <p className="text-gray-800 leading-relaxed">
-                  {pet.description || `${pet.name} is a wonderful companion looking for a loving home.`}
+                  {pet.summary || pet.description || `${pet.name} is a wonderful companion looking for a loving home.`}
                 </p>
               </div>
             </div>

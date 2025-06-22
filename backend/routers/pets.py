@@ -18,6 +18,7 @@ from backend.models.pet_vector import PetVector
 from backend.models.match import Match
 from backend.logic.matching_logic import build_pet_vector
 from backend.models.pet_training_traits import PetTrainingTrait
+from backend.logic.OpenAI_API_Logic import pet_ai_service
 
 
 router = APIRouter(prefix="/pets", tags=["Pets"])
@@ -48,6 +49,29 @@ def read_pet(pet_id: int, db: Session = Depends(get_db)):
     if not pet:
         raise HTTPException(status_code=404, detail="Pet not found")
     return pet
+
+@router.get("/{pet_id}/summary")
+async def get_pet_summary(
+    pet_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Get the stored AI-generated summary for a pet.
+    
+    This endpoint returns the pre-generated summary stored in the database.
+    If no summary exists, returns a 404 error.
+    """
+    pet = db.query(models.Pet).filter(models.Pet.id == pet_id).first()
+    if not pet:
+        raise HTTPException(status_code=404, detail="Pet not found")
+    
+    if not pet.summary:
+        raise HTTPException(
+            status_code=404, 
+            detail="No summary available for this pet. Please update the pet to generate a summary."
+        )
+    
+    return {"summary": pet.summary}
 
 @router.post("/", response_model=PetResponse)
 async def create_pet(
@@ -111,9 +135,21 @@ async def create_pet(
         
         # Create the pet
         db_pet = models.Pet(**{k: v for k, v in pet_data.items() if v is not None})
-        db.add(db_pet)
-        db.commit()
-        db.refresh(db_pet)
+        # Generate AI summary
+        try:
+            pet_dict = {k: v for k, v in pet_data.items() if v is not None}
+            pet_dict['id'] = db_pet.id  # Add ID for reference
+            summary = await pet_ai_service.generate_pet_summary(pet_dict)
+            db_pet.summary = summary
+            db.add(db_pet)
+            db.commit()
+            db.refresh(db_pet)
+        except Exception as e:
+            # Log the error but don't fail the request
+            print(f"Warning: Failed to generate AI summary for pet {db_pet.id}: {str(e)}")
+            db.add(db_pet)
+            db.commit()
+            db.refresh(db_pet)
         
         # If we have an image URL, update the pet with the correct ID in the URL
         if image_url and "0" in image_url:
@@ -359,7 +395,7 @@ async def upload_pet_photo(
         )
 
 @router.patch("/{pet_id}", response_model=PetResponse)
-def update_pet(
+async def update_pet(
     pet_id: int,
     pet_update: PetUpdate,
     db: Session = Depends(get_db),
@@ -388,8 +424,27 @@ def update_pet(
     if pet_update.status and pet_update.status != "Available":
         db.query(PetVector).filter_by(pet_id=pet_id).delete()
 
-    db.commit()
-    db.refresh(pet)
+    # Regenerate summary if any relevant fields were updated
+    summary_needs_update = any(field in update_data for field in [
+        'name', 'species', 'breed', 'age_group', 'sex', 'size', 'energy_level',
+        'experience_level', 'hair_length', 'allergy_friendly', 'special_needs',
+        'kid_friendly', 'pet_friendly', 'shelter_notes'
+    ])
+    
+    if summary_needs_update:
+        try:
+            pet_dict = {c.name: getattr(pet, c.name) for c in pet.__table__.columns}
+            pet_dict['id'] = pet.id
+            # Commit current changes first
+            db.commit()
+            db.refresh(pet)
+            # Then generate summary with the latest data
+            pet.summary = await pet_ai_service.generate_pet_summary(pet_dict)
+            db.add(pet)
+            db.commit()
+            db.refresh(pet)
+        except Exception as e:
+            print(f"Warning: Failed to update AI summary for pet {pet_id}: {str(e)}")
 
     if pet.status == "Adopted":
         db.query(Match).filter_by(pet_id=pet_id).delete()
