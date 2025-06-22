@@ -9,6 +9,7 @@ from typing import List
 from backend.logic.emails import send_visit_confirmation
 from backend.models.pet import Pet
 from backend.schemas.visit_schema import VisitRequestCreate, VisitStatusUpdate, VisitRequestSchema
+from backend.models.visit_request import VisitRequestStatus
 
 router = APIRouter(prefix="/visit-requests", tags=["Visit Requests"])
 
@@ -142,7 +143,7 @@ def update_visit_status(
     db.commit()
     db.refresh(visit)
 
-    if previous_status == "Pending" and payload.new_status == "Confirmed":
+    if previous_status ==  VisitRequestStatus.Pending and payload.new_status == VisitRequestStatus.Confirmed:
         background_tasks.add_task(
             send_visit_confirmation,
             adopter_name=adopter.full_name,
