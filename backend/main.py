@@ -1,16 +1,22 @@
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Union
+from typing import Union, Optional, List, Callable, Awaitable
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import OAuth2PasswordBearer
-from backend.logic.scheduler import start_scheduler  
+from backend.logic.scheduler import start_scheduler
 from fastapi.staticfiles import StaticFiles
 from backend.rate_limiter import apply_rate_limiting
+from backend.core.config import settings
 import os
+import secrets
 from fastapi.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.types import ASGIApp
-from backend.routers import (  
+from starlette.types import ASGIApp, Message
+from starlette.datastructures import Headers, MutableHeaders
+from starlette.requests import HTTPConnection
+from starlette.responses import Response as StarletteResponse
+from starlette.types import ASGIApp, Receive, Scope, Send
+from backend.routers import (
     auth_router,
     user_profile_router,
     preferences_router,
@@ -21,39 +27,192 @@ from backend.routers import (
     visit_requests_router,
     admin_visit_requests_router
 )
+from urllib.parse import urlparse
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: ASGIApp):
         super().__init__(app)
         self.security_headers = {
+            # Prevent MIME type sniffing
             "X-Content-Type-Options": "nosniff",
+            # Prevent clickjacking
             "X-Frame-Options": "DENY",
-            "Strict-Transport-Security": "max-age=63072000; includeSubDomains",
-            "Content-Security-Policy": "default-src 'self'",
-            "Referrer-Policy": "same-origin",
-            "Permissions-Policy": "geolocation=(), microphone=()"
+            # Enforce secure connections (HTTPS)
+            "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+            # Content Security Policy
+            "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;",
+            # Control referrer information
+            "Referrer-Policy": "strict-origin-when-cross-origin",
+            # Feature policy
+            "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
+            # XSS protection (legacy but still useful for older browsers)
+            "X-XSS-Protection": "1; mode=block",
+            # Prevent browsers from embedding resources from this site in other sites
+            "Cross-Origin-Embedder-Policy": "require-corp",
+            "Cross-Origin-Opener-Policy": "same-origin",
+            "Cross-Origin-Resource-Policy": "same-site"
         }
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         response = await call_next(request)
-        response.headers.update(self.security_headers)
+        # Don't override headers if they're already set
+        for header, value in self.security_headers.items():
+            if header not in response.headers:
+                response.headers[header] = value
         return response
 
+
+class CSRFMiddleware:
+    def __init__(
+        self,
+        app: ASGIApp,
+        secret: str = None,
+        cookie_name: str = "csrftoken",
+        header_name: str = "X-CSRF-Token",
+        safe_methods: set = None,
+        cookie_secure: bool = True,
+        cookie_http_only: bool = True,
+        cookie_same_site: str = "lax",
+    ) -> None:
+        self.app = app
+        self.secret = secret or settings.SECRET_KEY
+        self.cookie_name = cookie_name
+        self.header_name = header_name
+        self.safe_methods = safe_methods or {"GET", "HEAD", "OPTIONS", "TRACE"}
+        self.cookie_secure = cookie_secure
+        self.cookie_http_only = cookie_http_only
+        self.cookie_same_site = cookie_same_site
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+
+        request = Request(scope, receive)
+        csrf_token = request.cookies.get(self.cookie_name)
+
+        # Generate new CSRF token if not present
+        if not csrf_token:
+            csrf_token = secrets.token_urlsafe(32)
+
+        # Skip CSRF check for safe methods
+        if request.method in self.safe_methods:
+            return await self._process_request(scope, receive, send, csrf_token)
+
+        # Get token from header or form data
+        header_token = request.headers.get(self.header_name)
+        form_data = await request.form()
+        form_token = form_data.get("csrf_token")
+        
+        # Verify CSRF token
+        if not (header_token and header_token == csrf_token) and not (form_token and form_token == csrf_token):
+            response = StarletteResponse(
+                status_code=status.HTTP_403_FORBIDDEN,
+                content="CSRF token validation failed"
+            )
+            await response(scope, receive, send)
+            return
+
+        # Process the request if CSRF check passes
+        return await self._process_request(scope, receive, send, csrf_token)
+
+    async def _process_request(self, scope: Scope, receive: Receive, send: Send, csrf_token: str) -> None:
+        async def send_with_csrf_cookie(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                if "set-cookie" not in message.get("headers", {}):
+                    headers = MutableHeaders(scope=message)
+                    headers.append(
+                        "Set-Cookie",
+                        self._get_csrf_cookie(csrf_token)
+                    )
+            await send(message)
+
+        await self.app(scope, receive, send_with_csrf_cookie)
+
+    def _get_csrf_cookie(self, token: str) -> str:
+        cookie_parts = [
+            f"{self.cookie_name}={token}",
+            f"Max-Age={60 * 60 * 24 * 7}",  # 7 days
+            f"Path=/",
+        ]
+        
+        if self.cookie_secure:
+            cookie_parts.append("Secure")
+        if self.cookie_http_only:
+            cookie_parts.append("HttpOnly")
+        if self.cookie_same_site:
+            cookie_parts.append(f"SameSite={self.cookie_same_site}")
+            
+        return "; ".join(cookie_parts)
+
+# Configure CORS
+cors_origins = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
+    # Add production domains here
+]
+
+# Ensure all origins are properly formatted
+cors_origins = [origin.rstrip('/') for origin in cors_origins]
+
+# Add regex pattern for localhost with any port
+cors_origin_regex = r"^https?://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$"
+
+# List of paths that should be excluded from CSRF protection
+csrf_exempt_paths = {
+    "/api/auth/login",
+    "/api/auth/refresh",
+    "/api/auth/register",
+    "/api/auth/logout",
+    "/api/docs",
+    "/api/openapi.json",
+    "/api/redoc",
+    "/openapi.json"
+}
+
+class CSRFExemptMiddleware(CSRFMiddleware):
+    """Extends CSRFMiddleware to exclude certain paths."""
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] == "http":
+            # Skip CSRF for excluded paths
+            path = scope.get("path", "")
+            if path in csrf_exempt_paths:
+                await self.app(scope, receive, send)
+                return
+        await super().__call__(scope, receive, send)
+
+# Configure middleware
 middleware = [
+    # CORS middleware should be first to handle OPTIONS requests
     Middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:3000",  
-            "http://localhost:3001",  
-            "http://127.0.0.1:3000", 
-            "http://127.0.0.1:3001",
+        allow_origins=cors_origins,
+        allow_origin_regex=cors_origin_regex,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=[
+            "Content-Range",
+            "X-Total-Count",
+            "X-CSRF-Token",
+            "Access-Control-Allow-Origin",
+            "Access-Control-Allow-Credentials"
         ],
-        allow_credentials=True,  
-        allow_methods=["*"],  
-        allow_headers=["*"],  
-        expose_headers=["*"],  
+        max_age=600,  # 10 minutes for preflight cache
     ),
+    
+    # Security headers middleware
     Middleware(SecurityHeadersMiddleware),
+    
+    # CSRF protection (must come after CORS)
+    Middleware(
+        CSRFExemptMiddleware,
+        cookie_secure=not settings.DEBUG,  # Only send over HTTPS in production
+        cookie_same_site="lax" if settings.DEBUG else "none",
+        cookie_http_only=True,  # More secure with httpOnly
+        safe_methods={"GET", "HEAD", "OPTIONS", "TRACE"},
+    ),
 ]
 
 app = FastAPI(middleware=middleware)

@@ -130,17 +130,21 @@ function AppContent() {
         </PublicRoute>
       } />
       
-      {/* All other routes with Navbar */}
-      <Route path="/" element={<Layout />}>
-        <Route index element={<LandingPage />} />
-        
+      {/* Public routes with Navbar */}
+      <Route element={<Layout />}>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/pets" element={<PetsPage />} />
+      </Route>
+      
+      {/* Protected routes with Navbar */}
+      <Route element={<Layout />}>
+        {/* Protected routes */}
         <Route path="/questionnaire" element={
           <ProtectedRoute>
             <Questionnaire />
           </ProtectedRoute>
         } />
         
-        {/* Protected routes */}
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <AdopterDashboard />
@@ -159,19 +163,14 @@ function AppContent() {
           </ProtectedRoute>
         } />
         
-        {/* Public pets page */}
-        <Route path="/pets" element={
-          <PetsPage />
-        } />
-        
         {/* Redirect old /admin to /admin/dashboard */}
         <Route path="/admin" element={
           <Navigate to="/admin/dashboard" replace />
         } />
-        
-        {/* Catch-all route */}
-        <Route path="*" element={<NotFoundPage />} />
       </Route>
+      
+      {/* Catch-all route */}
+      <Route path="*" element={<Layout><NotFoundPage /></Layout>} />
     </Routes>
   );
 }

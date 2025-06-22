@@ -8,7 +8,15 @@ from backend.core.database import get_db
 from backend.models.user import User
 
 def get_optional_user(request: Request, db: Session = Depends(get_db)) -> Optional[User]:
-    token = request.cookies.get("access_token")
+    # Check for token in Authorization header first
+    auth_header = request.headers.get("Authorization")
+    token = None
+    
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+    else:
+        # Fall back to checking cookies
+        token = request.cookies.get("access_token")
     
     if not token:
         return None
@@ -18,7 +26,13 @@ def get_optional_user(request: Request, db: Session = Depends(get_db)) -> Option
         user_id = payload.get("sub")
         if user_id is None:
             return None
-    except JWTError:
+            
+        # Validate token type is access token
+        if payload.get("type") != "access":
+            return None
+            
+    except JWTError as e:
+        print(f"JWT Error: {str(e)}")
         return None
 
     try:
@@ -35,11 +49,18 @@ def get_optional_user(request: Request, db: Session = Depends(get_db)) -> Option
         if user_id_int <= 0:
             return None
             
-    except ValueError:
+    except (ValueError, AttributeError) as e:
+        print(f"User ID validation error: {str(e)}")
         return None
 
-    user = db.query(User).filter(User.id == user_id_int).first()
-    return user
+    try:
+        user = db.query(User).filter(User.id == user_id_int).first()
+        if not user:
+            print(f"User with ID {user_id_int} not found")
+        return user
+    except Exception as e:
+        print(f"Database error when fetching user: {str(e)}")
+        return None
 
 def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     user = get_optional_user(request, db)

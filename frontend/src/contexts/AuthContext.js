@@ -5,6 +5,7 @@ export const AuthContext = createContext({
   user: null,
   isAuthenticated: false,
   isLoading: true,
+  error: null,
   login: () => {},
   logout: () => {},
   refreshUser: () => {},
@@ -15,85 +16,87 @@ export const AuthContext = createContext({
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  // Initialize user from session storage if available
+  const [user, setUser] = useState(() => {
+    const storedUser = sessionStorage.getItem('user');
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const isAuthenticated = !!user;
-  
   const isAdmin = user?.role === 'admin';
 
+  // Initialize authentication state
   const initializeAuth = useCallback(async () => {
     try {
       setIsLoading(true);
+      setError(null);
       
-      const storedUser = localStorage.getItem('user');
+      // Check if we have a valid session
+      const isAuthenticated = await authService.isAuthenticated();
       
-      if (!storedUser) {
-        setUser(null);
-        return;
-      }
-      
-      try {
-        const userData = JSON.parse(storedUser);
+      if (isAuthenticated) {
+        // Get the current user data
+        const userData = await authService.getCurrentUser();
         setUser(userData);
-        
-        try {
-          const freshUserData = await authService.getCurrentUser();
-          if (freshUserData) {
-            setUser(freshUserData);
-          }
-        } catch (error) {
-          localStorage.removeItem('user');
-          setUser(null);
-        }
-      } catch (e) {
-        localStorage.removeItem('user');
+      } else {
         setUser(null);
       }
+      
+      return isAuthenticated;
     } catch (error) {
+      console.error('Error initializing auth:', error);
+      setError('Failed to initialize authentication');
       setUser(null);
+      return false;
     } finally {
       setIsLoading(false);
+      setIsInitialized(true);
     }
   }, []);
 
+  // Initialize auth state on mount
   useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
 
+  // Handle login
   const login = async (credentials) => {
     try {
       setIsLoading(true);
       setError(null);
       
-      const response = await authService.login(credentials);
+      const { user: userData } = await authService.login(credentials);
       
-      if (!response.user) {
+      if (!userData) {
         throw new Error('No user data received');
       }
       
-      setUser(response.user);
-      
-      return response.user;
+      setUser(userData);
+      return userData;
     } catch (error) {
-      // Login error
-      setError(error.message || 'Login failed');
+      console.error('Login error:', error);
+      setError(error.message || 'Login failed. Please check your credentials and try again.');
       throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Handle logout
   const logout = async () => {
     try {
       setIsLoading(true);
+      setError(null);
+      
       await authService.logout();
       setUser(null);
-      setError(null);
     } catch (error) {
-      // Logout error
-      setError('Failed to logout');
+      console.error('Logout error:', error);
+      setError('Failed to logout. Please try again.');
+      throw error;
     } finally {
       setIsLoading(false);
     }
