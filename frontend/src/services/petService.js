@@ -173,41 +173,16 @@ export const petService = {
     try {
       console.log(`[petService] Updating pet ${petId} with data:`, petData);
       
-      // If we're only updating the status and have the existing pet data,
-      // include all required fields from the existing pet to avoid validation errors
-      let updateData = { ...petData };
-      if (existingPet && Object.keys(petData).length === 1 && 'status' in petData) {
-        console.log('[petService] Status-only update detected, including all required fields');
-        updateData = {
-          ...existingPet,
-          status: petData.status
-        };
-      }
-      
-      const isFormData = updateData instanceof FormData;
+      const formData = createFormData(petData);
+
       const config = {
         headers: {
-          'Content-Type': isFormData ? 'multipart/form-data' : 'application/json'
+          'Content-Type': 'multipart/form-data'
         }
       };
       
-      // Log the data being sent
-      let dataToSend;
-      if (isFormData) {
-        console.log('[petService] Sending FormData');
-        dataToSend = updateData;
-        // Log FormData entries if possible
-        for (let pair of updateData.entries()) {
-          console.log(`[petService] FormData entry: ${pair[0]} = ${pair[1]}`);
-        }
-      } else {
-        console.log('[petService] Sending JSON data');
-        dataToSend = createFormData(updateData);
-        console.log('[petService] Created FormData from object:', Object.fromEntries(dataToSend));
-      }
-      
       console.log(`[petService] Sending PATCH request to /pets/${petId}`);
-      const response = await api.patch(`/pets/${petId}`, dataToSend, config);
+      const response = await api.patch(`/pets/${petId}`, formData, config);
       console.log('[petService] Update response:', response);
       
       if (!response || !response.data) {

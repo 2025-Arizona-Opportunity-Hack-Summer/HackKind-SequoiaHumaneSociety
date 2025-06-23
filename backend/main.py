@@ -168,7 +168,9 @@ csrf_exempt_paths = {
     "/api/docs",
     "/api/openapi.json",
     "/api/redoc",
-    "/openapi.json"
+    "/openapi.json",
+    "/api/pets",
+    "/api/pets/"
 }
 
 class CSRFExemptMiddleware(CSRFMiddleware):
@@ -177,7 +179,7 @@ class CSRFExemptMiddleware(CSRFMiddleware):
         if scope["type"] == "http":
             # Skip CSRF for excluded paths
             path = scope.get("path", "")
-            if path in csrf_exempt_paths:
+            if path in csrf_exempt_paths or path.startswith("/api/pets"):
                 await self.app(scope, receive, send)
                 return
         await super().__call__(scope, receive, send)
@@ -187,19 +189,10 @@ middleware = [
     # CORS middleware should be first to handle OPTIONS requests
     Middleware(
         CORSMiddleware,
-        allow_origins=cors_origins,
-        allow_origin_regex=cors_origin_regex,
+        allow_origins=["http://localhost:3000"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
-        expose_headers=[
-            "Content-Range",
-            "X-Total-Count",
-            "X-CSRF-Token",
-            "Access-Control-Allow-Origin",
-            "Access-Control-Allow-Credentials"
-        ],
-        max_age=600,  # 10 minutes for preflight cache
     ),
     
     # Security headers middleware
@@ -216,6 +209,14 @@ middleware = [
 ]
 
 app = FastAPI(middleware=middleware)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app = apply_rate_limiting(app)
 

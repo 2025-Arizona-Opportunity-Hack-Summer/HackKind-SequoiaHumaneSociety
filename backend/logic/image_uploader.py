@@ -2,9 +2,11 @@ import os
 import shutil
 from uuid import uuid4
 from pathlib import Path
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile
 from PIL import Image
 import magic
+from io import BytesIO
+from backend.core.config import settings
 
 UPLOAD_DIR = "backend/static/uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -14,7 +16,7 @@ ALLOWED_MIME_TYPES = {'image/jpeg', 'image/png', 'image/gif', 'image/webp'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  
 MAX_IMAGE_DIMENSION = 2048  
 
-def validate_image_file(file, filename: str) -> None:
+def validate_image_file(file: BytesIO, filename: str) -> None:
     
     file_ext = Path(filename).suffix.lower()
     if file_ext not in ALLOWED_EXTENSIONS:
@@ -23,9 +25,7 @@ def validate_image_file(file, filename: str) -> None:
             detail=f"Invalid file type. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}"
         )
     
-    file.seek(0, 2)  
-    file_size = file.tell()
-    file.seek(0)  
+    file_size = len(file.getvalue())
     
     if file_size > MAX_FILE_SIZE:
         raise HTTPException(
@@ -37,6 +37,7 @@ def validate_image_file(file, filename: str) -> None:
         raise HTTPException(status_code=400, detail="Empty file not allowed")
     
     try:
+        file.seek(0)
         file_content = file.read(1024)  
         file.seek(0)  
         
@@ -76,9 +77,12 @@ def validate_and_process_image(file_path: str) -> None:
             os.remove(file_path)
         raise HTTPException(status_code=400, detail="Invalid image file")
 
-def upload_pet_photo_local(file, pet_id: int, original_filename: str) -> str:
+async def upload_pet_photo_local(file: UploadFile, pet_id: int, original_filename: str) -> str:
     
-    validate_image_file(file, original_filename)
+    content = await file.read()
+    file_like_object = BytesIO(content)
+    
+    validate_image_file(file_like_object, original_filename)
     
     safe_filename = sanitize_filename(original_filename)
     
@@ -90,11 +94,11 @@ def upload_pet_photo_local(file, pet_id: int, original_filename: str) -> str:
     
     try:
         with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file, buffer)
+            buffer.write(content)
         
         validate_and_process_image(file_path)
         
-        return f"http://localhost:8000/static/uploads/{unique_name}"
+        return f"{settings.BASE_URL}/static/uploads/{unique_name}"
         
     except Exception as e:
         if os.path.exists(file_path):

@@ -9,58 +9,53 @@ import os
 from backend.core.database import get_db
 from backend import models
 from backend.logic.image_uploader import upload_pet_photo_local
-from backend.schemas.pet_schema import PetCreate, PetResponse, PetUpdate
-from pydantic.networks import HttpUrl
+from backend.schemas.pet_schema import PetResponse
 from backend.core.dependencies import get_optional_user, get_current_user
 from backend.models.user import User, UserRole
-from backend.models.pet import Pet
 from backend.models.pet_vector import PetVector
 from backend.models.match import Match
 from backend.logic.matching_logic import build_pet_vector
 from backend.models.pet_training_traits import PetTrainingTrait
 from backend.logic.OpenAI_API_Logic import pet_ai_service
+from backend.core.config import settings
 
 
 router = APIRouter(prefix="/pets", tags=["Pets"])
 
+def _ensure_absolute_image_url(pet):
+    if pet.image_url and pet.image_url.startswith("/static/"):
+        pet.image_url = f"{settings.BASE_URL}{pet.image_url}"
+    return pet
+
 @router.get("/", response_model=List[PetResponse])
 def read_pets(
     skip: int = 0, 
-    limit: int = 100,  # Increased default limit to return more pets
-    status: str = None,  # Optional status filter
+    limit: int = 100,
+    status: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_optional_user)
+    current_user: Optional[User] = Depends(get_optional_user)
 ):
     query = db.query(models.Pet)
     
-    # If status is provided, filter by status
     if status:
         query = query.filter(models.Pet.status == status)
-    # If no status provided and user is not admin (or not logged in), show only available pets
     elif current_user is None or current_user.role != UserRole.Admin:
         query = query.filter(models.Pet.status == "Available")
-    
-    # Apply pagination
-    return query.offset(skip).limit(limit).all()
+    pets = query.order_by(models.Pet.created_at.desc()).offset(skip).limit(limit).all()
+    return [_ensure_absolute_image_url(pet) for pet in pets]
 
 @router.get("/{pet_id}", response_model=PetResponse)
 def read_pet(pet_id: int, db: Session = Depends(get_db)):
     pet = db.query(models.Pet).filter(models.Pet.id == pet_id).first()
     if not pet:
         raise HTTPException(status_code=404, detail="Pet not found")
-    return pet
+    return _ensure_absolute_image_url(pet)
 
 @router.get("/{pet_id}/summary")
 async def get_pet_summary(
     pet_id: int,
     db: Session = Depends(get_db)
 ):
-    """
-    Get the stored AI-generated summary for a pet.
-    
-    This endpoint returns the pre-generated summary stored in the database.
-    If no summary exists, returns a 404 error.
-    """
     pet = db.query(models.Pet).filter(models.Pet.id == pet_id).first()
     if not pet:
         raise HTTPException(status_code=404, detail="Pet not found")
@@ -75,6 +70,8 @@ async def get_pet_summary(
 
 @router.post("/", response_model=PetResponse)
 async def create_pet(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
     name: str = Form(...),
     age_group: str = Form(...),
     sex: str = Form(...),
@@ -91,78 +88,47 @@ async def create_pet(
     shelter_notes: Optional[str] = Form(None),
     status: Optional[str] = Form("Available"),
     image: Optional[UploadFile] = File(None),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
 ):
-    # Check if user is admin
     if current_user.role != UserRole.Admin:
         raise HTTPException(status_code=403, detail="Only admins can create pets")
-    
+
     try:
-        # Handle file upload if present
-        image_url = None
-        if image and image.filename:
-            try:
-                # Ensure we're at the start of the file
-                await image.seek(0)
-                # Upload the image
-                image_url = await upload_pet_photo_local(image, 0, image.filename)  # 0 is a temporary ID
-                # Close the file
-                await image.close()
-            except Exception as e:
-                print(f"Error uploading image: {str(e)}")
-                # Continue without image if upload fails
-        
-        # Create pet data dictionary
         pet_data = {
-            "name": name,
-            "age_group": age_group,
-            "sex": sex,
-            "species": species,
-            "size": size,
-            "energy_level": energy_level,
-            "experience_level": experience_level,
-            "hair_length": hair_length,
-            "breed": breed,
-            "allergy_friendly": allergy_friendly,
-            "special_needs": special_needs,
-            "kid_friendly": kid_friendly,
-            "pet_friendly": pet_friendly,
-            "shelter_notes": shelter_notes,
-            "status": status,
-            "image_url": image_url
+            "name": name, "age_group": age_group, "sex": sex, "species": species,
+            "size": size, "energy_level": energy_level, "experience_level": experience_level,
+            "hair_length": hair_length, "breed": breed, "allergy_friendly": allergy_friendly,
+            "special_needs": special_needs, "kid_friendly": kid_friendly,
+            "pet_friendly": pet_friendly, "shelter_notes": shelter_notes, "status": status,
         }
         
-        # Create the pet
         db_pet = models.Pet(**{k: v for k, v in pet_data.items() if v is not None})
-        # Generate AI summary
+        db.add(db_pet)
+        db.commit()
+        db.refresh(db_pet)
+
+        if image and image.filename:
+            try:
+                image_url = await upload_pet_photo_local(image, db_pet.id, image.filename)
+                db_pet.image_url = image_url
+            except Exception as e:
+                print(f"Warning: Could not upload image for new pet {db_pet.id}: {e}")
+            finally:
+                await image.close()
+        
         try:
-            pet_dict = {k: v for k, v in pet_data.items() if v is not None}
-            pet_dict['id'] = db_pet.id  # Add ID for reference
+            pet_dict = {c.name: getattr(db_pet, c.name) for c in db_pet.__table__.columns if getattr(db_pet, c.name) is not None}
             summary = await pet_ai_service.generate_pet_summary(pet_dict)
             db_pet.summary = summary
-            db.add(db_pet)
-            db.commit()
-            db.refresh(db_pet)
         except Exception as e:
-            # Log the error but don't fail the request
-            print(f"Warning: Failed to generate AI summary for pet {db_pet.id}: {str(e)}")
-            db.add(db_pet)
-            db.commit()
-            db.refresh(db_pet)
-        
-        # If we have an image URL, update the pet with the correct ID in the URL
-        if image_url and "0" in image_url:
-            new_image_url = image_url.replace("pet_0_", f"pet_{db_pet.id}_")
-            db_pet.image_url = new_image_url
-            db.commit()
-            db.refresh(db_pet)
-        
+            print(f"Warning: Failed to generate AI summary for new pet {db_pet.id}: {e}")
+
+        db.commit()
+        db.refresh(db_pet)
+
         try:
-            # Create pet vector
             traits = db.query(PetTrainingTrait).filter_by(pet_id=db_pet.id).all()
             trait_enums = [t.trait for t in traits]
-            pet_response = PetResponse(**{k: v for k, v in db_pet.__dict__.items() if not k.startswith("_")})
+            pet_response = PetResponse.model_validate(db_pet, from_attributes=True)
             vector = build_pet_vector(pet_response, trait_enums)
             
             pet_vector = PetVector(pet_id=db_pet.id, vector=vector.tolist())
@@ -176,16 +142,18 @@ async def create_pet(
         
     except Exception as e:
         db.rollback()
-        print(f"Error creating pet: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to create pet: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create pet: {e}")
 
-@router.put("/{pet_id}", response_model=PetResponse)
+
+@router.patch("/{pet_id}", response_model=PetResponse)
 async def update_pet(
     pet_id: int,
-    name: str = Form(None),
-    age_group: str = Form(None),
-    sex: str = Form(None),
-    species: str = Form(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    name: Optional[str] = Form(None),
+    age_group: Optional[str] = Form(None),
+    sex: Optional[str] = Form(None),
+    species: Optional[str] = Form(None),
     size: Optional[str] = Form(None),
     energy_level: Optional[str] = Form(None),
     experience_level: Optional[str] = Form(None),
@@ -198,63 +166,56 @@ async def update_pet(
     shelter_notes: Optional[str] = Form(None),
     status: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
 ):
-    # Check if user is admin
     if current_user.role != UserRole.Admin:
         raise HTTPException(status_code=403, detail="Only admins can update pets")
-    
+
     pet = db.query(models.Pet).filter(models.Pet.id == pet_id).first()
     if not pet:
         raise HTTPException(status_code=404, detail="Pet not found")
-    
+
     try:
-        # Handle file upload if present
-        if image and image.filename:
-            try:
-                await image.seek(0)
-                image_url = await upload_pet_photo_local(image, pet_id, image.filename)
-                await image.close()
-                pet.image_url = image_url
-            except Exception as e:
-                print(f"Error updating pet image: {str(e)}")
-                # Continue without updating the image if upload fails
-        
-        # Update pet fields
         update_data = {
-            "name": name,
-            "age_group": age_group,
-            "sex": sex,
-            "species": species,
-            "size": size,
-            "energy_level": energy_level,
-            "experience_level": experience_level,
-            "hair_length": hair_length,
-            "breed": breed,
-            "allergy_friendly": allergy_friendly,
-            "special_needs": special_needs,
-            "kid_friendly": kid_friendly,
-            "pet_friendly": pet_friendly,
-            "shelter_notes": shelter_notes,
-            "status": status
+            "name": name, "age_group": age_group, "sex": sex, "species": species,
+            "size": size, "energy_level": energy_level, "experience_level": experience_level,
+            "hair_length": hair_length, "breed": breed, "allergy_friendly": allergy_friendly,
+            "special_needs": special_needs, "kid_friendly": kid_friendly,
+            "pet_friendly": pet_friendly, "shelter_notes": shelter_notes, "status": status,
         }
         
-        # Only update fields that were provided
+        summary_needs_update = False
         for key, value in update_data.items():
-            if value is not None:
+            if value is not None and getattr(pet, key) != value:
                 setattr(pet, key, value)
+                if key not in ['status']:
+                    summary_needs_update = True
+        
+        if image and image.filename:
+            try:
+                image_url = await upload_pet_photo_local(image, pet_id, image.filename)
+                pet.image_url = image_url
+                summary_needs_update = True
+            except Exception as e:
+                print(f"Warning: Could not update image for pet {pet_id}: {e}")
+            finally:
+                await image.close()
+
+        if summary_needs_update:
+            try:
+                pet_dict = {c.name: getattr(pet, c.name) for c in pet.__table__.columns if getattr(pet, c.name) is not None}
+                pet.summary = await pet_ai_service.generate_pet_summary(pet_dict)
+            except Exception as e:
+                print(f"Warning: Failed to update AI summary for pet {pet_id}: {e}")
         
         db.commit()
         db.refresh(pet)
-        
-        # Update pet vector
+
         try:
             traits = db.query(PetTrainingTrait).filter_by(pet_id=pet_id).all()
             trait_enums = [t.trait for t in traits]
-            pet_response = PetResponse(**{k: v for k, v in pet.__dict__.items() if not k.startswith("_")})
+            pet_response = PetResponse.model_validate(pet, from_attributes=True)
             vector = build_pet_vector(pet_response, trait_enums)
-            
+
             existing_vector = db.query(PetVector).filter_by(pet_id=pet_id).first()
             if existing_vector:
                 existing_vector.vector = vector.tolist()
@@ -265,193 +226,55 @@ async def update_pet(
             print(f"✅ Auto-updated vector for {pet.name}")
         except Exception as e:
             print(f"❌ Vector update failed for {pet.name}: {e}")
-        
+            
         return pet
-        
+
     except Exception as e:
         db.rollback()
-        print(f"Error updating pet: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to update pet: {str(e)}")
-    
-    return pet
+        raise HTTPException(status_code=500, detail=f"Failed to update pet: {e}")
 
-@router.delete("/{pet_id}", response_model=PetResponse)
+@router.delete("/{pet_id}", status_code=204)
 def delete_pet(pet_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    if current_user.role.lower() != "admin":
+    if current_user.role != UserRole.Admin:
         raise HTTPException(status_code=403, detail="Only admins can delete pets")
         
     pet = db.query(models.Pet).filter(models.Pet.id == pet_id).first()
     if not pet:
         raise HTTPException(status_code=404, detail="Pet not found")
     
-    # Delete related records first
     db.query(models.PetTrainingTrait).filter(models.PetTrainingTrait.pet_id == pet_id).delete()
     db.query(models.PetVector).filter(models.PetVector.pet_id == pet_id).delete()
     db.query(models.Match).filter(models.Match.pet_id == pet_id).delete()
     
-    # Now delete the pet
     db.delete(pet)
     db.commit()
-    return pet
+    return Response(status_code=204)
 
 @router.get("/{pet_id}/photo")
 async def get_pet_photo(pet_id: int, db: Session = Depends(get_db)):
-    try:
-        pet = db.query(models.Pet).filter(models.Pet.id == pet_id).first()
-        if not pet or not pet.image_url:
-            raise HTTPException(status_code=404, detail="Pet or photo not found")
-        
-        if not (pet.image_url.startswith('http') or pet.image_url.startswith('https')):
-            file_path = Path(pet.image_url)
-            if not file_path.exists():
-                uploads_path = Path("uploads") / pet.image_url
-                if not uploads_path.exists():
-                    raise HTTPException(status_code=404, detail="Photo file not found")
-                file_path = uploads_path
-            
-            return FileResponse(
-                file_path,
-                media_type="image/jpeg",
-                headers={
-                    "Cache-Control": "public, max-age=86400", 
-                    "Access-Control-Allow-Origin": "*"  
-                }
-            )
-        
-        try:
-            response = requests.get(pet.image_url, stream=True, timeout=10)
-            response.raise_for_status()
-            
-            content_type = response.headers.get('content-type', 'image/jpeg')
-            
-            return Response(
-                content=response.content,  
-                media_type=content_type,
-                headers={
-                    "Cache-Control": "public, max-age=86400",  
-                    "Access-Control-Allow-Origin": "*"  
-                }
-            )
-        except requests.exceptions.RequestException as e:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Failed to fetch external image: {str(e)}"
-            )
-    except Exception as e:
-        print(f"Error in get_pet_photo: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail="An error occurred while processing the image"
-        )
-
-@router.post("/{pet_id}/photo")
-async def upload_pet_photo(
-    pet_id: int, 
-    file: UploadFile = File(...), 
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user) 
-):
     pet = db.query(models.Pet).filter(models.Pet.id == pet_id).first()
-    if not pet:
-        raise HTTPException(status_code=404, detail="Pet not found")
+    if not pet or not pet.image_url:
+        raise HTTPException(status_code=404, detail="Pet or photo not found")
     
-    if current_user.role != UserRole.Admin:
-        raise HTTPException(status_code=403, detail="Only admins can upload pet photos")
-    
-    if not file.filename:
-        raise HTTPException(status_code=400, detail="No file provided")
-    
-    try:
-        # Read the file content once
-        file_content = await file.read()
-        
-        # Create a BytesIO object from the content
-        from io import BytesIO
-        file_obj = BytesIO(file_content)
-        
-        # Upload the file using our local function
-        file_url = upload_pet_photo_local(file_obj, pet_id, file.filename)
-        
-        # Update the pet record
-        pet.image_url = file_url
-        db.commit()
-        db.refresh(pet)
-        
-        return {"message": "Photo uploaded successfully", "image_url": file_url}
-        
-    except HTTPException as http_exc:
-        raise http_exc
-    except Exception as e:
-        db.rollback()
-        error_detail = "Failed to process the uploaded file. Please try again with a different image."
-        if hasattr(e, 'detail'):
-            error_detail = str(e.detail)
-        elif hasattr(e, 'args') and e.args:
-            error_detail = str(e.args[0])
-        
-        raise HTTPException(
-            status_code=500 if not isinstance(e, HTTPException) else e.status_code,
-            detail=error_detail
-        )
+    image_url_str = str(pet.image_url)
 
-@router.patch("/{pet_id}", response_model=PetResponse)
-async def update_pet(
-    pet_id: int,
-    pet_update: PetUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    if current_user.role.lower() != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can update pets")
+    if image_url_str.startswith('/static/'):
+        # Handle local file
+        file_path = Path("backend" + image_url_str)
+        if not file_path.exists():
+            raise HTTPException(status_code=404, detail="Photo file not found on server")
+        return FileResponse(file_path, media_type="image/jpeg", headers={"Cache-Control": "public, max-age=86400"})
 
-    pet = db.query(Pet).filter_by(id=pet_id).first()
-    if not pet:
-        raise HTTPException(status_code=404, detail="Pet not found")
-
-    current_image_url = pet.image_url
-    
-    update_data = pet_update.model_dump(exclude_unset=True)
-    
-    if 'image_url' in update_data and update_data['image_url'] is not None:
-        update_data['image_url'] = str(update_data['image_url'])
-    
-    for key, value in update_data.items():
-        setattr(pet, key, value)
-    
-    if 'image_url' not in update_data and current_image_url:
-        pet.image_url = current_image_url
-
-    if pet_update.status and pet_update.status != "Available":
-        db.query(PetVector).filter_by(pet_id=pet_id).delete()
-
-    # Regenerate summary if any relevant fields were updated
-    summary_needs_update = any(field in update_data for field in [
-        'name', 'species', 'breed', 'age_group', 'sex', 'size', 'energy_level',
-        'experience_level', 'hair_length', 'allergy_friendly', 'special_needs',
-        'kid_friendly', 'pet_friendly', 'shelter_notes'
-    ])
-    
-    if summary_needs_update:
+    elif image_url_str.startswith('http'):
+        # Handle external URL
         try:
-            pet_dict = {c.name: getattr(pet, c.name) for c in pet.__table__.columns}
-            pet_dict['id'] = pet.id
-            # Commit current changes first
-            db.commit()
-            db.refresh(pet)
-            # Then generate summary with the latest data
-            pet.summary = await pet_ai_service.generate_pet_summary(pet_dict)
-            db.add(pet)
-            db.commit()
-            db.refresh(pet)
-        except Exception as e:
-            print(f"Warning: Failed to update AI summary for pet {pet_id}: {str(e)}")
-
-    if pet.status == "Adopted":
-        db.query(Match).filter_by(pet_id=pet_id).delete()
-        db.commit()
-        
-    return pet
-
-    return pet
+            response = requests.get(image_url_str, stream=True, timeout=10)
+            response.raise_for_status()
+            content_type = response.headers.get('content-type', 'image/jpeg')
+            return Response(content=response.content, media_type=content_type, headers={"Cache-Control": "public, max-age=86400"})
+        except requests.exceptions.RequestException as e:
+            raise HTTPException(status_code=400, detail=f"Failed to fetch external image: {e}")
+            
+    raise HTTPException(status_code=404, detail="Invalid image URL format")
 
 
