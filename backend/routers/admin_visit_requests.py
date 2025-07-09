@@ -70,15 +70,11 @@ def update_visit_status(
     db.commit()
     db.refresh(visit)
 
-    print(f"[DEBUG] previous_status: {previous_status} (type: {type(previous_status)})")
-    print(f"[DEBUG] new status: {status} (type: {type(status)})")
-
     # Send confirmation email if status changed from Pending to Confirmed
     if previous_status.value.lower() == VisitRequestStatus.Pending.value.lower() and status.value.lower() == VisitRequestStatus.Confirmed.value.lower():
         adopter = db.query(User).filter(User.id == visit.user_id).first()
         pet = db.query(Pet).filter(Pet.id == visit.pet_id).first()
         if adopter is not None and pet is not None:
-            print(f"[DEBUG] Sending confirmation email to {adopter.email} for visit {visit.id}")
             from backend.logic.emails import send_visit_confirmation
             send_visit_confirmation(
                 adopter_name=str(adopter.full_name) if adopter.full_name else "Adopter",

@@ -108,13 +108,6 @@ def _set_refresh_token_cookie(response: Response, token: str, expires: datetime)
     # Ensure path is always set
     cookie_config["path"] = "/"
     
-    # Log cookie settings for debugging
-    print("\n=== Setting Refresh Token Cookie ===")
-    print(f"Key: {REFRESH_TOKEN_COOKIE}")
-    print(f"Value: {'*' * 8}{token[-4:] if token else ''}")  # Don't log full token
-    print(f"Expires: {expires}")
-    print(f"Config: {cookie_config}")
-    
     try:
         # Set the cookie
         response.set_cookie(
@@ -124,23 +117,7 @@ def _set_refresh_token_cookie(response: Response, token: str, expires: datetime)
             **{k: v for k, v in cookie_config.items() if v is not None}
         )
         
-        # Log the Set-Cookie header for verification (excluding the actual token value)
-        set_cookie_headers = response.raw_headers
-        cookie_headers = [
-            value.decode() if isinstance(value, bytes) else value
-            for name, value in set_cookie_headers
-            if name.lower() == b'set-cookie' or name == 'set-cookie'
-        ]
-        
-        if cookie_headers:
-            for header in cookie_headers:
-                safe_header = re.sub(r'(?<=refresh_token=)[^;]+', '****', header)
-                print(f"Set-Cookie header: {safe_header}")
-        else:
-            print("Warning: No Set-Cookie header was set in the response")
-            
     except Exception as e:
-        print(f"Error setting cookie: {str(e)}")
         raise
 
 def _get_token_from_header(authorization: HTTPAuthorizationCredentials = Depends(security)) -> str:
@@ -218,9 +195,6 @@ async def refresh_token(
     refresh_token = request.cookies.get(REFRESH_TOKEN_COOKIE)
     
     if not refresh_token:
-        # Log the error for debugging
-        print(f"Refresh token missing. Cookies: {request.cookies}")
-        
         # Return 401 with CORS headers and proper error response format
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return JSONResponse(
@@ -278,7 +252,6 @@ async def refresh_token(
         )
         
     except Exception as e:
-        print(f"Unexpected error in refresh token: {str(e)}")
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "An error occurred while refreshing the token"},

@@ -316,7 +316,7 @@ const PetModal = ({
                           required
                         >
                           <option value="">Select an age group</option>
-                          {ENUMS.ageGroups.map(ag => (
+                          {ENUMS.ageGroups.filter(ag => ag !== 'NoPreference').map(ag => (
                             <option key={ag} value={ag}>{ag}</option>
                           ))}
                         </select>

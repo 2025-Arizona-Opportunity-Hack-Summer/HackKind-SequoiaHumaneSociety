@@ -96,16 +96,12 @@ def get_pet_recommendations(
         if not preferences:
             raise HTTPException(status_code=400, detail="Please complete the questionnaire to get pet recommendations.")
         
-        print(f"User {current_user.id} has preferences: {preferences}")
-        
         if refresh:
-            print(f"Refreshing adopter vector for user {current_user.id}")
             prefs_dict, traits_list = get_user_preferences_and_traits(current_user.id, db)
             save_adopter_vector(current_user.id, prefs_dict, traits_list, db)
         
         adopter_vector = load_adopter_vector(current_user.id, db)
         if not adopter_vector:
-            print(f"No adopter vector found for user {current_user.id}, generating...")
             prefs_dict, traits_list = get_user_preferences_and_traits(current_user.id, db)
             save_adopter_vector(current_user.id, prefs_dict, traits_list, db)
             adopter_vector = load_adopter_vector(current_user.id, db)
@@ -113,41 +109,29 @@ def get_pet_recommendations(
             if not adopter_vector:
                 raise HTTPException(status_code=400, detail="Could not generate adopter vector")
 
-        print(f"Adopter vector loaded for user {current_user.id}")
-
         pet_vectors = load_pet_vectors(db)
         if not pet_vectors:
-            print("No pet vectors found")
             return []
 
-        print(f"Found {len(pet_vectors)} pet vectors")
-        
-        # Filter pets by preferred species if specified and not NoPreference
         if preferences.preferred_species and preferences.preferred_species != "NoPreference":
-            print(f"Filtering pets by preferred species: {preferences.preferred_species}")
-            # Get all pets that match the preferred species
             matching_pets = db.query(Pet.id).filter(
                 Pet.species == preferences.preferred_species,
                 Pet.status == "Available"
             ).all()
             matching_pet_ids = {pet_id for (pet_id,) in matching_pets}
             
-            # Filter pet_vectors to only include pets of the preferred species
             filtered_pet_vectors = [
                 (pet_id, vector) for pet_id, vector in pet_vectors 
                 if pet_id in matching_pet_ids
             ]
-            print(f"Found {len(filtered_pet_vectors)} pets matching preferred species")
-            
             if filtered_pet_vectors:
                 pet_vectors = filtered_pet_vectors
             else:
-                print("No pets match the preferred species, falling back to all pets")
+                pass # No pets match the preferred species, falling back to all pets
         elif preferences.preferred_species == "NoPreference":
-            print("No preference for species, considering all available pets")
+            pass # No preference for species, considering all available pets
 
         top_matches = get_top_pet_matches(adopter_vector, pet_vectors, top_k=50)
-        print(f"Generated {len(top_matches)} matches")
         
         skip = (page - 1) * pageSize
         paginated_matches = top_matches[skip:skip + pageSize]
@@ -162,8 +146,6 @@ def get_pet_recommendations(
         for pet_id in pet_ids:
             traits = db.query(PetTrainingTrait).filter(PetTrainingTrait.pet_id == pet_id).all()
             pet_traits[pet_id] = [t.trait.name for t in traits]
-
-        print(f"Found {len(pets)} available pets for {len(pet_ids)} pet IDs")
 
         results = []
         for pet_id, score in paginated_matches:
@@ -192,11 +174,9 @@ def get_pet_recommendations(
                 }
                 results.append(pet_data)
 
-        print(f"Returning {len(results)} results")
         return results
 
     except Exception as e:
-        print(f"Error in get_pet_recommendations: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -43,7 +43,6 @@ api.interceptors.request.use(
   async (config) => {
     // Ensure URL has the correct API prefix
     config.url = ensureApiPrefix(config.url);
-    console.log('[AXIOS] Interceptor running for:', config.url, config.headers);
 
     // Define public endpoints that don't require authentication
     const publicEndpoints = [
@@ -68,10 +67,8 @@ api.interceptors.request.use(
         const token = await authService.getAccessToken();
         if (token) {
           config.headers['Authorization'] = `Bearer ${token}`;
-          console.log('[AXIOS] Added Authorization header:', config.headers['Authorization']);
         }
       } catch (error) {
-        console.error('[AXIOS] Error getting access token:', error);
         return Promise.reject(error);
       }
     }
@@ -98,9 +95,8 @@ api.interceptors.request.use(
         if (csrfToken) {
           config.headers['X-CSRF-Token'] = csrfToken;
           config.withCredentials = true; // Important for sending cookies
-          console.log('[AXIOS] Added X-CSRF-Token header:', csrfToken);
         } else {
-          console.warn('[AXIOS] CSRF token not found in cookies.');
+          // console.warn('[AXIOS] CSRF token not found in cookies.');
         }
       }
     }
@@ -110,16 +106,16 @@ api.interceptors.request.use(
   (error) => {
     // Request error handling
     if (process.env.NODE_ENV !== 'production') {
-      console.error('Request error:', {
-        message: error.message,
-        config: error.config,
-        response: error.response ? {
-          status: error.response.status,
-          data: error.response.data,
-          headers: error.response.headers
-        } : 'No response',
-        request: error.request
-      });
+      // console.error('Request error:', {
+      //   message: error.message,
+      //   config: error.config,
+      //   response: error.response ? {
+      //     status: error.response.status,
+      //     data: error.response.data,
+      //     headers: error.response.headers
+      //   } : 'No response',
+      //   request: error.request
+      // });
     }
     return Promise.reject(error);
   }
@@ -136,13 +132,13 @@ api.interceptors.response.use(
 
     // Log error in development
     if (process.env.NODE_ENV !== 'production') {
-      console.error('API Error:', {
-        message: error.message,
-        config: error.config,
-        response: error.response?.data,
-        status: error.response?.status,
-        code: error.code,
-      });
+      // console.error('API Error:', {
+      //   message: error.message,
+      //   config: error.config,
+      //   response: error.response?.data,
+      //   status: error.response?.status,
+      //   code: error.code,
+      // });
     }
 
     // Handle network errors
@@ -342,7 +338,7 @@ function showErrorToast(message) {
       autoClose: 5000,
     });
   } else {
-    console.error('Error:', message);
+    // console.error('Error:', message);
   }
 }
 

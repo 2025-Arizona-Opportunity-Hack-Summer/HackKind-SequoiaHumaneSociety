@@ -50,7 +50,6 @@ export const petService = {
       const response = await api.get('/pets', { params });
       return response.data;
     } catch (error) {
-      console.error('Error fetching all pets:', error);
       throw error;
     }
   },
@@ -61,7 +60,6 @@ export const petService = {
       const response = await api.get(`/pets?skip=${skip}&limit=${limit}`);
       return response.data;
     } catch (error) {
-      console.error('Error fetching paginated pets:', error);
       throw error;
     }
   },
@@ -72,7 +70,6 @@ export const petService = {
       const response = await api.get(`/pets/${petId}`);
       return response.data;
     } catch (error) {
-      console.error(`Error fetching pet ${petId}:`, error);
       throw error;
     }
   },
@@ -104,10 +101,9 @@ export const petService = {
       }
       
       // Log the data being sent
-      console.log('Sending FormData with entries:');
-      for (let pair of formData.entries()) {
-        console.log(pair[0] + ': ', pair[1]);
-      }
+      // for (let pair of formData.entries()) {
+      //   console.log(pair[0] + ': ', pair[1]);
+      // }
       
       // Explicitly add Authorization header for FormData requests
       const token = await import('./authService').then(m => m.authService.getAccessToken());
@@ -120,17 +116,14 @@ export const petService = {
       
       // If we get here but status is 422, log the response
       if (response.status === 422) {
-        console.error('=== VALIDATION ERRORS ===');
-        console.error('Status:', response.status);
-        console.error('Data:', response.data);
+        // console.error('=== VALIDATION ERRORS ===');
+        // console.error('Status:', response.status);
+        // console.error('Data:', response.data);
         
         if (response.data?.detail) {
-          console.error('Detailed validation errors:');
+          // console.error('Detailed validation errors:');
           response.data.detail.forEach((error, index) => {
-            console.error(`Error ${index + 1}:`, error);
-            if (error.loc) console.error('  Location:', error.loc);
-            if (error.msg) console.error('  Message:', error.msg);
-            if (error.type) console.error('  Type:', error.type);
+            // console.error(`Error ${index + 1}:`, error);
           });
         }
         
@@ -144,9 +137,9 @@ export const petService = {
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
-        console.error('Error response data:', error.response.data);
-        console.error('Error status:', error.response.status);
-        console.error('Error headers:', error.response.headers);
+        // console.error('Error response data:', error.response.data);
+        // console.error('Error status:', error.response.status);
+        // console.error('Error headers:', error.response.headers);
         
         // Create a more descriptive error message
         if (error.response.data && error.response.data.detail) {
@@ -172,13 +165,13 @@ export const petService = {
         }
       } else if (error.request) {
         // The request was made but no response was received
-        console.error('No response received:', error.request);
+        // console.error('No response received:', error.request);
       } else {
         // Something happened in setting up the request that triggered an Error
-        console.error('Error setting up request:', error.message);
+        // console.error('Error setting up request:', error.message);
       }
       
-      console.error('Error config:', error.config);
+      // console.error('Error config:', error.config);
       throw error;
     }
   },
@@ -186,28 +179,28 @@ export const petService = {
   // Update an existing pet
   updatePet: async (petId, petData, existingPet = null) => {
     try {
-      console.log(`[petService] Updating pet ${petId} with data:`, petData);
+      // console.log(`[petService] Updating pet ${petId} with data:`, petData);
       
       const formData = createFormData(petData);
 
       // Do NOT set Content-Type manually; let Axios handle it
-      console.log(`[petService] Sending PATCH request to /pets/${petId}`);
+      // console.log(`[petService] Sending PATCH request to /pets/${petId}`);
       const response = await api.patch(`/pets/${petId}`, formData);
-      console.log('[petService] Update response:', response);
+      // console.log('[petService] Update response:', response);
       
       if (!response || !response.data) {
-        console.error('[petService] Invalid response from server:', response);
+        // console.error('[petService] Invalid response from server:', response);
         throw new Error('Invalid response from server');
       }
       
       return response.data;
     } catch (error) {
-      console.error(`[petService] Error updating pet ${petId}:`, {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        config: error.config
-      });
+      // console.error(`[petService] Error updating pet ${petId}:`, {
+      //   message: error.message,
+      //   response: error.response?.data,
+      //   status: error.response?.status,
+      //   config: error.config
+      // });
       
       // Handle 422 validation errors
       if (error.response?.status === 422 && error.response?.data?.detail) {
@@ -245,7 +238,7 @@ export const petService = {
       const response = await api.delete(`/pets/${petId}`);
       return response.data;
     } catch (error) {
-      console.error(`Error deleting pet ${petId}:`, error);
+      // console.error(`Error deleting pet ${petId}:`, error);
       throw error;
     }
   },
@@ -261,7 +254,7 @@ export const petService = {
       
       return response.data;
     } catch (error) {
-      console.error(`Error uploading image for pet ${petId}:`, error);
+      // console.error(`Error uploading image for pet ${petId}:`, error);
       throw error;
     }
   },
@@ -285,7 +278,7 @@ export const petService = {
       } else if (error.response?.status === 404) {
         return [];
       }
-      console.error('Error fetching pet matches:', error);
+      // console.error('Error fetching pet matches:', error);
       throw new Error(error.response?.data?.message || 'Failed to load pet matches. Please try again later.');
     }
   }

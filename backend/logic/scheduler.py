@@ -33,13 +33,12 @@ def send_reminder_emails():
                         visit_time=visit.requested_at.strftime("%Y-%m-%d %I:%M %p")
                     )
                 else:
-                    print(f"Missing user or pet for visit {visit.id}")
+                    pass
             except Exception as e:
-                print(f"Failed to send reminder for visit {visit.id}: {e}")
                 continue
                 
     except Exception as e:
-        print(f"Error in send_reminder_emails: {e}")
+        pass
     finally:
         db.close()
 

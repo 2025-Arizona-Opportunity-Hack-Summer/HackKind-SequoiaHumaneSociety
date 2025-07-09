@@ -2,14 +2,6 @@ import sys
 import os
 import socket
 
-print("PYTHON EXECUTABLE:", sys.executable)
-print("VIRTUAL ENV:", sys.prefix)
-print("MAILER_SEND_API_KEY:", os.getenv("MAILER_SEND_API_KEY"))
-print("ORIGIN_EMAIL:", os.getenv("ORIGIN_EMAIL"))
-try:
-    print("DNS TEST:", socket.gethostbyname('api.mailersend.com'))
-except Exception as e:
-    print("DNS TEST FAILED:", e)
 from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Union, Optional, List, Callable, Awaitable
