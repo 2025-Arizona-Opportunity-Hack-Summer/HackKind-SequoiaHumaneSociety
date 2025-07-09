@@ -102,6 +102,24 @@ async def create_pet(
         }
         
         db_pet = models.Pet(**{k: v for k, v in pet_data.items() if v is not None})
+        # Generate summary using fallback BEFORE commit
+        summary = await pet_ai_service.generate_pet_summary({
+            'name': name,
+            'species': species,
+            'breed': breed,
+            'age_group': age_group,
+            'sex': sex,
+            'size': size,
+            'energy_level': energy_level,
+            'experience_level': experience_level,
+            'hair_length': hair_length,
+            'allergy_friendly': allergy_friendly,
+            'special_needs': special_needs,
+            'kid_friendly': kid_friendly,
+            'pet_friendly': pet_friendly,
+            'shelter_notes': shelter_notes,
+        })
+        db_pet.summary = summary  # type: ignore
         db.add(db_pet)
         db.commit()
         db.refresh(db_pet)
@@ -109,22 +127,12 @@ async def create_pet(
         if image and image.filename:
             try:
                 image_url = await upload_pet_photo_local(image, db_pet.id, image.filename)
-                db_pet.image_url = image_url
+                db_pet.image_url = image_url  # type: ignore
             except Exception as e:
                 print(f"Warning: Could not upload image for new pet {db_pet.id}: {e}")
             finally:
                 await image.close()
         
-        try:
-            pet_dict = {c.name: getattr(db_pet, c.name) for c in db_pet.__table__.columns if getattr(db_pet, c.name) is not None}
-            summary = await pet_ai_service.generate_pet_summary(pet_dict)
-            db_pet.summary = summary
-        except Exception as e:
-            print(f"Warning: Failed to generate AI summary for new pet {db_pet.id}: {e}")
-
-        db.commit()
-        db.refresh(db_pet)
-
         try:
             traits = db.query(PetTrainingTrait).filter_by(pet_id=db_pet.id).all()
             trait_enums = [t.trait for t in traits]

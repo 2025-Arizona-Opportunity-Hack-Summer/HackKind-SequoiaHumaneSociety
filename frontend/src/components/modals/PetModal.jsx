@@ -146,7 +146,8 @@ const PetModal = ({
     }));
   };
 
-  const handleSubmit = (e) => {
+  // Change handleSubmit to async and await onSubmit
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     console.log('Form data before submission:', formData);
@@ -207,10 +208,41 @@ const PetModal = ({
     
     // Pass both the FormData and training traits to the parent component
     // The parent component will handle whether to send as FormData or JSON
-    onSubmit({
-      ...Object.fromEntries(formDataToSubmit.entries()),
-      trainingTraits
-    });
+    try {
+      await onSubmit({
+        ...Object.fromEntries(formDataToSubmit.entries()),
+        trainingTraits
+      });
+    } catch (err) {
+      console.error('Error in PetModal handleSubmit:', err);
+      // Show all validation errors if present
+      if (err.response && err.response.data && err.response.data.detail) {
+        // Log the full error detail array for debugging
+        console.error('Backend validation error detail:', err.response.data.detail);
+        let details;
+        if (Array.isArray(err.response.data.detail)) {
+          details = err.response.data.detail.map(d => {
+            if (typeof d === 'object' && d !== null) {
+              return d.msg || d.message || JSON.stringify(d);
+            }
+            return String(d);
+          }).join('; ');
+        } else {
+          details = JSON.stringify(err.response.data.detail);
+        }
+        if (window.toast) {
+          window.toast.error(details, {
+            position: 'top-center',
+            autoClose: 7000,
+          });
+        }
+      } else if (window.toast) {
+        window.toast.error(err.message || 'An error occurred while creating the pet.', {
+          position: 'top-center',
+          autoClose: 5000,
+        });
+      }
+    }
   };
 
   if (!isOpen) return null;

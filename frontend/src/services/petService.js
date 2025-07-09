@@ -109,14 +109,14 @@ export const petService = {
         console.log(pair[0] + ': ', pair[1]);
       }
       
-      // Set the content type to multipart/form-data
-      const config = {
+      // Explicitly add Authorization header for FormData requests
+      const token = await import('./authService').then(m => m.authService.getAccessToken());
+      // Use trailing slash to avoid 307 redirect
+      const response = await api.post('/pets/', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          ...(token ? { 'Authorization': `Bearer ${await token}` } : {})
         }
-      };
-      
-      const response = await api.post('/pets', formData, config);
+      });
       
       // If we get here but status is 422, log the response
       if (response.status === 422) {
@@ -150,10 +150,25 @@ export const petService = {
         
         // Create a more descriptive error message
         if (error.response.data && error.response.data.detail) {
-          const details = Array.isArray(error.response.data.detail) 
-            ? error.response.data.detail.map(d => d.msg || d).join('; ')
-            : JSON.stringify(error.response.data.detail);
+          let details;
+          if (Array.isArray(error.response.data.detail)) {
+            details = error.response.data.detail.map(d => {
+              if (typeof d === 'object' && d !== null) {
+                return d.msg || JSON.stringify(d);
+              }
+              return String(d);
+            }).join('; ');
+          } else {
+            details = JSON.stringify(error.response.data.detail);
+          }
           error.message = `Validation failed: ${details}`;
+          // Show all validation errors in a toast
+          if (typeof window !== 'undefined' && window.toast) {
+            window.toast.error(details, {
+              position: 'top-center',
+              autoClose: 7000,
+            });
+          }
         }
       } else if (error.request) {
         // The request was made but no response was received
@@ -175,14 +190,9 @@ export const petService = {
       
       const formData = createFormData(petData);
 
-      const config = {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      };
-      
+      // Do NOT set Content-Type manually; let Axios handle it
       console.log(`[petService] Sending PATCH request to /pets/${petId}`);
-      const response = await api.patch(`/pets/${petId}`, formData, config);
+      const response = await api.patch(`/pets/${petId}`, formData);
       console.log('[petService] Update response:', response);
       
       if (!response || !response.data) {
@@ -246,11 +256,8 @@ export const petService = {
       const formData = new FormData();
       formData.append('image', imageFile);
       
-      const response = await api.post(`/pets/${petId}/image`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      // Do NOT set Content-Type manually; let Axios handle it
+      const response = await api.post(`/pets/${petId}/image`, formData);
       
       return response.data;
     } catch (error) {

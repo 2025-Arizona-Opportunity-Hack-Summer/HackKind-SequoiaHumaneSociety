@@ -14,7 +14,6 @@ const ensureApiPrefix = (url) => {
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
   withCredentials: true, // Required for cookies, authorization headers with credentials
@@ -44,6 +43,7 @@ api.interceptors.request.use(
   async (config) => {
     // Ensure URL has the correct API prefix
     config.url = ensureApiPrefix(config.url);
+    console.log('[AXIOS] Interceptor running for:', config.url, config.headers);
 
     // Define public endpoints that don't require authentication
     const publicEndpoints = [
@@ -68,9 +68,10 @@ api.interceptors.request.use(
         const token = await authService.getAccessToken();
         if (token) {
           config.headers['Authorization'] = `Bearer ${token}`;
+          console.log('[AXIOS] Added Authorization header:', config.headers['Authorization']);
         }
       } catch (error) {
-        console.error('Error getting access token:', error);
+        console.error('[AXIOS] Error getting access token:', error);
         return Promise.reject(error);
       }
     }
@@ -97,16 +98,9 @@ api.interceptors.request.use(
         if (csrfToken) {
           config.headers['X-CSRF-Token'] = csrfToken;
           config.withCredentials = true; // Important for sending cookies
-        } else if (process.env.NODE_ENV !== 'production') {
-          console.warn('CSRF token not found in cookies, request may be rejected by server');
-          // In development, you might want to fetch a CSRF token if not present
-          if (!window.csrfFetchAttempted) {
-            window.csrfFetchAttempted = true;
-            fetch(`${API_BASE_URL}/api/auth/csrf/`, {
-              method: 'GET',
-              credentials: 'include',
-            }).catch(console.error);
-          }
+          console.log('[AXIOS] Added X-CSRF-Token header:', csrfToken);
+        } else {
+          console.warn('[AXIOS] CSRF token not found in cookies.');
         }
       }
     }
