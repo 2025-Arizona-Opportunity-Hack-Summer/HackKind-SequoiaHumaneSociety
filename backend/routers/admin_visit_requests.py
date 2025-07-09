@@ -5,6 +5,7 @@ from backend.models.visit_request import VisitRequest, VisitRequestStatus
 from backend.models.user import User, UserRole
 from backend.core.dependencies import get_current_user
 from backend.schemas.visit_schema import VisitRequestSchema
+from backend.models.pet import Pet
 
 router = APIRouter(prefix="/admin/visit-requests", tags=["Admin Visit Requests"])
 
@@ -64,6 +65,26 @@ def update_visit_status(
     if not visit:
         raise HTTPException(status_code=404, detail="Visit not found")
 
-    visit.status = status
+    previous_status = visit.status
+    visit.status = status.value  # Assign the string value to the Enum column
     db.commit()
-    return {"message": f"Visit status updated to {status}"}
+    db.refresh(visit)
+
+    print(f"[DEBUG] previous_status: {previous_status} (type: {type(previous_status)})")
+    print(f"[DEBUG] new status: {status} (type: {type(status)})")
+
+    # Send confirmation email if status changed from Pending to Confirmed
+    if previous_status.value.lower() == VisitRequestStatus.Pending.value.lower() and status.value.lower() == VisitRequestStatus.Confirmed.value.lower():
+        adopter = db.query(User).filter(User.id == visit.user_id).first()
+        pet = db.query(Pet).filter(Pet.id == visit.pet_id).first()
+        if adopter is not None and pet is not None:
+            print(f"[DEBUG] Sending confirmation email to {adopter.email} for visit {visit.id}")
+            from backend.logic.emails import send_visit_confirmation
+            send_visit_confirmation(
+                adopter_name=str(adopter.full_name) if adopter.full_name else "Adopter",
+                adopter_email=str(adopter.email),
+                pet_name=str(pet.name),
+                visit_time=visit.requested_at.strftime("%Y-%m-%d %I:%M %p")
+            )
+
+    return {"message": f"Visit status updated to {status.value}"}

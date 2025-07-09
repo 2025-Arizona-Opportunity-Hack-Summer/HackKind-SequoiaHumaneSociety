@@ -2,11 +2,12 @@ from mailersend import emails
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+load_dotenv(dotenv_path="/Users/nicolasgarzon/Codes/HackKind-SequoiaHumaneSociety/.env")
 mailer = emails.NewEmail(os.getenv('MAILER_SEND_API_KEY'))
 origin_email = os.getenv("ORIGIN_EMAIL")
 
 def send_visit_confirmation(adopter_name: str, adopter_email: str, pet_name: str, visit_time: str):
+    print(f"[DEBUG] send_visit_confirmation called for {adopter_email}")
     mail_body = {}
 
     mail_from = {
@@ -25,14 +26,19 @@ def send_visit_confirmation(adopter_name: str, adopter_email: str, pet_name: str
         "name": "Sequoia Humane Society",
         "email": origin_email,
     }
-    
-    mailer.set_mail_from(mail_from, mail_body)
-    mailer.set_mail_to(recipients, mail_body)
-    mailer.set_subject(f"🐾 Your Visit to Meet {pet_name} is Scheduled!", mail_body)
-    mailer.set_html_content(f"<p>Hi {adopter_name}!</p><p>Your visit to meet <strong>{pet_name}</strong> is scheduled for <strong>{visit_time}</strong>.</p><p>See you soon! 🐶🐱</p>", mail_body)
-    mailer.set_plaintext_content(f"Hi {adopter_name}! Your visit to meet {pet_name} has been scheduled for {visit_time}.", mail_body)
-    mailer.set_reply_to(reply_to, mail_body)
-    mailer.send(mail_body)
+    try:
+        mailer.set_mail_from(mail_from, mail_body)
+        mailer.set_mail_to(recipients, mail_body)
+        mailer.set_subject(f"🐾 Your Visit to Meet {pet_name} is Scheduled!", mail_body)
+        mailer.set_html_content(f"<p>Hi {adopter_name}!</p><p>Your visit to meet <strong>{pet_name}</strong> is scheduled for <strong>{visit_time}</strong>.</p><p>See you soon! 🐶🐱</p>", mail_body)
+        mailer.set_plaintext_content(f"Hi {adopter_name}! Your visit to meet {pet_name} has been scheduled for {visit_time}.", mail_body)
+        mailer.set_reply_to(reply_to, mail_body)
+        print(f"[DEBUG] About to call mailer.send for {adopter_email}")
+        response = mailer.send(mail_body)
+        print(f"[DEBUG] mailer.send response: {response}")
+        print(f"[DEBUG] mailer.send completed for {adopter_email}")
+    except Exception as e:
+        print(f"[ERROR] Failed to send confirmation email to {adopter_email}: {e}")
 
 def send_visit_reminder(adopter_name: str, adopter_email: str, pet_name: str, visit_time: str):
     mail_body = {}
