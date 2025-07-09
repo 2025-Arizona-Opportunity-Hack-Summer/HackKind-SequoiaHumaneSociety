@@ -167,6 +167,7 @@ def get_pet_recommendations(
                     "kid_friendly": pet.kid_friendly,
                     "pet_friendly": pet.pet_friendly,
                     "shelter_notes": pet.shelter_notes,
+                    "summary": pet.summary,
                     "image_url": str(pet.image_url) if pet.image_url else None,
                     "status": pet.status.value,
                     "training_traits": pet_traits.get(pet_id, []),

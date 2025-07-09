@@ -155,17 +155,32 @@ def get_top_pet_matches(adopter_vector: List[float], pet_vectors: List[Tuple[int
 
 def save_matches_for_user(user_id: int, matches: List[Tuple[int, float]], db):
     try:
-        db.begin()
-
-        db.query(Match).filter(Match.user_id == user_id).delete(synchronize_session=False)
-
-        new_matches = [
-            {"user_id": user_id, "pet_id": pet_id, "match_score": score}
-            for pet_id, score in matches
-        ]
-
-        db.bulk_insert_mappings(Match, new_matches)
-
+        # Get existing matches for this user
+        existing_matches = {
+            match.pet_id: match 
+            for match in db.query(Match).filter(Match.user_id == user_id).all()
+        }
+        
+        # Process each new match
+        for pet_id, score in matches:
+            if pet_id in existing_matches:
+                # Update existing match
+                existing_matches[pet_id].match_score = score
+            else:
+                # Create new match
+                new_match = Match(
+                    user_id=user_id,
+                    pet_id=pet_id,
+                    match_score=score
+                )
+                db.add(new_match)
+        
+        # Remove matches that are no longer in the top matches
+        current_pet_ids = {pet_id for pet_id, _ in matches}
+        for pet_id, match in existing_matches.items():
+            if pet_id not in current_pet_ids:
+                db.delete(match)
+        
         db.commit()
 
     except SQLAlchemyError as e:
