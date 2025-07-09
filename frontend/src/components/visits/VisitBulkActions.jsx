@@ -40,7 +40,6 @@ const VisitBulkActions = ({
         }
       }
     } catch (error) {
-      console.error('Error performing bulk action:', error);
       toast.error('An error occurred while processing your request');
     } finally {
       setIsProcessing(false);

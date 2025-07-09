@@ -11,7 +11,6 @@ const petTrainingTraitsService = {
       const response = await api.get(`/pets/${petId}/training-traits`);
       return response.data || [];
     } catch (error) {
-      console.error(`Error getting training traits for pet ${petId}:`, error);
       throw error;
     }
   },
@@ -36,7 +35,6 @@ const petTrainingTraitsService = {
       );
       return response.data;
     } catch (error) {
-      console.error(`Error adding training trait ${trait} to pet ${petId}:`, error);
       throw error;
     }
   },
@@ -52,7 +50,6 @@ const petTrainingTraitsService = {
       const response = await api.delete(`/pets/${petId}/training-traits/${trait}`);
       return response.data;
     } catch (error) {
-      console.error(`Error removing training trait ${trait} from pet ${petId}:`, error);
       throw error;
     }
   },
@@ -84,13 +81,11 @@ const petTrainingTraitsService = {
       // Check for any failures
       const failedOperations = results.filter(result => result.status === 'rejected');
       if (failedOperations.length > 0) {
-        console.error(`Failed to update some training traits for pet ${petId}:`, failedOperations);
         // Continue with the operation but log the errors
       }
       
       return results;
     } catch (error) {
-      console.error(`Error updating training traits for pet ${petId}:`, error);
       throw error;
     }
   }

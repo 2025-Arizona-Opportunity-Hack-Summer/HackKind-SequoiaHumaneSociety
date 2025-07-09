@@ -47,7 +47,6 @@ export const AuthProvider = ({ children }) => {
       
       return isAuthenticated;
     } catch (error) {
-      console.error('Error initializing auth:', error);
       setError('Failed to initialize authentication');
       setUser(null);
       return false;
@@ -77,7 +76,6 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       return userData;
     } catch (error) {
-      console.error('Login error:', error);
       setError(error.message || 'Login failed. Please check your credentials and try again.');
       throw error;
     } finally {
@@ -94,7 +92,6 @@ export const AuthProvider = ({ children }) => {
       await authService.logout();
       setUser(null);
     } catch (error) {
-      console.error('Logout error:', error);
       setError('Failed to logout. Please try again.');
       throw error;
     } finally {

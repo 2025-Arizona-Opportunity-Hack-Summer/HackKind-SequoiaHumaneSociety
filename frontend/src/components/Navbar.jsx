@@ -77,7 +77,7 @@ export default function Navbar() {
       await logout();
       navigate('/login');
     } catch (error) {
-      console.error('Error during logout:', error);
+      // Remove all console.error calls
     }
   };
 

@@ -32,22 +32,18 @@ const VisitList = ({
     }
     setSelectedVisits(newSelection);
     
-    // Log the current selection for debugging
-    console.log('Selected visits:', Array.from(newSelection));
   };
 
   const handleBulkAction = async (action) => {
     if (!onBulkAction || selectedVisits.size === 0) {
-      console.log('No action or no items selected');
       return;
     }
     
     try {
-      console.log(`Executing bulk action '${action}' on visits:`, Array.from(selectedVisits));
       await onBulkAction(Array.from(selectedVisits), action);
       setSelectedVisits(new Set());
     } catch (error) {
-      console.error('Error in bulk action:', error);
+      // console.error('Error in bulk action:', error);
     }
   };
 

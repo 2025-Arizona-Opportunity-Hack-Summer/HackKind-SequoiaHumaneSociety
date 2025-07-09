@@ -61,7 +61,6 @@ const AdminDashboard = () => {
       try {
         await Promise.all([fetchPets(), fetchVisits()]);
       } catch (error) {
-        console.error('Error fetching data:', error);
         toast.error('Failed to load data. Please try again.');
       }
     };
@@ -72,7 +71,6 @@ const AdminDashboard = () => {
   // Fetch pets from API
   const fetchPets = async () => {
     try {
-      console.log('Fetching pets...');
       setIsLoadingPets(true);
       
       // Fetch all pets first
@@ -85,7 +83,6 @@ const AdminDashboard = () => {
       setHasMorePets(allPetsData.length > petsPerPage);
       setPetError('');
     } catch (error) {
-      console.error('Error fetching pets:', error);
       setPetError('Failed to load pets. Please try again.');
       toast.error('Failed to load pets');
       setAllPets([]);
@@ -120,7 +117,6 @@ const AdminDashboard = () => {
   // Fetch visits from API
   const fetchVisits = async () => {
     try {
-      console.log('Fetching visits...');
       setIsLoadingVisits(true);
       
       // Fetch all visits first
@@ -133,7 +129,6 @@ const AdminDashboard = () => {
       setHasMoreVisits(allVisitsData.length > visitsPerPage);
       setVisitError('');
     } catch (error) {
-      console.error('Error fetching visits:', error);
       setVisitError('Failed to load visits. Please try again.');
       toast.error('Failed to load visits');
       setAllVisits([]);
@@ -188,7 +183,6 @@ const AdminDashboard = () => {
     // Return the mapped status or the original if not found
     const normalizedStatus = statusMap[statusLower] || statusLower;
     
-    console.log(`Normalized status from '${status}' to '${normalizedStatus}'`);
     return normalizedStatus;
   };
 
@@ -201,39 +195,19 @@ const AdminDashboard = () => {
   // Handle pet submission
   const handlePetSubmit = async (submissionData) => {
     try {
-      console.log('=== Starting handlePetSubmit ===');
-      console.log('Raw submission data:', JSON.parse(JSON.stringify(submissionData)));
       setIsProcessing(true);
       
       // Extract training traits if they exist in the submission data
       const { trainingTraits = [], ...petData } = submissionData;
       
-      // Log the pet data that will be sent to the API
-      console.log('Pet data to send to API:', JSON.parse(JSON.stringify(petData)));
-      console.log('Training traits to process separately:', trainingTraits);
-      
-      // Log the incoming data
-      console.log('Pet data received:', JSON.parse(JSON.stringify(petData)));
-      console.log('Training traits:', trainingTraits);
-      
       // If petData is FormData, we need to handle it differently
       const isFormData = petData instanceof FormData;
-      console.log('Is FormData:', isFormData);
-      
-      // Log form data entries if it's FormData
-      if (isFormData) {
-        console.log('FormData entries:');
-        for (let pair of petData.entries()) {
-          console.log(pair[0] + ':', pair[1]);
-        }
-      }
       
       let updatedPet;
       
       if (currentPet) {
         // Get the correct ID (trying both _id and id)
         const petId = currentPet._id || currentPet.id;
-        console.log('Updating pet with ID:', petId);
         
         // Prepare the update data with validated status
         const updateData = isFormData ? petData : {
@@ -244,39 +218,28 @@ const AdminDashboard = () => {
             : 'Available' // Default to 'Available' if invalid status
         };
         
-        console.log('Update data prepared:', isFormData ? 'FormData object' : updateData);
-        
         // Update existing pet
-        console.log('Calling petService.updatePet...');
         updatedPet = await petService.updatePet(petId, updateData);
-        console.log('Update response received:', updatedPet);
         
         if (!updatedPet) {
           const error = new Error('No data returned from update');
-          console.error('Update error:', error);
           throw error;
         }
         
         // Handle training traits if they were provided
         if (Array.isArray(trainingTraits)) {
           try {
-            console.log('Updating training traits:', trainingTraits);
             await petTrainingTraitsService.updateTrainingTraits(petId, trainingTraits);
-            console.log('Training traits updated successfully');
           } catch (traitsError) {
-            console.error('Error updating training traits:', traitsError);
             // Don't fail the entire operation if traits update fails
             toast.error('Pet updated, but there was an error updating training traits');
           }
         }
         
-        console.log('Fetching updated pet data...');
         // Fetch the updated pet to ensure we have all the latest data
         const refreshedPet = await petService.getPet(petId);
-        console.log('Refreshed pet data:', refreshedPet);
         
         // Update local state
-        console.log('Updating local state...');
         setAllPets(prevPets => 
           prevPets.map(pet => 
             (pet._id === petId || pet.id === petId) ? { ...pet, ...refreshedPet } : pet
@@ -289,7 +252,6 @@ const AdminDashboard = () => {
           )
         );
         
-        console.log('Pet update successful');
         toast.success('Pet updated successfully');
       } else {
         // Create new pet with validated status and ensure required fields are included
@@ -307,23 +269,18 @@ const AdminDashboard = () => {
             : 'Available' // Default to 'Available' if invalid status
         };
         
-        console.log('Creating pet with data:', JSON.parse(JSON.stringify(newPetData)));
-        
         // Create the pet first
         const createdPet = await petService.createPet(newPetData);
         
         // Handle training traits for the new pet if they were provided
         if (Array.isArray(trainingTraits) && trainingTraits.length > 0) {
           try {
-            console.log('Adding training traits to new pet:', trainingTraits);
             await petTrainingTraitsService.updateTrainingTraits(createdPet.id || createdPet._id, trainingTraits);
-            console.log('Training traits added to new pet');
             
             // Refresh the pet data to include the new traits
             const refreshedPet = await petService.getPet(createdPet.id || createdPet._id);
             createdPet.trainingTraits = refreshedPet.trainingTraits || [];
           } catch (traitsError) {
-            console.error('Error adding training traits to new pet:', traitsError);
             // Don't fail the entire operation if traits update fails
             toast.error('Pet created, but there was an error adding training traits');
           }
@@ -341,7 +298,6 @@ const AdminDashboard = () => {
       setCurrentPet(null);
       
     } catch (error) {
-      console.error('Error in handlePetSubmit:', error);
       const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
       toast.error(errorMessage);
     } finally {
@@ -361,7 +317,6 @@ const AdminDashboard = () => {
       setShowDeleteModal(false);
       setItemToDelete({ id: null, type: '' });
     } catch (error) {
-      console.error('Error deleting pet:', error);
       toast.error(error.response?.data?.message || 'Failed to delete pet');
     } finally {
       setIsProcessing(false);
@@ -399,7 +354,6 @@ const AdminDashboard = () => {
       setCurrentVisit(null);
       await fetchVisits();
     } catch (error) {
-      console.error('Error saving visit:', error);
       toast.error(error.message || `Failed to ${currentVisit ? 'update' : 'create'} visit request`);
     } finally {
       setIsProcessing(false);
@@ -434,7 +388,6 @@ const AdminDashboard = () => {
       setShowDeleteModal(false);
       setItemToDelete({ id: null, type: '' });
     } catch (error) {
-      console.error(`Error deleting ${itemToDelete.type}:`, error);
       toast.error(`Failed to delete ${itemToDelete.type}`);
     } finally {
       setIsProcessing(false);
@@ -459,7 +412,6 @@ const AdminDashboard = () => {
       
       // Format status to match backend's expected format (PascalCase)
       const formattedStatus = action.charAt(0).toUpperCase() + action.slice(1).toLowerCase();
-      console.log(`Updating status to '${formattedStatus}' for ${selectedIds.length} pets`);
       
       // Get the current pets data to include required fields in the update
       const petsToUpdate = allPets.filter(pet => selectedIds.includes(pet.id));
@@ -470,7 +422,6 @@ const AdminDashboard = () => {
         return petService.updatePet(id, { status: formattedStatus }, existingPet)
           .then(() => ({ success: true, id }))
           .catch(error => {
-            console.error(`Error updating pet ${id}:`, error);
             return { success: false, id, error: error.message };
           });
       });
@@ -479,9 +430,7 @@ const AdminDashboard = () => {
       const failedUpdates = results.filter(result => !result.success);
       
       if (failedUpdates.length > 0) {
-        console.error(`Failed to update ${failedUpdates.length} pets`);
         failedUpdates.forEach(failed => {
-          console.error(`Failed to update pet ${failed.id}:`, failed.error);
         });
         toast.error(`Failed to update ${failedUpdates.length} pet(s). See console for details.`);
       }
@@ -493,7 +442,6 @@ const AdminDashboard = () => {
         await fetchPets();
       }
     } catch (error) {
-      console.error('Error performing bulk action:', error);
       toast.error(`Failed to perform bulk action: ${error.message}`);
     } finally {
       setIsBulkProcessing(false);
@@ -521,7 +469,6 @@ const AdminDashboard = () => {
       toast.success('Visit status updated successfully');
       return true;
     } catch (error) {
-      console.error('Error updating visit status:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Failed to update visit status';
       toast.error(errorMessage);
       return false;
@@ -538,7 +485,7 @@ const AdminDashboard = () => {
     try {
       setIsBulkProcessing(true);
       
-      if (itemToDelete.type === 'bulk-pet') {
+      if (itemToDelete.type === 'bulk') {
         if (bulkAction === 'delete') {
           // Delete multiple pets
           const deleteResults = await Promise.allSettled(
@@ -655,9 +602,7 @@ const AdminDashboard = () => {
       setBulkAction('');
       
     } catch (error) {
-      console.error('Error performing bulk action:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to perform bulk action';
-      toast.error(errorMessage);
+      toast.error(error.response?.data?.message || error.message || 'Failed to perform bulk action');
     } finally {
       setIsBulkProcessing(false);
     }
@@ -694,7 +639,6 @@ const AdminDashboard = () => {
         throw new Error('Failed to update some visits');
       }
     } catch (error) {
-      console.error('Error performing bulk action:', error);
       toast.error(`Failed to update visits: ${error.message}`);
     } finally {
       setIsBulkProcessing(false);
@@ -734,7 +678,6 @@ const AdminDashboard = () => {
       setShowBulkActionModal(false);
       setItemToDelete({ id: null, type: '' });
     } catch (error) {
-      console.error('Error performing bulk delete:', error);
       toast.error('Failed to delete selected items');
     } finally {
       setIsBulkProcessing(false);
@@ -747,7 +690,6 @@ const AdminDashboard = () => {
       await logout();
       navigate('/login');
     } catch (error) {
-      console.error('Error logging out:', error);
       toast.error('Failed to log out');
     }
   };

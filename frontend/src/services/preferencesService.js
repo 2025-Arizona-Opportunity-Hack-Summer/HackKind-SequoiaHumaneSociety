@@ -63,10 +63,10 @@ export const preferencesService = {
         try {
           await this.saveTrainingTraits(trainingTraits);
         } catch (traitsError) {
-          console.error('Failed to save training traits, but preferences were saved:', traitsError);
+          // console.error('Failed to save training traits, but preferences were saved:', traitsError);
         }
       } else {
-        console.log('No training traits to save. trainingTraits:', trainingTraits);
+        // console.log('No training traits to save. trainingTraits:', trainingTraits);
       }
       
       return preferencesResult;
@@ -86,7 +86,7 @@ export const preferencesService = {
       if (error.response?.status === 404) {
         return {}; 
       }
-      console.error('Error fetching user preferences:', error);
+      // console.error('Error fetching user preferences:', error);
       throw error;
     }
   },
@@ -96,7 +96,7 @@ export const preferencesService = {
       const response = await api.patch(PREFERENCES_ENDPOINT, updates);
       return response.data || {};
     } catch (error) {
-      console.error('Error updating preferences:', error);
+      // console.error('Error updating preferences:', error);
       const errorMessage = error.response?.data?.detail || 
                          error.response?.data?.message || 
                          'Failed to update preferences. Please try again.';
@@ -108,7 +108,7 @@ export const preferencesService = {
     try {
       
       if (!traitsArray || !Array.isArray(traitsArray)) {
-        console.error('Invalid traitsArray:', traitsArray);
+        // console.error('Invalid traitsArray:', traitsArray);
         return;
       }
       
@@ -120,14 +120,14 @@ export const preferencesService = {
         .filter(trait => {
           const isValid = trait && trait !== 'none' && trait !== 'allergy_friendly';
           if (!isValid) {
-            console.log(`Skipping invalid trait: ${trait}`);
+            // console.log(`Skipping invalid trait: ${trait}`);
           }
           return isValid;
         })
         .filter(trait => {
           const isDuplicate = currentTraitNames.includes(trait);
           if (isDuplicate) {
-            console.log(`Skipping duplicate trait: ${trait}`);
+            // console.log(`Skipping duplicate trait: ${trait}`);
           }
           return !isDuplicate;
         });
@@ -138,10 +138,10 @@ export const preferencesService = {
             return response;
           })
           .catch(error => {
-            console.error(`Error saving trait ${trait}:`, error);
+            // console.error(`Error saving trait ${trait}:`, error);
             if (error.response) {
-              console.error('Response data:', error.response.data);
-              console.error('Status:', error.response.status);
+              // console.error('Response data:', error.response.data);
+              // console.error('Status:', error.response.status);
             }
             throw error; 
           });
@@ -151,11 +151,11 @@ export const preferencesService = {
         const results = await Promise.all(savePromises);
         return results;
       } else {
-        console.log('No new training traits to save');
+        // console.log('No new training traits to save');
         return [];
       }
     } catch (error) {
-      console.error('Error in saveTrainingTraits:', error);
+      // console.error('Error in saveTrainingTraits:', error);
       logErrorDetails(error, 'Save Training Traits');
       throw new Error('Failed to save training traits');
     }
@@ -169,7 +169,7 @@ export const preferencesService = {
       if (error.response?.status === 404) {
         return []; 
       }
-      console.error('Error fetching training traits:', error);
+      // console.error('Error fetching training traits:', error);
       throw error;
     }
   },
@@ -297,7 +297,7 @@ export const preferencesService = {
     });
 
     if (undefinedFields.length > 0) {
-      console.error('CRITICAL: Required fields are undefined:', undefinedFields);
+      // console.error('CRITICAL: Required fields are undefined:', undefinedFields);
     }
 
     return { preferences, trainingTraits };

@@ -32,8 +32,7 @@ def get_optional_user(request: Request, db: Session = Depends(get_db)) -> Option
             return None
             
     except JWTError as e:
-        print(f"JWT Error: {str(e)}")
-        return None
+        pass
 
     try:
         if not isinstance(user_id, (str, int)):
@@ -50,16 +49,15 @@ def get_optional_user(request: Request, db: Session = Depends(get_db)) -> Option
             return None
             
     except (ValueError, AttributeError) as e:
-        print(f"User ID validation error: {str(e)}")
-        return None
+        pass
 
     try:
         user = db.query(User).filter(User.id == user_id_int).first()
         if not user:
-            print(f"User with ID {user_id_int} not found")
+            pass
         return user
     except Exception as e:
-        print(f"Database error when fetching user: {str(e)}")
+        pass
         return None
 
 def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:

@@ -88,7 +88,6 @@ export default function PetsPage() {
         throw new Error('Invalid response format from server');
       }
     } catch (err) {
-      console.error('Error fetching pets:', err);
       setError('Failed to load pets. Please try again.');
     } finally {
       setIsLoading(false);
@@ -148,7 +147,6 @@ export default function PetsPage() {
       
       // If we get a response with success: false, it's a handled error case
       if (response.data && response.data.success === false) {
-        console.log('Handled error response:', response.data);
         setError(response.data.message || 'Could not schedule visit');
         return { 
           success: false, 
@@ -165,7 +163,6 @@ export default function PetsPage() {
       };
       
     } catch (err) {
-      console.error('Unexpected error in handleRequestVisit:', err);
       const errorMessage = 'An unexpected error occurred. Please try again.';
       setError(errorMessage);
       return { 

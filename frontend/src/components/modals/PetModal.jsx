@@ -49,7 +49,7 @@ const PetModal = ({
             litter_trained: traitNames.includes('LitterTrained')
           }));
         } catch (error) {
-          console.error('Error fetching training traits:', error);
+          // console.error('Error fetching training traits:', error);
         }
       };
       
@@ -150,8 +150,6 @@ const PetModal = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    console.log('Form data before submission:', formData);
-    
     // Extract training traits from the form data
     const trainingTraits = [];
     if (formData.house_trained) trainingTraits.push('HouseTrained');
@@ -199,13 +197,6 @@ const PetModal = ({
     // Ensure status is always included
     formDataToSubmit.append('status', formData.status || 'Available');
     
-    // Log the FormData being sent
-    const formDataObj = {};
-    formDataToSubmit.forEach((value, key) => {
-      formDataObj[key] = value;
-    });
-    console.log('Submitting form data:', formDataObj);
-    
     // Pass both the FormData and training traits to the parent component
     // The parent component will handle whether to send as FormData or JSON
     try {
@@ -214,11 +205,10 @@ const PetModal = ({
         trainingTraits
       });
     } catch (err) {
-      console.error('Error in PetModal handleSubmit:', err);
       // Show all validation errors if present
       if (err.response && err.response.data && err.response.data.detail) {
         // Log the full error detail array for debugging
-        console.error('Backend validation error detail:', err.response.data.detail);
+        // console.error('Backend validation error detail:', err.response.data.detail);
         let details;
         if (Array.isArray(err.response.data.detail)) {
           details = err.response.data.detail.map(d => {

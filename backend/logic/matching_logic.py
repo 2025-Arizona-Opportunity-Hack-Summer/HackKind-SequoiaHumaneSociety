@@ -16,21 +16,21 @@ from typing import List, Tuple
 #------Vector Building Functions------#
 def build_pet_vector(pet_info: PetResponse, training_traits: list[TrainingTrait]):
     df = pd.DataFrame([{
-        "age_group": pet_info.age_group.name,
-        "size": pet_info.size.name,
-        "energy_level": pet_info.energy_level.name,
-        "experience_level": pet_info.experience_level.name,
-        "hair_length": pet_info.hair_length.name,
-        "sex": pet_info.sex.name,
-        "species": pet_info.species.name,
-        "allergy_friendly": float(pet_info.allergy_friendly),
-        "special_needs": float(pet_info.special_needs),
-        "kid_friendly": float(pet_info.kid_friendly),
-        "pet_friendly": float(pet_info.pet_friendly)
+        "age_group": pet_info.age_group.name if pet_info.age_group is not None else "NoPreference",
+        "size": pet_info.size.name if pet_info.size is not None else "NoPreference",
+        "energy_level": pet_info.energy_level.name if pet_info.energy_level is not None else "NoPreference",
+        "experience_level": pet_info.experience_level.name if pet_info.experience_level is not None else "Beginner",
+        "hair_length": pet_info.hair_length.name if pet_info.hair_length is not None else "NoPreference",
+        "sex": pet_info.sex.name if pet_info.sex is not None else "NoPreference",
+        "species": pet_info.species.name if pet_info.species is not None else "Dog",
+        "allergy_friendly": float(pet_info.allergy_friendly) if pet_info.allergy_friendly is not None else 0.0,
+        "special_needs": float(pet_info.special_needs) if pet_info.special_needs is not None else 0.0,
+        "kid_friendly": float(pet_info.kid_friendly) if pet_info.kid_friendly is not None else 0.0,
+        "pet_friendly": float(pet_info.pet_friendly) if pet_info.pet_friendly is not None else 0.0
     }])
 
-    df["sex_encoded"] = df["sex"].map({"Female": 0, "Male": 1}).astype(float)
-    df["species_encoded"] = df["species"].map({"Cat": 0, "Dog": 1}).astype(float)
+    df["sex_encoded"] = df["sex"].map(lambda x: 0 if x == "Female" else 1 if x == "Male" else 0.5).astype(float)
+    df["species_encoded"] = df["species"].map(lambda x: 0 if x == "Cat" else 1 if x == "Dog" else 0.5).astype(float)
     df["size_encoded"] = pd.Categorical(df["size"], categories=[e.name for e in PetSize], ordered=True).codes / (len(PetSize) - 1)
     df["energy_level_encoded"] = pd.Categorical(df["energy_level"], categories=[e.name for e in PetEnergyLevel], ordered=True).codes / (len(PetEnergyLevel) - 1)
     df["age_group_encoded"] = pd.Categorical(df["age_group"], categories=[e.name for e in PetAgeGroup], ordered=True).codes / (len(PetAgeGroup) - 1)
@@ -167,11 +167,9 @@ def save_matches_for_user(user_id: int, matches: List[Tuple[int, float]], db):
         db.bulk_insert_mappings(Match, new_matches)
 
         db.commit()
-        print(f"✅ Saved {len(new_matches)} matches for user {user_id}")
 
     except SQLAlchemyError as e:
         db.rollback()
-        print(f"❌ Failed to save matches for user {user_id}: {e}")
         raise
 
 #--------Loader Functions--------#

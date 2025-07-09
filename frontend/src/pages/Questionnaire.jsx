@@ -30,7 +30,6 @@ export default function Questionnaire() {
           }));
         }
       } catch (error) {
-        console.error('Error loading preferences:', error);
         toast.error('Failed to load saved preferences. Starting with a fresh form.');
       } finally {
         setIsLoading(false);

@@ -77,12 +77,10 @@ const VisitItem = ({
 
     setIsUpdating(true);
     try {
-      console.log(`Updating status from ${visit.status} to: ${newStatus} (normalized: ${normalizedNewStatus})`);
       
       // Call the API to update the status with the exact value from the dropdown
       await visitService.updateVisitStatus(visit.id, newStatus);
       
-      console.log('Status update successful, notifying parent component...');
       
       // Update local state immediately for better UX
       if (onStatusUpdate) {
@@ -98,7 +96,6 @@ const VisitItem = ({
       // Show success feedback with properly formatted status
       toast.success(`Status updated to ${formatStatusDisplay(newStatus)}`);
     } catch (error) {
-      console.error('Error updating status:', error);
       const errorMessage = error.response?.data?.detail || 
                          error.response?.data?.message || 
                          error.message ||

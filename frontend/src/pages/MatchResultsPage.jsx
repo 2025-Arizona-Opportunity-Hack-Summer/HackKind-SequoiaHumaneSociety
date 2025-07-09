@@ -201,7 +201,6 @@ export default function MatchResultsPage() {
       };
       
     } catch (err) {
-      console.error('Error in handleRequestVisit:', err);
       let errorMessage = 'Failed to submit visit request. Please try again.';
       
       if (err.response) {
