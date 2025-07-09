@@ -23,6 +23,13 @@ class Settings(BaseSettings):
     # API Base URL
     BASE_URL: str = "http://localhost:8000"
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    # AWS S3
+    AWS_S3_ACCESS_KEY_ID: Optional[str] = None
+    AWS_S3_SECRET_ACCESS_KEY: Optional[str] = None
+    AWS_S3_BUCKET_NAME: Optional[str] = None
+    AWS_S3_REGION: Optional[str] = None
+    AWS_S3_ENDPOINT_URL: Optional[str] = None  # Optional, for custom endpoints or localstack
+
+    model_config = SettingsConfigDict(env_file="/Users/nicolasgarzon/Codes/HackKind-SequoiaHumaneSociety/.env", extra="ignore")
 
 settings = Settings()

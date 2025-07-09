@@ -8,7 +8,7 @@ import os
 
 from backend.core.database import get_db
 from backend import models
-from backend.logic.image_uploader import upload_pet_photo_local
+from backend.logic.image_uploader import upload_pet_photo_local  # Now uses S3
 from backend.schemas.pet_schema import PetResponse
 from backend.core.dependencies import get_optional_user, get_current_user
 from backend.models.user import User, UserRole

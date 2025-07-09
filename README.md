@@ -67,3 +67,19 @@
     - ✨ [2020 Team 8](https://github.com/2020-opportunity-hack/Team-08)
     - ✨ [2020 Team 12](https://github.com/2020-opportunity-hack/Team-12)
     
+## AWS S3 Configuration for Image Uploads
+
+To enable image uploads to AWS S3, set the following environment variables in your `.env` file or environment:
+
+```
+AWS_S3_ACCESS_KEY_ID=your-access-key-id
+AWS_S3_SECRET_ACCESS_KEY=your-secret-access-key
+AWS_S3_BUCKET_NAME=your-s3-bucket-name
+AWS_S3_REGION=your-s3-region
+# Optional: for custom endpoints (e.g., localstack)
+# AWS_S3_ENDPOINT_URL=https://s3.your-provider.com
+```
+
+- The S3 bucket must exist and the credentials must have permission to `PutObject` and `GetObject` for the bucket.
+- The backend will return a public or presigned URL for each uploaded image.
+    
