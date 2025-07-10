@@ -7,7 +7,7 @@ from pathlib import Path
 import os
 
 from  core.database import get_db
-from backend import models
+import models
 from  logic.image_uploader import upload_pet_photo_local  # Now uses S3
 from  schemas.pet_schema import PetResponse
 from  core.dependencies import get_optional_user, get_current_user
