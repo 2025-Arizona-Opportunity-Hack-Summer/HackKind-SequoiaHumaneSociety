@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Union, Optional, List, Callable, Awaitable
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import OAuth2PasswordBearer
-from backend.logic.scheduler import start_scheduler
+from logic.scheduler import start_scheduler
 from fastapi.staticfiles import StaticFiles
 from backend.rate_limiter import apply_rate_limiting
 from backend.core.config import settings
