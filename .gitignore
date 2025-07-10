@@ -57,3 +57,6 @@ backend/static/
 /frontend/.env.development
 /frontend/.env.production
 /frontend/.env.test
+
+#
+backend/.env.production
