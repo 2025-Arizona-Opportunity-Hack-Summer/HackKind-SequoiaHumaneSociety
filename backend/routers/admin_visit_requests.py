@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session, joinedload
-from backend.core.database import get_db
-from backend.models.visit_request import VisitRequest, VisitRequestStatus
-from backend.models.user import User, UserRole
-from backend.core.dependencies import get_current_user
-from backend.schemas.visit_schema import VisitRequestSchema
-from backend.models.pet import Pet
+from  core.database import get_db
+from  models.visit_request import VisitRequest, VisitRequestStatus
+from  models.user import User, UserRole
+from  core.dependencies import get_current_user
+from  schemas.visit_schema import VisitRequestSchema
+from  models.pet import Pet
 
 router = APIRouter(prefix="/admin/visit-requests", tags=["Admin Visit Requests"])
 
@@ -75,7 +75,7 @@ def update_visit_status(
         adopter = db.query(User).filter(User.id == visit.user_id).first()
         pet = db.query(Pet).filter(Pet.id == visit.pet_id).first()
         if adopter is not None and pet is not None:
-            from backend.logic.emails import send_visit_confirmation
+            from  logic.emails import send_visit_confirmation
             send_visit_confirmation(
                 adopter_name=str(adopter.full_name) if adopter.full_name else "Adopter",
                 adopter_email=str(adopter.email),

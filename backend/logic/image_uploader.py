@@ -6,7 +6,7 @@ from fastapi import HTTPException, UploadFile
 from PIL import Image
 import magic
 from io import BytesIO
-from backend.core.config import settings
+from  core.config import settings
 import boto3
 from botocore.exceptions import BotoCoreError, NoCredentialsError, ClientError
 

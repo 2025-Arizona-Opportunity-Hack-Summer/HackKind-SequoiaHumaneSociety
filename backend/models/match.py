@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, Float, TIMESTAMP, ForeignKey, UniqueConstraint
-from backend.core.database import Base
+from  core.database import Base
 from sqlalchemy.sql import func
 
 class Match(Base):

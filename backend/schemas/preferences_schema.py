@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from backend.models.user_preferences import (
+from  models.user_preferences import (
     PetSpecies,
     PetEnergyLevel,
     PetAgeGroup,

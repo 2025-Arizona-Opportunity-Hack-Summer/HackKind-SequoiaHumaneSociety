@@ -6,18 +6,18 @@ from fastapi.responses import FileResponse
 from pathlib import Path
 import os
 
-from backend.core.database import get_db
+from  core.database import get_db
 from backend import models
-from backend.logic.image_uploader import upload_pet_photo_local  # Now uses S3
-from backend.schemas.pet_schema import PetResponse
-from backend.core.dependencies import get_optional_user, get_current_user
-from backend.models.user import User, UserRole
-from backend.models.pet_vector import PetVector
-from backend.models.match import Match
-from backend.logic.matching_logic import build_pet_vector
-from backend.models.pet_training_traits import PetTrainingTrait
-from backend.logic.OpenAI_API_Logic import pet_ai_service
-from backend.core.config import settings
+from  logic.image_uploader import upload_pet_photo_local  # Now uses S3
+from  schemas.pet_schema import PetResponse
+from  core.dependencies import get_optional_user, get_current_user
+from  models.user import User, UserRole
+from  models.pet_vector import PetVector
+from  models.match import Match
+from  logic.matching_logic import build_pet_vector
+from  models.pet_training_traits import PetTrainingTrait
+from  logic.OpenAI_API_Logic import pet_ai_service
+from  core.config import settings
 
 
 router = APIRouter(prefix="/pets", tags=["Pets"])

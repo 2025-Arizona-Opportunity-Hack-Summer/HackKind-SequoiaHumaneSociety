@@ -7,24 +7,24 @@ from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
-from backend.core.config import settings
-from backend.core.database import get_db
-from backend.core.exceptions import (
+from  core.config import settings
+from  core.database import get_db
+from  core.exceptions import (
     AuthenticationError,
     BadRequest,
     Conflict,
     InvalidTokenError,
     TokenExpiredError,
 )
-from backend.core.security import (
+from  core.security import (
     create_access_token,
     create_refresh_token,
     get_password_hash,
     get_subject_from_token,
     verify_password,
 )
-from backend.models.user import User
-from backend.schemas.auth_schema import TokenResponse, UserCreate, UserResponse
+from  models.user import User
+from  schemas.auth_schema import TokenResponse, UserCreate, UserResponse
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 security = HTTPBearer()
@@ -50,7 +50,7 @@ async def get_csrf_token(
     Get a CSRF token. If no valid token exists in cookies, a new one will be generated.
     The token is set in both a cookie and returned in the response.
     """
-    from backend.main import CSRFMiddleware  # Import here to avoid circular import
+    from  main import CSRFMiddleware  # Import here to avoid circular import
     
     # If we already have a valid token, return it
     if csrftoken:

@@ -1,15 +1,15 @@
 import pandas as pd
 import numpy as np
-from backend.models.user_training_preferences import TrainingTrait
-from backend.schemas.pet_schema import PetAgeGroup, PetSize, PetEnergyLevel, ExperienceLevel, HairLength, PetResponse
-from backend.schemas.preferences_schema import PreferencesSchema
-from backend.schemas.training_schema import TraitInput
-from backend.models.pet_vector import PetVector
-from backend.models.adopter_vector import AdopterVector
+from  models.user_training_preferences import TrainingTrait
+from  schemas.pet_schema import PetAgeGroup, PetSize, PetEnergyLevel, ExperienceLevel, HairLength, PetResponse
+from  schemas.preferences_schema import PreferencesSchema
+from  schemas.training_schema import TraitInput
+from  models.pet_vector import PetVector
+from  models.adopter_vector import AdopterVector
 from sqlalchemy.sql import func
 from typing import List, Tuple
-from backend.models.match import Match
-from backend.models.pet import Pet
+from  models.match import Match
+from  models.pet import Pet
 from sqlalchemy.exc import SQLAlchemyError
 from typing import List, Tuple
 

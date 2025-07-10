@@ -12,7 +12,7 @@ from pydantic import (
     model_validator,
 )
 
-from backend.models.user import UserRole
+from  models.user import UserRole
 
 __all__ = [
     'TokenBase',

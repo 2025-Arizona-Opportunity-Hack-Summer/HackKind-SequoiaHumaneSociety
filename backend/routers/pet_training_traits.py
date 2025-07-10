@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from backend.core.database import get_db
-from backend.core.dependencies import get_current_user
-from backend.models.pet_training_traits import PetTrainingTrait, TrainingTrait
-from backend.models.user import UserRole
+from  core.database import get_db
+from  core.dependencies import get_current_user
+from  models.pet_training_traits import PetTrainingTrait, TrainingTrait
+from  models.user import UserRole
 from fastapi import Body
 
 

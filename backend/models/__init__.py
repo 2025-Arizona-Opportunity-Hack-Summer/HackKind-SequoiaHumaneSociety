@@ -7,5 +7,5 @@ from .match import Match
 from .visit_request import VisitRequest, VisitRequestStatus
 from .pet_vector import PetVector
 from .adopter_vector import AdopterVector
-from backend.core.database import Base
+from  core.database import Base
 

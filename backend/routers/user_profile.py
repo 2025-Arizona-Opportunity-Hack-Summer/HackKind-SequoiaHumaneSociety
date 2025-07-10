@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from backend.core.database import get_db
-from backend.models.user import User
-from backend.core.dependencies import get_current_user
-from backend.schemas.user_schema import UserUpdate, UserOut
-from backend.schemas.user_schema import UserWithPreferences
-from backend.models.user_preferences import UserPreferences
+from  core.database import get_db
+from  models.user import User
+from  core.dependencies import get_current_user
+from  schemas.user_schema import UserUpdate, UserOut
+from  schemas.user_schema import UserWithPreferences
+from  models.user_preferences import UserPreferences
 
 router = APIRouter(prefix="/users/me", tags=["User Profile"])
 

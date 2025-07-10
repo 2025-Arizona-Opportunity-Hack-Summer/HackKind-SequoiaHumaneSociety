@@ -1,15 +1,15 @@
 from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
-from backend.core.database import get_db
-from backend.models.visit_request import VisitRequest
-from backend.core.dependencies import get_current_user
-from backend.models.user import User
+from  core.database import get_db
+from  models.visit_request import VisitRequest
+from  core.dependencies import get_current_user
+from  models.user import User
 from typing import List
-from backend.logic.emails import send_visit_confirmation
-from backend.models.pet import Pet
-from backend.schemas.visit_schema import VisitRequestCreate, VisitStatusUpdate, VisitRequestSchema
-from backend.models.visit_request import VisitRequestStatus
+from  logic.emails import send_visit_confirmation
+from  models.pet import Pet
+from  schemas.visit_schema import VisitRequestCreate, VisitStatusUpdate, VisitRequestSchema
+from  models.visit_request import VisitRequestStatus
 
 router = APIRouter(prefix="/visit-requests", tags=["Visit Requests"])
 

@@ -1,7 +1,7 @@
 import datetime
 from datetime import datetime, timezone
 from pydantic import BaseModel, ConfigDict, field_validator
-from backend.models.visit_request import VisitRequestStatus
+from  models.visit_request import VisitRequestStatus
 
 class VisitRequestCreate(BaseModel):
     requested_at: datetime

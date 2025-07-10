@@ -4,8 +4,8 @@ from typing import Optional, Tuple
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 
-from backend.core.config import settings
-from backend.core.exceptions import InvalidTokenError, TokenExpiredError
+from  core.config import settings
+from  core.exceptions import InvalidTokenError, TokenExpiredError
 
 # Password hashing configuration
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

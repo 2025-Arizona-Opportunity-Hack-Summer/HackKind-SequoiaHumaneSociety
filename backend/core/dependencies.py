@@ -3,9 +3,9 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from typing import Optional
-from backend.core.config import settings
-from backend.core.database import get_db
-from backend.models.user import User
+from  core.config import settings
+from  core.database import get_db
+from  models.user import User
 
 def get_optional_user(request: Request, db: Session = Depends(get_db)) -> Optional[User]:
     # Check for token in Authorization header first

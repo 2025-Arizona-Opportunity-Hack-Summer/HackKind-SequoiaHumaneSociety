@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic import ConfigDict
 from pydantic import BaseModel
 from typing import Optional
-from backend.schemas.preferences_schema import PreferencesSchema
+from  schemas.preferences_schema import PreferencesSchema
 
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None

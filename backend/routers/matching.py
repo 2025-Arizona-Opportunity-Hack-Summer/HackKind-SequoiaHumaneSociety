@@ -1,17 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
-from backend.core.database import get_db
-from backend.core.dependencies import get_current_user
-from backend.models.user import User
-from backend.models.user_preferences import UserPreferences
-from backend.models.user_training_preferences import UserTrainingPreference
-from backend.schemas.preferences_schema import PreferencesSchema
-from backend.schemas.training_schema import TraitInput
-from backend.models.pet import Pet
-from backend.models.pet_training_traits import PetTrainingTrait
-from backend.schemas.pet_schema import PetResponse
-from backend.models.match import Match
-from backend.logic.matching_logic import (
+from  core.database import get_db
+from  core.dependencies import get_current_user
+from  models.user import User
+from  models.user_preferences import UserPreferences
+from  models.user_training_preferences import UserTrainingPreference
+from  schemas.preferences_schema import PreferencesSchema
+from  schemas.training_schema import TraitInput
+from  models.pet import Pet
+from  models.pet_training_traits import PetTrainingTrait
+from  schemas.pet_schema import PetResponse
+from  models.match import Match
+from  logic.matching_logic import (
     save_adopter_vector,
     save_pet_vector,
     load_adopter_vector,

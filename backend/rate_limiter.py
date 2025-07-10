@@ -11,7 +11,7 @@ import os
 import time
 from redis import Redis
 from redis.asyncio import Redis as AsyncRedis
-from backend.core.config import settings
+from  core.config import settings
 
 # Initialize Redis connection
 redis_url = settings.REDIS_URL

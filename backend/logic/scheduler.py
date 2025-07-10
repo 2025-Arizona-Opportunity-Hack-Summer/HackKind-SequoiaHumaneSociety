@@ -1,12 +1,12 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from sqlalchemy.orm import Session
-from backend.core.database import SessionLocal
-from backend.models.visit_request import VisitRequest, VisitRequestStatus
-from backend.logic.emails import send_visit_reminder
-from backend.logic.matching_logic import refresh_all_matches
+from  core.database import SessionLocal
+from  models.visit_request import VisitRequest, VisitRequestStatus
+from  logic.emails import send_visit_reminder
+from  logic.matching_logic import refresh_all_matches
 from datetime import datetime, timedelta, timezone
-from backend.models.user import User
-from backend.models.pet import Pet
+from  models.user import User
+from  models.pet import Pet
 
 
 def send_reminder_emails():

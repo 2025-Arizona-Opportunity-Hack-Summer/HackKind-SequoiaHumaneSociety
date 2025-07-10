@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from backend.core.database import get_db
-from backend.models.user_preferences import UserPreferences
-from backend.core.dependencies import get_current_user
-from backend.models.user import User
-from backend.schemas.preferences_schema import PreferencesSchema
-from backend.logic.matching_logic import save_adopter_vector
-from backend.models.user_training_preferences import UserTrainingPreference  
-from backend.schemas.training_schema import TraitInput
+from  core.database import get_db
+from  models.user_preferences import UserPreferences
+from  core.dependencies import get_current_user
+from  models.user import User
+from  schemas.preferences_schema import PreferencesSchema
+from  logic.matching_logic import save_adopter_vector
+from  models.user_training_preferences import UserTrainingPreference  
+from  schemas.training_schema import TraitInput
 
 router = APIRouter(prefix="/users/me/preferences", tags=["User Preferences"])
     

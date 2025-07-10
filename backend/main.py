@@ -9,8 +9,8 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.security import OAuth2PasswordBearer
 from logic.scheduler import start_scheduler
 from fastapi.staticfiles import StaticFiles
-from backend.rate_limiter import apply_rate_limiting
-from backend.core.config import settings
+from  rate_limiter import apply_rate_limiting
+from  core.config import settings
 import secrets
 from fastapi.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -19,7 +19,7 @@ from starlette.datastructures import Headers, MutableHeaders
 from starlette.requests import HTTPConnection
 from starlette.responses import Response as StarletteResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
-from backend.routers import (
+from  routers import (
     auth_router,
     user_profile_router,
     preferences_router,
