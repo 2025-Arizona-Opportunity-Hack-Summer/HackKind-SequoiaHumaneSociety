@@ -24,9 +24,31 @@
 - **Email Notifications:** Automated emails for visit confirmations and reminders.
 
 ## 🎥 Project Walkthrough
---photos and gifs of the project
 
-[**Live Site**](link)
+### Landing Page
+![HackKind-SequoiaHumaneSociety](https://i.imgur.com/cnFDHx7.png)
+
+### Login & Signup  
+![HackKind-SequoiaHumaneSociety](https://i.imgur.com/qdpF3wG.png)  
+![HackKind-SequoiaHumaneSociety](https://i.imgur.com/oJYwAJy.png)
+
+### Questionarie
+![HackKind-SequoiaHumaneSociety](https://i.imgur.com/9E7grEn.gif)
+
+### Matches Page
+![HackKind-SequoiaHumaneSociety](https://i.imgur.com/nbchnS2.gif)
+
+### Pets Page
+![HackKind-SequoiaHumaneSociety](https://i.imgur.com/bVPqQKr.gif)
+
+### Adopter Dashboard
+![HackKind-SequoiaHumaneSociety](https://i.imgur.com/IViYINh.png)
+
+### Admin Dashboard
+![HackKind-SequoiaHumaneSociety](https://i.imgur.com/oeYrPep.gif)
+
+### 🧪 Try It Yourself  
+[**Visit The Live Site**](link)
 
 ## 🛠️ Tech Stack
 
