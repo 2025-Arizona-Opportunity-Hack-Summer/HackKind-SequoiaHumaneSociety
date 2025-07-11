@@ -187,7 +187,7 @@ middleware = [
     # CORS middleware should be first to handle OPTIONS requests
     Middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3000"],
+        allow_origins=["https://hackkind-shs-copy.vercel.app/"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
