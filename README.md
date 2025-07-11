@@ -32,7 +32,7 @@
 ![HackKind-SequoiaHumaneSociety](https://i.imgur.com/qdpF3wG.png)  
 ![HackKind-SequoiaHumaneSociety](https://i.imgur.com/oJYwAJy.png)
 
-### Questionarie
+### Questionnaire
 ![HackKind-SequoiaHumaneSociety](docs%20&%20media/Questionarie%20Walktrough.gif)
 
 
