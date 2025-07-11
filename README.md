@@ -49,7 +49,7 @@
 ![HackKind-SequoiaHumaneSociety](docs%20&%20media/Admin%20Dashboard.gif)
 
 ### 🧪 Try It Yourself  
-[**Visit The Live Site**](link)
+[**Visit The Live Site**](https://petmatch-hackkind.vercel.app/)
 
 ## 🛠️ Tech Stack
 
