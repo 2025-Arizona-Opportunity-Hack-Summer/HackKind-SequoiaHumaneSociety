@@ -143,7 +143,7 @@ class CSRFExemptMiddleware(CSRFMiddleware):
         await super().__call__(scope, receive, send)
 
 allowed_origins = [
-    "https://hackkind-shs-copy.vercel.app"
+    "https://petmatch-hackkind.vercel.app"
 ]
 
 middleware = [
