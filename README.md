@@ -33,19 +33,20 @@
 ![HackKind-SequoiaHumaneSociety](https://i.imgur.com/oJYwAJy.png)
 
 ### Questionarie
-![HackKind-SequoiaHumaneSociety](https://i.imgur.com/9E7grEn.gif)
+![HackKind-SequoiaHumaneSociety](docs%20&%20media/Questionarie%20Walktrough.gif)
+
 
 ### Matches Page
-![HackKind-SequoiaHumaneSociety](https://i.imgur.com/nbchnS2.gif)
+![HackKind-SequoiaHumaneSociety](docs%20&%20media/Matches%20Page.gif)
 
 ### Pets Page
-![HackKind-SequoiaHumaneSociety](https://i.imgur.com/bVPqQKr.gif)
+![HackKind-SequoiaHumaneSociety](docs%20&%20media/Pets%20Page.gif)
 
 ### Adopter Dashboard
 ![HackKind-SequoiaHumaneSociety](https://i.imgur.com/IViYINh.png)
 
 ### Admin Dashboard
-![HackKind-SequoiaHumaneSociety](https://i.imgur.com/oeYrPep.gif)
+![HackKind-SequoiaHumaneSociety](docs%20&%20media/Admin%20Dashboard.gif)
 
 ### 🧪 Try It Yourself  
 [**Visit The Live Site**](link)
