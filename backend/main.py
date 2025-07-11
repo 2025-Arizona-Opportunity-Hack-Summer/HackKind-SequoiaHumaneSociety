@@ -1,10 +1,7 @@
-import sys
 import os
-import socket
-
 from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Union, Optional, List, Callable, Awaitable
+from typing import Union
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import OAuth2PasswordBearer
 from logic.scheduler import start_scheduler
@@ -15,8 +12,7 @@ import secrets
 from fastapi.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp, Message
-from starlette.datastructures import Headers, MutableHeaders
-from starlette.requests import HTTPConnection
+from starlette.datastructures import MutableHeaders
 from starlette.responses import Response as StarletteResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 from  routers import (
@@ -30,7 +26,6 @@ from  routers import (
     visit_requests_router,
     admin_visit_requests_router
 )
-from urllib.parse import urlparse
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: ASGIApp):

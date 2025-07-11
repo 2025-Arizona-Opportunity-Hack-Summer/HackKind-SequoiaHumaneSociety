@@ -2,7 +2,7 @@ import re
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Union
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status, Cookie
+from fastapi import APIRouter, Depends, Request, Response, status, Cookie
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session

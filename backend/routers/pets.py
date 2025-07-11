@@ -4,7 +4,6 @@ import requests
 from sqlalchemy.orm import Session
 from fastapi.responses import FileResponse
 from pathlib import Path
-import os
 
 from  core.database import get_db
 import models
@@ -13,7 +12,6 @@ from  schemas.pet_schema import PetResponse
 from  core.dependencies import get_optional_user, get_current_user
 from  models.user import User, UserRole
 from  models.pet_vector import PetVector
-from  models.match import Match
 from  logic.matching_logic import build_pet_vector
 from  models.pet_training_traits import PetTrainingTrait
 from  logic.OpenAI_API_Logic import pet_ai_service

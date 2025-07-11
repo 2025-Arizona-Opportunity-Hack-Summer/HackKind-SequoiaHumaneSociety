@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated, Optional, List
+from typing import Annotated, Optional
 
 import phonenumbers
 from pydantic import (

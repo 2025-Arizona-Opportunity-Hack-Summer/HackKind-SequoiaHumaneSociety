@@ -1,7 +1,6 @@
 from typing import Dict, Any
 from openai import OpenAI
 import os
-from fastapi import HTTPException
 
 class PetAIService:
     def __init__(self, openai_api_key: str = None):

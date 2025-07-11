@@ -1,15 +1,9 @@
-from typing import Optional, Dict, Any, Callable, Awaitable, List, Tuple
-from fastapi import Request, HTTPException, status, Depends
+from fastapi import Request, status
 from fastapi.responses import JSONResponse
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-from slowapi.middleware import SlowAPIMiddleware
-from slowapi.extension import _rate_limit_exceeded_handler
-from functools import wraps
-import os
 import time
-from redis import Redis
 from redis.asyncio import Redis as AsyncRedis
 from  core.config import settings
 

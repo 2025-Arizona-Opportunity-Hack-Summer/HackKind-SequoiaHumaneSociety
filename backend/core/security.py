@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Tuple
+from typing import Tuple
 
 from jose import jwt, JWTError
 from passlib.context import CryptContext
