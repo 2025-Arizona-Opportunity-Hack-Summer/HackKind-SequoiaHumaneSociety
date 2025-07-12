@@ -49,6 +49,7 @@ api.interceptors.request.use(
       '/auth/login',
       '/auth/refresh',
       '/auth/logout',
+      '/auth/register',
       '/pets',
       '/pets/'
     ];
@@ -76,7 +77,7 @@ api.interceptors.request.use(
     // Add CSRF token for non-GET requests
     if (config.method.toLowerCase() !== 'get' && config.method.toLowerCase() !== 'head') {
       // Skip CSRF for public endpoints
-      const csrfExemptEndpoints = ['/auth/login', '/auth/refresh', '/auth/logout'];
+      const csrfExemptEndpoints = ['/auth/login', '/auth/refresh', '/auth/logout', '/auth/register'];
       const isCsrfExempt = csrfExemptEndpoints.some(endpoint => 
         config.url.endsWith(endpoint) || 
         config.url.includes(`${endpoint}?`) || 
