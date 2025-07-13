@@ -5,6 +5,18 @@ let accessToken = null;
 let tokenExpiry = null;
 let refreshTimeout = null;
 
+// Persisted storage keys
+const ACCESS_TOKEN_KEY = 'access_token';
+const ACCESS_TOKEN_EXPIRY_KEY = 'access_token_expiry';
+
+// Restore token from sessionStorage on module load
+const savedToken = sessionStorage.getItem(ACCESS_TOKEN_KEY);
+const savedExpiry = sessionStorage.getItem(ACCESS_TOKEN_EXPIRY_KEY);
+if (savedToken && savedExpiry) {
+  accessToken = savedToken;
+  tokenExpiry = new Date(savedExpiry);
+}
+
 /**
  * Handle API errors consistently
  */
@@ -41,6 +53,8 @@ const handleApiError = (error, defaultMessage = 'An error occurred') => {
 const setAuthToken = (token, expiresAt) => {
   accessToken = token;
   tokenExpiry = new Date(expiresAt);
+  sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
+  sessionStorage.setItem(ACCESS_TOKEN_EXPIRY_KEY, tokenExpiry.toISOString());
   
   // Clear any existing refresh timeout
   if (refreshTimeout) {
@@ -67,6 +81,8 @@ const setAuthToken = (token, expiresAt) => {
 const clearAuth = () => {
   accessToken = null;
   tokenExpiry = null;
+  sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+  sessionStorage.removeItem(ACCESS_TOKEN_EXPIRY_KEY);
   if (refreshTimeout) {
     clearTimeout(refreshTimeout);
     refreshTimeout = null;
