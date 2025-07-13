@@ -147,7 +147,9 @@ csrf_exempt_paths = {
     "/api/pets",
     "/api/pets/",
     "/api/users/me/preferences",
-    "/api/users/me/preferences/"
+    "/api/users/me/preferences/",
+    "/api/visit-requests",
+    "/api/visit-requests/",
 }
 
 class CSRFExemptMiddleware(CSRFMiddleware):
