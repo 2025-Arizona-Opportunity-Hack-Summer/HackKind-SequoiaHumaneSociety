@@ -158,11 +158,13 @@ class CSRFExemptMiddleware(CSRFMiddleware):
             path = scope.get("path", "")
             # Normalize path by removing trailing slash for comparison
             normalized_path = path.rstrip('/')
-            
-            # Check if the normalized path is in exempt paths or starts with pets
-            if (normalized_path in csrf_exempt_paths or 
+            # Exempt all /api/visit-requests* endpoints
+            if (
+                normalized_path in csrf_exempt_paths or 
                 path in csrf_exempt_paths or 
-                path.startswith("/api/pets")):
+                path.startswith("/api/pets") or
+                path.startswith("/api/visit-requests")
+            ):
                 await self.app(scope, receive, send)
                 return
         await super().__call__(scope, receive, send)
