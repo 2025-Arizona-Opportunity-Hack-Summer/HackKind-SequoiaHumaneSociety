@@ -80,6 +80,7 @@ const refreshToken = async () => {
   try {
     // The refresh token is automatically sent via httpOnly cookie
     const response = await api.post('/auth/refresh');
+    
     const { access_token, expires_at } = response.data;
     
     // Update the token in memory and schedule next refresh
@@ -103,6 +104,7 @@ const getAccessToken = async () => {
   if (!accessToken || (tokenExpiry && new Date(tokenExpiry) <= fiveMinutesFromNow)) {
     await refreshToken();
   }
+  
   return accessToken;
 };
 

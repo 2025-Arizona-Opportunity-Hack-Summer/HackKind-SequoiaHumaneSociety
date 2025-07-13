@@ -1,21 +1,36 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from 'react-toastify';
+import { preferencesService } from "../services/preferencesService";
+import { useAuth } from '../contexts/AuthContext';
 import QuestionnaireStep1 from "../components/QuestionnaireStep1";
 import QuestionnaireStep2 from "../components/QuestionnaireStep2";
 import LoadingSpinner from "../components/common/LoadingSpinner";
-import { preferencesService } from "../services/preferencesService";
 
 const MAX_RETRIES = 3;
 
 export default function Questionnaire() {
-  const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [retryCount, setRetryCount] = useState(0);
-  const [formErrors, setFormErrors] = useState({});
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
+  const [step, setStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [formData, setFormData] = useState({
+    pet_type: '',
+    pet_purpose: '',
+    has_children: undefined,
+    has_pets: '',
+    ownership_experience: '',
+    preferred_age: '',
+    preferred_sex: '',
+    preferred_size: '',
+    activity_level: '',
+    hair_length: '',
+    required_traits: [],
+    special_needs: false
+  });
+  const [formErrors, setFormErrors] = useState({});
 
 
   // Load saved preferences on component mount
@@ -38,6 +53,14 @@ export default function Questionnaire() {
 
     loadPreferences();
   }, []);
+
+  // Check authentication before allowing form submission
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      toast.error('You must be logged in to save preferences. Redirecting to login...');
+      navigate('/login', { state: { from: '/questionnaire' } });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   const validateStep = (step) => {
     const errors = {};
@@ -89,11 +112,19 @@ export default function Questionnaire() {
   const handleSubmit = async () => {
     if (isSubmitting) return;
 
+    // Check authentication before submitting
+    if (!isAuthenticated) {
+      toast.error('You must be logged in to save preferences. Redirecting to login...');
+      navigate('/login', { state: { from: '/questionnaire' } });
+      return;
+    }
+
     setIsSubmitting(true);
     setFormErrors({});
     
     try {
       const preferencesData = preferencesService.mapQuestionnaireToPreferences(formData);
+      
       await preferencesService.savePreferences(preferencesData);
       
       toast.success('Preferences saved successfully! Redirecting to your matches...');
@@ -108,7 +139,17 @@ export default function Questionnaire() {
       let errorMessage = 'Failed to save preferences. ';
       
       if (error.response) {
-        if (error.response.status === 422) {
+        if (error.response.status === 401) {
+          errorMessage = 'Your session has expired. Please log in again.';
+          toast.error(errorMessage);
+          navigate('/login', { state: { from: '/questionnaire' } });
+          return;
+        } else if (error.response.status === 403) {
+          errorMessage = 'You do not have permission to save preferences. Please log in again.';
+          toast.error(errorMessage);
+          navigate('/login', { state: { from: '/questionnaire' } });
+          return;
+        } else if (error.response.status === 422) {
           errorMessage += 'Validation error. Please check your inputs and try again.';
           const validationErrors = error.response.data?.errors || {};
           setFormErrors(validationErrors);

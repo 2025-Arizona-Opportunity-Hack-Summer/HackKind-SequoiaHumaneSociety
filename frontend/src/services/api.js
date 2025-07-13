@@ -97,7 +97,7 @@ api.interceptors.request.use(
           config.headers['X-CSRF-Token'] = csrfToken;
           config.withCredentials = true; // Important for sending cookies
         } else {
-          // console.warn('[AXIOS] CSRF token not found in cookies.');
+          // console.warn('CSRF token not found in cookies.');
         }
       }
     }

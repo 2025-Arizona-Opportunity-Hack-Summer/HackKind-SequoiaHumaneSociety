@@ -75,11 +75,12 @@ async def get_csrf_token(
 # CORS settings for auth endpoints
 def get_cors_headers(request=None):
     origin = request.headers.get('origin') if request else None
-    allowed_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
-    
-    # In production, add your production domain here
-    if not settings.DEBUG:
-        allowed_origins.append("https://your-production-domain.com")
+    allowed_origins = [
+        "https://petmatch-hackkind.vercel.app",
+        "https://hackkind-sequoiahumanesociety.vercel.app",
+        "http://localhost:3000",
+        "http://localhost:3001"
+    ]
     
     # If request origin is in allowed origins, use it, otherwise use the first allowed origin
     origin = origin if origin in allowed_origins else allowed_origins[0]

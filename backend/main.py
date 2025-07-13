@@ -130,7 +130,8 @@ csrf_exempt_paths = {
     "/api/redoc",
     "/openapi.json",
     "/api/pets",
-    "/api/pets/"
+    "/api/pets/",
+    "/api/users/me/preferences"
 }
 
 class CSRFExemptMiddleware(CSRFMiddleware):
@@ -143,7 +144,10 @@ class CSRFExemptMiddleware(CSRFMiddleware):
         await super().__call__(scope, receive, send)
 
 allowed_origins = [
-    "https://petmatch-hackkind.vercel.app"
+    "https://petmatch-hackkind.vercel.app",
+    "https://hackkind-sequoiahumanesociety.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:3001"
 ]
 
 middleware = [
