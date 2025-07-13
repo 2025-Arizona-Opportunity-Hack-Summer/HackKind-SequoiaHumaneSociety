@@ -1,7 +1,6 @@
 import api from './api';
 
 export const visitService = {
-  // Get all visit requests (admin only)
   getAllVisits: async () => {
     try {
       const response = await api.get('/admin/visit-requests');
@@ -12,15 +11,12 @@ export const visitService = {
     }
   },
 
-  // Update visit status (admin only)
   updateVisitStatus: async (visitId, status) => {
     try {
-      // Normalize status to match backend enum
       const normalizedStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
       
       console.log(`Updating visit ${visitId} status to:`, normalizedStatus);
       
-      // The backend expects the status in the format: { "status": "StatusValue" }
       const response = await api.put(
         `/admin/visit-requests/${visitId}/status`,
         { status: normalizedStatus },
@@ -46,15 +42,12 @@ export const visitService = {
     }
   },
   
-  // Update multiple visits status (bulk action)
   updateVisitsStatus: async (visitIds, status) => {
     try {
-      // Normalize status to match backend enum
       const normalizedStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
       
       console.log(`Updating ${visitIds.length} visits status to:`, normalizedStatus);
       
-      // Process updates sequentially to avoid overwhelming the server
       const results = [];
       for (const id of visitIds) {
         try {
@@ -90,7 +83,6 @@ export const visitService = {
     }
   },
 
-  // Get visits for current user
   getUserVisits: async () => {
     try {
       const response = await api.get('/visit-requests');
@@ -101,7 +93,6 @@ export const visitService = {
     }
   },
 
-  // Request a new visit
   requestVisit: async (petId, visitData) => {
     try {
       const response = await api.post(`/visit-requests/${petId}`, visitData);

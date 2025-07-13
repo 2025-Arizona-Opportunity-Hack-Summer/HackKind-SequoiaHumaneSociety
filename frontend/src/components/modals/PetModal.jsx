@@ -37,7 +37,6 @@ const PetModal = ({
 
   useEffect(() => {
     if (pet) {
-      // Fetch training traits for the pet
       const fetchTrainingTraits = async () => {
         try {
           const traits = await petTrainingTraitsService.getTrainingTraits(pet.id || pet._id);
@@ -49,7 +48,6 @@ const PetModal = ({
             litter_trained: traitNames.includes('LitterTrained')
           }));
         } catch (error) {
-          // console.error('Error fetching training traits:', error);
         }
       };
       
@@ -58,7 +56,6 @@ const PetModal = ({
       const petData = {
         ...initialFormData,
         ...pet,
-        // Ensure status is properly capitalized to match enums
         status: pet.status ? pet.status.charAt(0).toUpperCase() + pet.status.slice(1) : 'Available'
       };
       
@@ -67,12 +64,10 @@ const PetModal = ({
         ...petData
       }));
       
-      // Check if it's a kitten
       const isPetKitten = pet.species?.toLowerCase() === 'cat' && 
                         pet.age_group?.toLowerCase().includes('kitten');
       setIsKitten(isPetKitten);
     } else {
-      // Reset form to initial state when adding a new pet
       setFormData(initialFormData);
       setPreviewImage(null);
       setIsKitten(false);
@@ -109,7 +104,6 @@ const PetModal = ({
       return;
     }
     
-    // Handle species change to update isKitten state
     if (name === 'species' || name === 'age_group') {
       const newFormData = {
         ...formData,
@@ -122,7 +116,6 @@ const PetModal = ({
       
       setIsKitten(isCat && isKittenAge);
       
-      // If it's a dog, unset litter_trained
       if (name === 'species' && value.toLowerCase() === 'dog') {
         setFormData(prev => ({
           ...newFormData,
@@ -146,69 +139,52 @@ const PetModal = ({
     }));
   };
 
-  // Change handleSubmit to async and await onSubmit
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Extract training traits from the form data
     const trainingTraits = [];
     if (formData.house_trained) trainingTraits.push('HouseTrained');
     if (formData.litter_trained) trainingTraits.push('LitterTrained');
     
-    // Create a copy of form data without the training traits
     const { house_trained, litter_trained, ...petData } = formData;
     
-    // Prepare form data for submission
     const formDataToSubmit = new FormData();
     
-    // Add all form fields to FormData
     Object.entries(petData).forEach(([key, value]) => {
-      // Skip image field if it's a string (URL) and no new image was selected
       if (key === 'image' && (typeof value === 'string' || value === null || value === undefined)) {
         return;
       }
       
-      // Skip training traits as they're handled separately
       if (key === 'house_trained' || key === 'litter_trained') {
         return;
       }
       
-      // For file uploads, handle specially
       if (key === 'image' && value instanceof File) {
         formDataToSubmit.append('image', value);
         return;
       }
       
-      // For checkboxes, ensure they're properly converted to booleans
       if (typeof value === 'boolean') {
         formDataToSubmit.append(key, value ? 'true' : 'false');
         return;
       }
       
-      // For all other fields, include them even if they're empty strings
       formDataToSubmit.append(key, value || '');
     });
     
-    // If it's an edit and no new image was selected, ensure we keep the existing image_url
     if (pet?.image_url && !formData.image) {
       formDataToSubmit.append('image_url', pet.image_url);
     }
     
-    // Ensure status is always included
     formDataToSubmit.append('status', formData.status || 'Available');
     
-    // Pass both the FormData and training traits to the parent component
-    // The parent component will handle whether to send as FormData or JSON
     try {
       await onSubmit({
         ...Object.fromEntries(formDataToSubmit.entries()),
         trainingTraits
       });
     } catch (err) {
-      // Show all validation errors if present
       if (err.response && err.response.data && err.response.data.detail) {
-        // Log the full error detail array for debugging
-        // console.error('Backend validation error detail:', err.response.data.detail);
         let details;
         if (Array.isArray(err.response.data.detail)) {
           details = err.response.data.detail.map(d => {
@@ -264,7 +240,6 @@ const PetModal = ({
                   )}
                   
                   <div className="space-y-6">
-                    {/* Basic Information */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-b border-gray-200 pb-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Name *</label>
@@ -388,7 +363,6 @@ const PetModal = ({
               </div>
             </div>
             
-            {/* Additional Pet Attributes */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-b border-gray-200 pb-6 px-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Energy Level</label>
@@ -436,7 +410,6 @@ const PetModal = ({
               </div>
             </div>
 
-            {/* Pet Traits Section */}
             <div className="border-b border-gray-200 pb-6 px-6">
               <label className="block text-sm font-medium text-gray-700 mb-4">Pet Traits</label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -528,7 +501,6 @@ const PetModal = ({
               </div>
             </div>
 
-            {/* Pet Image Upload Section */}
             <div className="col-span-2 bg-gray-50 p-6 rounded-lg mt-4">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Pet Image</h3>
               <div className="flex items-center">

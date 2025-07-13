@@ -15,7 +15,6 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
     return touched[field] && errors[field];
   };
 
-  // Update touched state when errors change
   useEffect(() => {
     if (Object.keys(errors).length > 0) {
       const newTouched = { ...touched };
@@ -146,7 +145,6 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
 
   const handleNext = (e) => {
     e.preventDefault();
-    // Mark all fields as touched to show all errors
     const allTouched = Object.keys(touched).reduce((acc, key) => ({
       ...acc,
       [key]: true
@@ -162,7 +160,6 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
         <h2 className="text-2xl font-bold mb-6 text-gray-800">Pet Preferences – Step 2 of 2</h2>
         
         <div className="space-y-8">
-          {/* 1. Preferred Age */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               1. Preferred Age <span className="text-red-500">*</span>
@@ -191,7 +188,6 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
             )}
           </div>
 
-          {/* 2. Preferred Sex */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               2. Preferred Sex <span className="text-red-500">*</span>
@@ -220,7 +216,6 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
             )}
           </div>
 
-          {/* 3. Preferred Size */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               3. Preferred Size <span className="text-red-500">*</span>
@@ -249,7 +244,6 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
             )}
           </div>
 
-          {/* 4. Activity Level */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               4. Activity Level <span className="text-red-500">*</span>
@@ -278,7 +272,6 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
             )}
           </div>
 
-          {/* 5. Hair Length */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               5. Preferred Hair Length <span className="text-red-500">*</span>
@@ -307,7 +300,6 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
             )}
           </div>
 
-          {/* 6. Required Traits */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               6. Required Traits <span className="text-red-500">*</span>
@@ -338,7 +330,6 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
             )}
           </div>
 
-          {/* 7. Special Needs */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               7. Would you be open to adopting a pet with special needs? <span className="text-red-500">*</span>
@@ -372,14 +363,12 @@ export default function QuestionnaireStep2({ onNext, onBack, formData, setFormDa
             )}
           </div>
 
-          {/* Error message */}
           {Object.keys(errors).length > 0 && !Object.keys(touched).some(key => touched[key] && errors[key]) && (
             <div className="p-3 bg-red-50 text-red-700 rounded-md border border-red-100">
               {Object.values(errors).filter(Boolean)[0]}
             </div>
           )}
 
-          {/* Navigation buttons */}
           <div className="flex justify-between pt-6 border-t border-gray-200">
             <button
               type="button"

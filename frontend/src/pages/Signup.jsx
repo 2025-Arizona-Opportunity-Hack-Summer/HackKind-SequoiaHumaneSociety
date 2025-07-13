@@ -69,7 +69,6 @@ export default function Signup() {
       navigate('/questionnaire', { replace: true });
 
     } catch (err) {
-      // Signup error
       setError(err.message || "Failed to create account. Please try again.");
     } finally {
       setIsLoading(false);

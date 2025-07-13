@@ -1,36 +1,28 @@
 import api from './api';
 
-// Helper function to handle file uploads and form data
 const createFormData = (data) => {
   const formData = new FormData();
   
   Object.keys(data).forEach(key => {
-    // Skip trainingTraits as they are handled separately
     if (key === 'trainingTraits') {
       return;
     }
     
-    // Handle file uploads
     if (key === 'image' && data[key] instanceof File) {
       formData.append('image', data[key]);
     } 
-    // Handle nested objects (like form data from PetModal)
     else if (typeof data[key] === 'object' && data[key] !== null) {
-      // For arrays, append each item individually if needed
       if (Array.isArray(data[key])) {
         data[key].forEach((item, index) => {
           formData.append(`${key}[${index}]`, item);
         });
       } else {
-        // For other objects, stringify them
         formData.append(key, JSON.stringify(data[key]));
       }
     }
-    // Handle boolean values - convert to string
     else if (typeof data[key] === 'boolean') {
       formData.append(key, String(data[key]));
     }
-    // Handle all other values that are not undefined or null
     else if (data[key] !== null && data[key] !== undefined) {
       formData.append(key, data[key]);
     }
@@ -40,7 +32,6 @@ const createFormData = (data) => {
 };
 
 export const petService = {
-  // Get all pets with optional pagination
   getAllPets: async (status = '') => {
     try {
       const params = {};
@@ -54,7 +45,6 @@ export const petService = {
     }
   },
   
-  // Get paginated list of pets
   getPets: async (skip = 0, limit = 10) => {
     try {
       const response = await api.get(`/pets?skip=${skip}&limit=${limit}`);
@@ -64,7 +54,6 @@ export const petService = {
     }
   },
 
-  // Get single pet by ID
   getPet: async (petId) => {
     try {
       const response = await api.get(`/pets/${petId}`);
@@ -74,56 +63,34 @@ export const petService = {
     }
   },
 
-  // Create a new pet
   createPet: async (petData) => {
     try {
-      // Always use FormData for consistency with the backend
       const formData = new FormData();
       
-      // Add all pet data to form data
       for (const key in petData) {
-        // Skip undefined values
         if (petData[key] !== undefined && petData[key] !== null) {
-          // Handle file objects differently
           if (petData[key] instanceof File) {
             formData.append(key, petData[key]);
           } else if (typeof petData[key] === 'object') {
-            // Stringify objects
             formData.append(key, JSON.stringify(petData[key]));
           } else if (typeof petData[key] === 'boolean') {
-            // Convert booleans to strings
             formData.append(key, petData[key] ? 'true' : 'false');
           } else {
-            // Handle all other types (string, number, etc.)
             formData.append(key, petData[key]);
           }
         }
       }
       
-      // Log the data being sent
-      // for (let pair of formData.entries()) {
-      //   console.log(pair[0] + ': ', pair[1]);
-      // }
-      
-      // Explicitly add Authorization header for FormData requests
       const token = await import('./authService').then(m => m.authService.getAccessToken());
-      // Use trailing slash to avoid 307 redirect
       const response = await api.post('/pets/', formData, {
         headers: {
           ...(token ? { 'Authorization': `Bearer ${await token}` } : {})
         }
       });
       
-      // If we get here but status is 422, log the response
       if (response.status === 422) {
-        // console.error('=== VALIDATION ERRORS ===');
-        // console.error('Status:', response.status);
-        // console.error('Data:', response.data);
-        
         if (response.data?.detail) {
-          // console.error('Detailed validation errors:');
           response.data.detail.forEach((error, index) => {
-            // console.error(`Error ${index + 1}:`, error);
           });
         }
         
@@ -135,13 +102,6 @@ export const petService = {
       return response.data;
     } catch (error) {
       if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        // console.error('Error response data:', error.response.data);
-        // console.error('Error status:', error.response.status);
-        // console.error('Error headers:', error.response.headers);
-        
-        // Create a more descriptive error message
         if (error.response.data && error.response.data.detail) {
           let details;
           if (Array.isArray(error.response.data.detail)) {
@@ -155,7 +115,6 @@ export const petService = {
             details = JSON.stringify(error.response.data.detail);
           }
           error.message = `Validation failed: ${details}`;
-          // Show all validation errors in a toast
           if (typeof window !== 'undefined' && window.toast) {
             window.toast.error(details, {
               position: 'top-center',
@@ -164,47 +123,27 @@ export const petService = {
           }
         }
       } else if (error.request) {
-        // The request was made but no response was received
-        // console.error('No response received:', error.request);
       } else {
-        // Something happened in setting up the request that triggered an Error
-        // console.error('Error setting up request:', error.message);
       }
       
-      // console.error('Error config:', error.config);
       throw error;
     }
   },
 
-  // Update an existing pet
   updatePet: async (petId, petData, existingPet = null) => {
     try {
-      // console.log(`[petService] Updating pet ${petId} with data:`, petData);
-      
       const formData = createFormData(petData);
 
-      // Do NOT set Content-Type manually; let Axios handle it
-      // console.log(`[petService] Sending PATCH request to /pets/${petId}`);
       const response = await api.patch(`/pets/${petId}`, formData);
-      // console.log('[petService] Update response:', response);
       
       if (!response || !response.data) {
-        // console.error('[petService] Invalid response from server:', response);
         throw new Error('Invalid response from server');
       }
       
       return response.data;
     } catch (error) {
-      // console.error(`[petService] Error updating pet ${petId}:`, {
-      //   message: error.message,
-      //   response: error.response?.data,
-      //   status: error.response?.status,
-      //   config: error.config
-      // });
       
-      // Handle 422 validation errors
       if (error.response?.status === 422 && error.response?.data?.detail) {
-        // Format the validation errors into a readable message
         const validationErrors = error.response.data.detail;
         const errorMessages = validationErrors.map(err => {
           if (typeof err === 'string') return err;
@@ -220,7 +159,6 @@ export const petService = {
         throw enhancedError;
       }
       
-      // For other types of errors
       const errorMessage = error.response?.data?.message || 
                          error.message || 
                          'Failed to update pet';
@@ -232,34 +170,28 @@ export const petService = {
     }
   },
 
-  // Delete a pet
   deletePet: async (petId) => {
     try {
       const response = await api.delete(`/pets/${petId}`);
       return response.data;
     } catch (error) {
-      // console.error(`Error deleting pet ${petId}:`, error);
       throw error;
     }
   },
 
-  // Upload pet image
   uploadPetImage: async (petId, imageFile) => {
     try {
       const formData = new FormData();
       formData.append('image', imageFile);
       
-      // Do NOT set Content-Type manually; let Axios handle it
       const response = await api.post(`/pets/${petId}/image`, formData);
       
       return response.data;
     } catch (error) {
-      // console.error(`Error uploading image for pet ${petId}:`, error);
       throw error;
     }
   },
 
-  // Get pet matches with pagination
   getMatches: async ({ page = 1, pageSize = 10, forceRefresh = false } = {}) => {
     try {
       const params = new URLSearchParams({
@@ -278,7 +210,6 @@ export const petService = {
       } else if (error.response?.status === 404) {
         return [];
       }
-      // console.error('Error fetching pet matches:', error);
       throw new Error(error.response?.data?.message || 'Failed to load pet matches. Please try again later.');
     }
   }

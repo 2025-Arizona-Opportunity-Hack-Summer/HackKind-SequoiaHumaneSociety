@@ -43,7 +43,6 @@ const VisitList = ({
       await onBulkAction(Array.from(selectedVisits), action);
       setSelectedVisits(new Set());
     } catch (error) {
-      // console.error('Error in bulk action:', error);
     }
   };
 

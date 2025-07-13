@@ -35,7 +35,7 @@ const SocialShare = ({ pet }) => {
   const shareImage = pet.primary_photo_url;
 
   const copyToClipboard = async (e) => {
-    e.stopPropagation(); // Prevent event from bubbling up
+    e.stopPropagation(); 
     try {
       await navigator.clipboard.writeText(petUrl);
     } catch (err) {
@@ -44,8 +44,8 @@ const SocialShare = ({ pet }) => {
   };
 
   const shareOnPlatform = (platform, e) => {
-    e.stopPropagation(); // Prevent event from bubbling up
-    e.preventDefault();  // Prevent any default behavior
+    e.stopPropagation();
+    e.preventDefault();
     
     let url = '';
     
@@ -68,7 +68,6 @@ const SocialShare = ({ pet }) => {
     }
   };
 
-  // Check if device is mobile
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   return (
@@ -146,7 +145,6 @@ const PetCard = ({ pet, onSelect, isSelected, isRequested }) => {
   };
   
   const generatePrimaryBadges = () => {
-    // Map age group for display
     const displayAgeGroup = pet.age_group === 'Baby' 
       ? pet.species === 'Dog' ? 'Puppy' : 'Kitten'
       : pet.age_group;

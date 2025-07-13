@@ -4,10 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { format, addDays, isWeekend } from 'date-fns';
 
-// Fallback image for when pet images fail to load
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1530281700549-e82e7bf110d6?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
 
-// Generate available time slots (10 AM to 4 PM, every 30 minutes)
 const generateTimeSlots = () => {
   const slots = [];
   for (let hour = 10; hour < 16; hour++) {
@@ -23,7 +21,6 @@ const generateTimeSlots = () => {
   return slots;
 };
 
-// Get available dates (next 14 weekdays)
 const getAvailableDates = () => {
   const dates = [];
   const today = new Date();
@@ -50,14 +47,12 @@ const PetModal = ({ pet, onClose, onNext, onPrev, hasNext, hasPrev, onRequestVis
   
   const timeSlots = generateTimeSlots();
   const availableDates = getAvailableDates();
-  // Close modal when clicking outside content
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
       onClose();
     }
   };
 
-  // Close on Escape key
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
@@ -82,7 +77,6 @@ const PetModal = ({ pet, onClose, onNext, onPrev, hasNext, hasPrev, onRequestVis
     }
   };
   
-  // Get the pet's image URL, falling back to the primary photo URL if available
   const getPetImageUrl = () => {
     if (pet.image_url) return pet.image_url;
     if (pet.primary_photo_url?.large) return pet.primary_photo_url.large;
@@ -114,10 +108,8 @@ const PetModal = ({ pet, onClose, onNext, onPrev, hasNext, hasPrev, onRequestVis
   const handleSubmitVisit = async (e) => {
     e.preventDefault();
     
-    // Reset any previous errors
     setError('');
     
-    // Validate inputs
     if (!visitDate || !visitTime) {
       const errorMsg = 'Please select both date and time';
       setError(errorMsg);
@@ -130,12 +122,9 @@ const PetModal = ({ pet, onClose, onNext, onPrev, hasNext, hasPrev, onRequestVis
     setIsSubmitting(true);
 
     try {
-      // Call the onRequestVisit prop with the selected date and time
       const result = await onRequestVisit(visitDate, visitTime);
       
-      // Check the result object for success/error
       if (result && result.success) {
-        // Show success toast with the message from the result or a default one
         const successMessage = result.message || 'Visit request submitted successfully!';
         if (window.toast) {
           window.toast.success(successMessage, {
@@ -144,15 +133,12 @@ const PetModal = ({ pet, onClose, onNext, onPrev, hasNext, hasPrev, onRequestVis
           });
         }
         
-        // Close the modal after a short delay to allow the toast to be seen
         setTimeout(() => {
           onClose();
         }, 500);
       } else {
-        // Handle error case from the result object
         const errorMessage = result?.message || 'Failed to schedule visit. Please try again.';
         
-        // Show error toast
         if (window.toast) {
           window.toast.error(errorMessage, {
             position: 'top-center',
@@ -160,17 +146,14 @@ const PetModal = ({ pet, onClose, onNext, onPrev, hasNext, hasPrev, onRequestVis
           });
         }
         
-        // Close the modal after showing the error
         setTimeout(() => {
           onClose();
         }, 1000);
       }
       
     } catch (err) {
-      // This catch block is now only for unexpected errors
       console.error('Unexpected error in handleSubmitVisit:', err);
       
-      // Show a generic error message for unexpected errors
       const errorMessage = 'An unexpected error occurred. Please try again.';
       
       if (window.toast) {
@@ -180,7 +163,6 @@ const PetModal = ({ pet, onClose, onNext, onPrev, hasNext, hasPrev, onRequestVis
         });
       }
       
-      // Close the modal on any error
       setTimeout(() => {
         onClose();
       }, 1000);
@@ -195,7 +177,6 @@ const PetModal = ({ pet, onClose, onNext, onPrev, hasNext, hasPrev, onRequestVis
       onClick={handleBackdropClick}
     >
       <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative shadow-2xl">
-        {/* Close button */}
         <button
           onClick={onClose}
           className="absolute right-4 top-4 bg-white rounded-full p-2 shadow-md hover:bg-red-50 z-10 transition-colors"
@@ -205,7 +186,6 @@ const PetModal = ({ pet, onClose, onNext, onPrev, hasNext, hasPrev, onRequestVis
         </button>
 
         <div className="grid md:grid-cols-2 gap-8 p-8">
-          {/* Pet Images */}
           <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl overflow-hidden">
             <img
               src={petImageUrl}
@@ -215,11 +195,9 @@ const PetModal = ({ pet, onClose, onNext, onPrev, hasNext, hasPrev, onRequestVis
             />
           </div>
 
-          {/* Pet Details */}
           <div className="space-y-6 p-4">
             <h2 className="text-3xl font-bold text-gray-900 border-b pb-2">{pet.name}</h2>
 
-            {/* Summary Section */}
             <div className="space-y-2">
               <h3 className="text-lg font-semibold text-gray-900">About {pet.name}</h3>
               <div className="bg-red-50 p-6 rounded-lg border border-red-100">
@@ -229,7 +207,6 @@ const PetModal = ({ pet, onClose, onNext, onPrev, hasNext, hasPrev, onRequestVis
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="pt-4 space-y-4">
               {!user ? (
                 <div className="space-y-3">
@@ -345,7 +322,6 @@ const PetModal = ({ pet, onClose, onNext, onPrev, hasNext, hasPrev, onRequestVis
           </div>
         </div>
 
-        {/* Navigation Arrows */}
         {hasPrev && (
           <button
             onClick={(e) => { e.stopPropagation(); onPrev(); }}

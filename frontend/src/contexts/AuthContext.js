@@ -16,7 +16,6 @@ export const AuthContext = createContext({
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-  // Initialize user from session storage if available
   const [user, setUser] = useState(() => {
     const storedUser = sessionStorage.getItem('user');
     return storedUser ? JSON.parse(storedUser) : null;
@@ -28,17 +27,14 @@ export const AuthProvider = ({ children }) => {
   const isAuthenticated = !!user;
   const isAdmin = user?.role === 'admin';
 
-  // Initialize authentication state
   const initializeAuth = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
       
-      // Check if we have a valid session
       const isAuthenticated = await authService.isAuthenticated();
       
       if (isAuthenticated) {
-        // Get the current user data
         const userData = await authService.getCurrentUser();
         setUser(userData);
       } else {
@@ -56,12 +52,10 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Initialize auth state on mount
   useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
 
-  // Handle login
   const login = async (credentials) => {
     try {
       setIsLoading(true);
@@ -83,7 +77,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Handle logout
   const logout = async () => {
     try {
       setIsLoading(true);
@@ -111,7 +104,6 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       return userData;
     } catch (error) {
-      // Failed to refresh user data
       if (error.response?.status === 401) {
         await logout();
       }

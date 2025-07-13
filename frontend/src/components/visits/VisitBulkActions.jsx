@@ -28,7 +28,6 @@ const VisitBulkActions = ({
       if (bulkAction === 'delete') {
         await onBulkAction('delete');
       } else {
-        // Handle status updates
         const result = await onBulkAction(bulkAction);
         if (result && result.success) {
           toast.success(`Successfully updated ${result.results.length} visit(s)`);

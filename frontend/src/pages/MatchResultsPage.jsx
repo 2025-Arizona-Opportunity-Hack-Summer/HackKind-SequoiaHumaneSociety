@@ -7,7 +7,6 @@ import { ensureCsrfToken } from "../services/api";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// Components
 import PetCard from '../components/pets/PetCard';
 import PetModal from '../components/pets/PetModal';
 import MatchResultsHeader from '../components/MatchResultsHeader';
@@ -130,8 +129,6 @@ export default function MatchResultsPage() {
     }
   };
 
-  // handleSubmitRequest has been replaced with handleRequestVisit
-
   const handlePetSelect = (pet) => {
     setSelectedPet(pet);
     setError('');
@@ -176,13 +173,11 @@ export default function MatchResultsPage() {
     setIsSubmitting(true);
     setError("");
 
-    // Ensure CSRF token is set before making the request
     await ensureCsrfToken();
 
     try {
       const dateTime = new Date(`${date}T${time}`);
 
-      // Debug: log outgoing request config
       if (process.env.NODE_ENV !== 'production') {
         console.log('[DEBUG] About to send visit request:', {
           url: `/visit-requests/${selectedPet.id}`,
@@ -197,7 +192,7 @@ export default function MatchResultsPage() {
       if (process.env.NODE_ENV !== 'production') {
         console.log('[DEBUG] Visit request response:', response);
       }
-      // If we get a response with success: false, it's a handled error case
+      
       if (response.data && response.data.success === false) {
         return { 
           success: false, 
@@ -206,7 +201,6 @@ export default function MatchResultsPage() {
         };
       }
       
-      // Success case - update requested visits and close modal will be handled by the modal
       setRequestedVisits(prev => [...prev, selectedPet.id]);
       
       return { 
@@ -222,7 +216,6 @@ export default function MatchResultsPage() {
       let errorMessage = 'Failed to submit visit request. Please try again.';
       
       if (err.response) {
-        // Handle specific error cases
         if (err.response.status === 400) {
           if (err.response.data?.error === 'Scheduling conflict') {
             errorMessage = 'This time slot is already booked. Please choose another time.';
@@ -245,7 +238,6 @@ export default function MatchResultsPage() {
     }
   }, [selectedPet]);
 
-  // Render loading state
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -262,7 +254,6 @@ export default function MatchResultsPage() {
     );
   }
 
-  // Render error state
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -295,7 +286,6 @@ export default function MatchResultsPage() {
     );
   }
 
-  // Render empty state
   if (pets.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -324,7 +314,6 @@ export default function MatchResultsPage() {
     );
   }
 
-  // Main content
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">

@@ -83,7 +83,6 @@ const Layout = () => {
           <Outlet />
         </div>
       </main>
-      {/* Footer can be added here */}
     </div>
   );
 };
@@ -97,7 +96,6 @@ function AppContent() {
       try {
         await initializeAuth();
       } catch (error) {
-        // Error initializing auth
       } finally {
         setIsInitialized(true);
       }
@@ -117,7 +115,6 @@ function AppContent() {
 
   return (
     <Routes>
-      {/* Auth routes (only for non-authenticated users) - No Navbar */}
       <Route path="/login" element={
         <PublicRoute>
           <Login />
@@ -130,15 +127,12 @@ function AppContent() {
         </PublicRoute>
       } />
       
-      {/* Public routes with Navbar */}
       <Route element={<Layout />}>
         <Route path="/" element={<LandingPage />} />
         <Route path="/pets" element={<PetsPage />} />
       </Route>
       
-      {/* Protected routes with Navbar */}
       <Route element={<Layout />}>
-        {/* Protected routes */}
         <Route path="/questionnaire" element={
           <ProtectedRoute>
             <Questionnaire />
@@ -163,13 +157,11 @@ function AppContent() {
           </ProtectedRoute>
         } />
         
-        {/* Redirect old /admin to /admin/dashboard */}
         <Route path="/admin" element={
           <Navigate to="/admin/dashboard" replace />
         } />
       </Route>
       
-      {/* Catch-all route */}
       <Route path="*" element={<Layout><NotFoundPage /></Layout>} />
     </Routes>
   );

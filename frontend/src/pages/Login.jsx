@@ -51,7 +51,6 @@ export default function Login() {
       navigate(redirectPath, { replace: true });
       
     } catch (err) {
-      // Login error occurred
       const errorMessage = err.response?.data?.detail || 
                          err.response?.data?.message || 
                          err.message || 

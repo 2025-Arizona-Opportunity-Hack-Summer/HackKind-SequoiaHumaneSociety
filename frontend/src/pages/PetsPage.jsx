@@ -32,7 +32,6 @@ export default function PetsPage() {
     hasMore: false
   });
   
-  // Check for petId in URL when pets are loaded
   useEffect(() => {
     if (pets.length > 0) {
       const petId = searchParams.get('petId');
@@ -56,8 +55,7 @@ export default function PetsPage() {
       
       setError('');
       
-      // Increase page size to load more pets at once
-      const pageSize = 12; // Increased from 6 to 12 for better performance
+      const pageSize = 12;
       const response = await petService.getPets(
         (page - 1) * pageSize,
         pageSize
@@ -70,10 +68,7 @@ export default function PetsPage() {
           return uniquePets;
         });
         
-        // Continue loading more if we got a full page of results
-        // This will keep loading until we get less than pageSize results
         if (response.length === pageSize) {
-          // Small delay before loading next page to avoid overwhelming the server
           setTimeout(() => {
             fetchPets(page + 1, true);
           }, 100);
@@ -93,7 +88,7 @@ export default function PetsPage() {
       setIsLoading(false);
       setIsLoadingMore(false);
     }
-  }, []); // Removed pagination.pageSize from dependencies to prevent infinite loops
+  }, []);
 
   useEffect(() => {
     fetchPets(1);
@@ -106,7 +101,6 @@ export default function PetsPage() {
   };
 
   const handlePetClick = (pet) => {
-    // Update URL with petId when a pet is selected
     const params = new URLSearchParams(searchParams);
     params.set('petId', pet.id);
     setSearchParams(params);
@@ -114,7 +108,6 @@ export default function PetsPage() {
   };
 
   const handleCloseModal = () => {
-    // Remove petId from URL when modal is closed
     const params = new URLSearchParams(searchParams);
     params.delete('petId');
     setSearchParams(params);
@@ -145,7 +138,6 @@ export default function PetsPage() {
         requested_at: dateTime.toISOString()
       });
       
-      // If we get a response with success: false, it's a handled error case
       if (response.data && response.data.success === false) {
         setError(response.data.message || 'Could not schedule visit');
         return { 
@@ -155,7 +147,6 @@ export default function PetsPage() {
         };
       }
       
-      // Success case
       return { 
         success: true, 
         message: `Visit request submitted for ${selectedPet.name}!`,
@@ -178,7 +169,6 @@ export default function PetsPage() {
 
   const handleRequestVisitClick = (pet) => {
     if (!user) {
-      // Redirect to sign-up if not logged in
       navigate('/signup');
       return;
     }
@@ -201,9 +191,6 @@ export default function PetsPage() {
   if (isLoading && !pets.length) {
     return <LoadingSpinner />;
   }
-
-  // We'll handle errors via toast notifications instead of showing an error page
-  // The error state is managed locally in the component for form validation
 
   if (!isLoading && !pets.length) {
     return <EmptyState message="No pets found" />;

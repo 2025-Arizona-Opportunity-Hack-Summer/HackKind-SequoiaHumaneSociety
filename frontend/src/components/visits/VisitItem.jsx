@@ -6,14 +6,12 @@ import { XMarkIcon, PhoneIcon, EnvelopeIcon, UserIcon, CheckIcon, ChevronDownIco
 import { toast } from 'react-hot-toast';
 import { visitService } from '../../services/visitService';
 
-// These values must match the backend's VisitRequestStatus enum exactly
 const statusOptions = [
   { value: 'Pending', label: 'Pending' },
   { value: 'Confirmed', label: 'Confirmed' },
   { value: 'Cancelled', label: 'Cancelled' }
 ];
 
-// Helper function to convert status to display format
 const getStatusDisplay = (status) => {
   const option = statusOptions.find(opt => opt.value === status);
   return option ? option.label : status;
@@ -33,7 +31,6 @@ const VisitItem = ({
   const dropdownRef = useRef(null);
   const statusButtonRef = useRef(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target) && 
@@ -48,7 +45,6 @@ const VisitItem = ({
     };
   }, []);
 
-  // Format status for display (title case)
   const formatStatusDisplay = (status) => {
     if (!status) return '';
     return status.split(' ').map(word => 
@@ -56,19 +52,16 @@ const VisitItem = ({
     ).join(' ');
   };
 
-  // Normalize status for API (lowercase with underscores)
   const normalizeStatusForApi = (status) => {
     if (!status) return 'pending';
     return status.toLowerCase().replace(/\s+/g, '_');
   };
 
   const handleStatusChange = async (newStatus) => {
-    // Prevent multiple clicks
     if (isUpdating) return;
     
-    // Normalize the status for comparison (case-insensitive)
     const currentStatus = (visit.status || '').toLowerCase().replace(/\s+/g, '_');
-    const normalizedNewStatus = newStatus.toLowerCase(); // Keep it simple, backend will handle normalization
+    const normalizedNewStatus = newStatus.toLowerCase();
     
     if (currentStatus === normalizedNewStatus) {
       setIsStatusDropdownOpen(false);
@@ -77,12 +70,8 @@ const VisitItem = ({
 
     setIsUpdating(true);
     try {
-      
-      // Call the API to update the status with the exact value from the dropdown
       await visitService.updateVisitStatus(visit.id, newStatus);
       
-      
-      // Update local state immediately for better UX
       if (onStatusUpdate) {
         const success = await onStatusUpdate(visit.id, newStatus);
         if (!success) {
@@ -90,10 +79,8 @@ const VisitItem = ({
         }
       }
       
-      // Close the dropdown after successful update
       setIsStatusDropdownOpen(false);
       
-      // Show success feedback with properly formatted status
       toast.success(`Status updated to ${formatStatusDisplay(newStatus)}`);
     } catch (error) {
       const errorMessage = error.response?.data?.detail || 
@@ -110,23 +97,19 @@ const VisitItem = ({
     setIsDetailsOpen(!isDetailsOpen);
   };
 
-  // Safely parse the requested date
   const requestedDate = visit.requested_at ? new Date(visit.requested_at) : new Date();
   const formattedDate = format(requestedDate, 'PPPPp');
 
-  // Safely get requester information with fallbacks
   const requesterName = visit.user?.full_name || visit.user?.name || visit.user_name || 'N/A';
   const requesterEmail = visit.user?.email || visit.user_email || 'No email provided';
   const requesterPhone = visit.user?.phone_number || visit.user?.phone || visit.user_phone || 'No phone provided';
   const petName = visit.pet?.name || visit.pet_name || 'Unknown Pet';
   
-  // Determine species based on image URL
   const getPetSpecies = () => {
     if (visit.pet?.image_url) {
       if (visit.pet.image_url.includes('dog.ceo')) return 'Dog';
       if (visit.pet.image_url.includes('thecatapi')) return 'Cat';
     }
-    // Default to 'Pet' if we can't determine
     return 'Pet';
   };
   
@@ -145,7 +128,6 @@ const VisitItem = ({
     }
   };
 
-  // Status options with their display labels and colors
   const statusOptions = [
     { 
       value: 'pending', 
@@ -167,12 +149,10 @@ const VisitItem = ({
     }
   ];
 
-  // Get current status display info
   const currentStatus = statusOptions.find(opt => 
     opt.value === (visit.status || '').toLowerCase()
   ) || { label: formatStatusDisplay(visit.status), bgColor: 'bg-gray-100', textColor: 'text-gray-800' };
 
-  // Status badge with dropdown
   const statusBadge = (
     <div className="relative inline-block text-left" ref={dropdownRef}>
       <div>
@@ -190,7 +170,6 @@ const VisitItem = ({
         </button>
       </div>
 
-      {/* Status dropdown */}
       {isStatusDropdownOpen && (
         <div className="origin-top-right absolute right-0 mt-2 w-32 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
           <div className="py-1" role="menu" aria-orientation="vertical">
@@ -276,7 +255,6 @@ const VisitItem = ({
         </button>
       </td>
 
-      {/* Visit Details Modal */}
       <Transition.Root show={isDetailsOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={toggleDetails}>
           <Transition.Child

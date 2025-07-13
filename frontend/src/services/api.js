@@ -2,7 +2,6 @@ import axios from 'axios';
 import { API_BASE_URL } from '../config/api';
 import { authService } from './authService';
 
-// Ensure consistent API URL formatting
 const ensureApiPrefix = (url) => {
   if (url.startsWith('http') || url.startsWith('/api/')) {
     return url;
@@ -10,20 +9,18 @@ const ensureApiPrefix = (url) => {
   return url.startsWith('/') ? `/api${url}` : `/api/${url}`;
 };
 
-// Create axios instance with default config
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Accept': 'application/json',
   },
-  withCredentials: true, // Required for cookies, authorization headers with credentials
+  withCredentials: true,
   crossDomain: true,
-  timeout: 15000, // 15 second timeout
+  timeout: 15000,
   xsrfCookieName: 'csrftoken',
   xsrfHeaderName: 'X-CSRF-Token',
 });
 
-// Flag to prevent multiple simultaneous token refresh requests
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -38,13 +35,10 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-// Request interceptor
 api.interceptors.request.use(
   async (config) => {
-    // Ensure URL has the correct API prefix
     config.url = ensureApiPrefix(config.url);
 
-    // Define public endpoints that don't require authentication
     const publicEndpoints = [
       '/auth/login',
       '/auth/refresh',
@@ -54,17 +48,14 @@ api.interceptors.request.use(
       '/pets/'
     ];
 
-    // Check if the current URL matches any public endpoints
     const isPublicEndpoint = publicEndpoints.some(
       endpoint => config.url.endsWith(endpoint) || 
                 config.url.includes(`${endpoint}?`) ||
                 config.url.includes(`${endpoint}&`)
     );
 
-    // Only add auth header for non-public endpoints
     if (!isPublicEndpoint) {
       try {
-        // Get the current access token
         const token = await authService.getAccessToken();
         if (token) {
           config.headers['Authorization'] = `Bearer ${token}`;
@@ -74,9 +65,7 @@ api.interceptors.request.use(
       }
     }
 
-    // Always set CSRF token for non-GET/HEAD requests
     if (config.method.toLowerCase() !== 'get' && config.method.toLowerCase() !== 'head') {
-      // Get CSRF token from cookies
       const cookies = document.cookie.split(';').reduce((cookies, item) => {
         const [name, value] = item.split('=');
         if (name && value) cookies[name.trim()] = value.trim();
@@ -85,7 +74,7 @@ api.interceptors.request.use(
       const csrfToken = cookies['csrftoken'];
       if (csrfToken) {
         config.headers['X-CSRF-Token'] = csrfToken;
-        config.withCredentials = true; // Important for sending cookies
+        config.withCredentials = true;
         if (process.env.NODE_ENV !== 'production') {
           console.log('[DEBUG] Setting X-CSRF-Token header:', csrfToken);
         }
@@ -99,7 +88,6 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
-    // Request error handling
     if (process.env.NODE_ENV !== 'production') {
       // console.error('Request error:', {
       //   message: error.message,
@@ -116,16 +104,13 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor
 api.interceptors.response.use(
   (response) => {
-    // Any status code within the range of 2xx cause this function to trigger
     return response;
   },
   async (error) => {
     const originalRequest = error.config;
 
-    // Log error in development
     if (process.env.NODE_ENV !== 'production') {
       // console.error('API Error:', {
       //   message: error.message,
@@ -136,47 +121,36 @@ api.interceptors.response.use(
       // });
     }
 
-    // Handle network errors
     if (error.code === 'ERR_NETWORK') {
       return handleNetworkError(error);
     }
 
-    // Handle CORS errors
     if (error.code === 'ERR_CORS') {
       return handleCorsError(error);
     }
 
-    // If we have a response from the server
     if (error.response) {
-      // Skip token refresh for public endpoints
       const publicEndpoints = ['/pets', '/pets/'];
       const isPublicEndpoint = publicEndpoints.some(
         endpoint => originalRequest.url.includes(endpoint)
       );
       
-      // Handle token expiration (401 Unauthorized) for non-public endpoints
       if (error.response.status === 401 && !originalRequest._retry && !isPublicEndpoint) {
         return handleTokenRefresh(error, originalRequest);
       }
 
-      // Handle CSRF token mismatch (403 Forbidden)
       if (error.response.status === 403 && 
           error.response.data?.detail?.toLowerCase().includes('csrf')) {
         return handleCsrfError(error);
       }
 
-      // Handle other HTTP errors
       return handleHttpError(error);
     }
 
-    // Handle errors without response
     return handleNoResponseError(error);
   }
 );
 
-/**
- * Handle network errors (no internet connection)
- */
 function handleNetworkError(error) {
   const networkError = new Error('Unable to connect to the server. Please check your internet connection.');
   networkError.isNetworkError = true;
@@ -184,9 +158,6 @@ function handleNetworkError(error) {
   return Promise.reject(networkError);
 }
 
-/**
- * Handle CORS errors
- */
 function handleCorsError(error) {
   const corsError = new Error('Cross-origin request blocked. Please ensure the backend server is properly configured for CORS.');
   corsError.isCorsError = true;
@@ -194,14 +165,9 @@ function handleCorsError(error) {
   return Promise.reject(corsError);
 }
 
-/**
- * Handle token refresh flow
- */
 async function handleTokenRefresh(error, originalRequest) {
-  // Prevent infinite loops
   originalRequest._retry = true;
 
-  // If we're already refreshing, add to queue
   if (isRefreshing) {
     return new Promise((resolve, reject) => {
       failedQueue.push({ resolve, reject });
@@ -218,26 +184,20 @@ async function handleTokenRefresh(error, originalRequest) {
   isRefreshing = true;
 
   try {
-    // Try to refresh the token
     const newToken = await authService.refreshToken();
     
     if (newToken) {
-      // Update the authorization header
       originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
       
-      // Process any queued requests
       processQueue(null, newToken);
       
-      // Retry the original request
       return api(originalRequest);
     } else {
-      // If refresh fails, log the user out
       await authService.logout();
       redirectToLogin();
       return Promise.reject(new Error('Session expired. Please log in again.'));
     }
   } catch (refreshError) {
-    // If refresh fails, log the user out
     processQueue(refreshError, null);
     await authService.logout();
     redirectToLogin();
@@ -247,9 +207,6 @@ async function handleTokenRefresh(error, originalRequest) {
   }
 }
 
-/**
- * Handle CSRF token errors
- */
 function handleCsrfError(error) {
   const csrfError = new Error('Security verification failed. Please refresh the page and try again.');
   csrfError.isCsrfError = true;
@@ -257,14 +214,10 @@ function handleCsrfError(error) {
   return Promise.reject(csrfError);
 }
 
-/**
- * Handle HTTP errors (4xx, 5xx)
- */
 function handleHttpError(error) {
   const { status, data } = error.response;
   let errorMessage = 'An error occurred';
   
-  // Customize error message based on status code
   switch (status) {
     case 400:
       errorMessage = data?.detail || 'Bad request';
@@ -294,7 +247,6 @@ function handleHttpError(error) {
   httpError.status = status;
   httpError.data = data;
   
-  // Show error toast for client-side errors (4xx) except 401
   if (status >= 400 && status < 500 && status !== 401) {
     showErrorToast(errorMessage);
   }
@@ -302,17 +254,12 @@ function handleHttpError(error) {
   return Promise.reject(httpError);
 }
 
-/**
- * Handle errors with no response from server
- */
 function handleNoResponseError(error) {
   let errorMessage = 'An unexpected error occurred';
   
   if (error.request) {
-    // Request was made but no response was received
     errorMessage = 'No response from server. Please check your connection.';
   } else {
-    // Error in request setup
     errorMessage = `Request setup error: ${error.message}`;
   }
   
@@ -323,9 +270,6 @@ function handleNoResponseError(error) {
   return Promise.reject(noResponseError);
 }
 
-/**
- * Show error toast message
- */
 function showErrorToast(message) {
   if (typeof window !== 'undefined' && window.toast) {
     window.toast.error(message, {
@@ -337,19 +281,13 @@ function showErrorToast(message) {
   }
 }
 
-/**
- * Redirect to login page
- */
 function redirectToLogin() {
-  // Only redirect if not already on the login page
   if (!window.location.pathname.includes('/login')) {
-    // Store current URL for redirect after login
     sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
     window.location.href = '/login';
   }
 }
 
-// Utility to ensure CSRF token is set
 export async function ensureCsrfToken() {
   const cookies = document.cookie.split(';').reduce((cookies, item) => {
     const [name, value] = item.split('=');
@@ -357,7 +295,6 @@ export async function ensureCsrfToken() {
     return cookies;
   }, {});
   if (!cookies['csrftoken']) {
-    // Fetch the CSRF token from the backend
     await fetch('/api/auth/csrf/', { credentials: 'include' });
   }
 }

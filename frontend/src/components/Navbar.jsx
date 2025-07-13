@@ -2,7 +2,6 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-// Navigation for non-authenticated users
 const GuestNav = () => (
   <>
     <Link
@@ -20,7 +19,6 @@ const GuestNav = () => (
   </>
 );
 
-// Navigation for authenticated admin users
 const AdminNav = ({ onLogout }) => (
   <>
     <Link
@@ -38,7 +36,6 @@ const AdminNav = ({ onLogout }) => (
   </>
 );
 
-// Navigation for authenticated non-admin users
 const UserNav = ({ onLogout }) => (
   <>
     <Link
@@ -77,7 +74,6 @@ export default function Navbar() {
       await logout();
       navigate('/login');
     } catch (error) {
-      // Remove all console.error calls
     }
   };
 
@@ -85,12 +81,10 @@ export default function Navbar() {
     <nav className="bg-white shadow-sm border-b border-primary-light-gray">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
           <Link to="/" className="text-2xl font-bold text-primary-red font-heading">
             PetMatch
           </Link>
 
-          {/* Navigation Links */}
           <div className="flex items-center space-x-4">
             {!isAuthenticated ? (
               <GuestNav />

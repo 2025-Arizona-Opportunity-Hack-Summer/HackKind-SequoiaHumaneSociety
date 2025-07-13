@@ -25,7 +25,6 @@ export default function AdopterDashboard() {
         setPreferences(hasPreferences ? prefsData : null);
         setTrainingTraits(traitsRes || []);
       } catch (err) {
-        // Error fetching dashboard data
       } finally {
         setLoading(false);
       }

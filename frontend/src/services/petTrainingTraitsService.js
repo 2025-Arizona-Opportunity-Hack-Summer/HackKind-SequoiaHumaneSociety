@@ -23,13 +23,12 @@ const petTrainingTraitsService = {
    */
   async addTrainingTrait(petId, trait) {
     try {
-      // Send the trait value directly as the request body
       const response = await api.post(
         `/pets/${petId}/training-traits`,
-        trait, // Send the trait value directly
+        trait,
         {
           headers: {
-            'Content-Type': 'text/plain', // Set content type to text/plain
+            'Content-Type': 'text/plain',
           },
         }
       );
@@ -63,25 +62,19 @@ const petTrainingTraitsService = {
    */
   async updateTrainingTraits(petId, newTraits = []) {
     try {
-      // Get current traits
       const currentTraits = await this.getTrainingTraits(petId);
       const currentTraitNames = currentTraits.map(t => t.trait || t);
       
-      // Determine which traits to add and which to remove
       const traitsToAdd = newTraits.filter(trait => !currentTraitNames.includes(trait));
       const traitsToRemove = currentTraitNames.filter(trait => !newTraits.includes(trait));
       
-      // Process additions and removals
       const addPromises = traitsToAdd.map(trait => this.addTrainingTrait(petId, trait));
       const removePromises = traitsToRemove.map(trait => this.removeTrainingTrait(petId, trait));
       
-      // Wait for all operations to complete
       const results = await Promise.allSettled([...addPromises, ...removePromises]);
       
-      // Check for any failures
       const failedOperations = results.filter(result => result.status === 'rejected');
       if (failedOperations.length > 0) {
-        // Continue with the operation but log the errors
       }
       
       return results;

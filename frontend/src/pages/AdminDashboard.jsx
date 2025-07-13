@@ -7,7 +7,6 @@ import petTrainingTraitsService from '../services/petTrainingTraitsService';
 import api from '../services/api';
 import toast, { Toaster } from 'react-hot-toast';
 
-// Components
 import Section from '../components/common/Section';
 import PetList from '../components/pets/PetList';
 import VisitList from '../components/visits/VisitList';
@@ -19,7 +18,6 @@ const AdminDashboard = () => {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
   
-  // State for Pets
   const [allPets, setAllPets] = useState([]);
   const [displayedPets, setDisplayedPets] = useState([]);
   const [isLoadingPets, setIsLoadingPets] = useState(true);
@@ -28,7 +26,6 @@ const AdminDashboard = () => {
   const [hasMorePets, setHasMorePets] = useState(false);
   const petsPerPage = 10;
   
-  // State for Visits
   const [allVisits, setAllVisits] = useState([]);
   const [displayedVisits, setDisplayedVisits] = useState([]);
   const [isLoadingVisits, setIsLoadingVisits] = useState(true);
@@ -37,25 +34,20 @@ const AdminDashboard = () => {
   const [hasMoreVisits, setHasMoreVisits] = useState(false);
   const visitsPerPage = 10;
   
-  // Modal states
   const [showPetModal, setShowPetModal] = useState(false);
   const [showVisitModal, setShowVisitModal] = useState(false);
   const [currentPet, setCurrentPet] = useState(null);
   const [currentVisit, setCurrentVisit] = useState(null);
   
-  // Delete confirmation states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState({ id: null, type: '' });
   
-  // Bulk action states
   const [bulkAction, setBulkAction] = useState('');
   const [showBulkActionModal, setShowBulkActionModal] = useState(false);
   
-  // Processing states
   const [isProcessing, setIsProcessing] = useState(false);
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
 
-  // Fetch pets and visits on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -68,16 +60,13 @@ const AdminDashboard = () => {
     fetchData();
   }, []);
 
-  // Fetch pets from API
   const fetchPets = async () => {
     try {
       setIsLoadingPets(true);
       
-      // Fetch all pets first
       const allPetsData = await petService.getAllPets();
       setAllPets(allPetsData);
       
-      // Initialize displayed pets with first page
       const initialPets = allPetsData.slice(0, petsPerPage);
       setDisplayedPets(initialPets);
       setHasMorePets(allPetsData.length > petsPerPage);
@@ -92,7 +81,6 @@ const AdminDashboard = () => {
     }
   };
   
-  // Load more pets when scrolling
   const loadMorePets = () => {
     if (isLoadingPets) return;
     
@@ -104,7 +92,6 @@ const AdminDashboard = () => {
     setHasMorePets(nextPets.length < allPets.length);
   };
   
-  // Handle pet list scroll
   const handlePetListScroll = (e) => {
     const { scrollTop, scrollHeight, clientHeight } = e.target;
     const isNearBottom = scrollTop + clientHeight >= scrollHeight - 20;
@@ -114,16 +101,13 @@ const AdminDashboard = () => {
     }
   };
 
-  // Fetch visits from API
   const fetchVisits = async () => {
     try {
       setIsLoadingVisits(true);
       
-      // Fetch all visits first
       const allVisitsData = await visitService.getAllVisits();
       setAllVisits(allVisitsData);
       
-      // Initialize displayed visits with first page
       const initialVisits = allVisitsData.slice(0, visitsPerPage);
       setDisplayedVisits(initialVisits);
       setHasMoreVisits(allVisitsData.length > visitsPerPage);
@@ -138,7 +122,6 @@ const AdminDashboard = () => {
     }
   };
   
-  // Load more visits when scrolling
   const loadMoreVisits = () => {
     if (isLoadingVisits) return;
     
@@ -150,7 +133,6 @@ const AdminDashboard = () => {
     setHasMoreVisits(nextVisits.length < allVisits.length);
   };
   
-  // Handle visit list scroll
   const handleVisitListScroll = (e) => {
     const { scrollTop, scrollHeight, clientHeight } = e.target;
     const isNearBottom = scrollTop + clientHeight >= scrollHeight - 20;
@@ -160,14 +142,11 @@ const AdminDashboard = () => {
     }
   };
 
-  // Normalize status to ensure consistent formatting for visit statuses
   const normalizeStatus = (status) => {
     if (!status) return 'pending';
     
-    // Convert to lowercase for case-insensitive comparison
     const statusLower = status.toLowerCase().trim();
     
-    // Map common status variations to the expected backend values
     const statusMap = {
       'pending': 'pending',
       'pending approval': 'pending',
@@ -180,45 +159,36 @@ const AdminDashboard = () => {
       'denied': 'cancelled'
     };
     
-    // Return the mapped status or the original if not found
     const normalizedStatus = statusMap[statusLower] || statusLower;
     
     return normalizedStatus;
   };
 
-  // Format status for display (first letter uppercase)
   const formatStatusForDisplay = (status) => {
     if (!status) return 'Available';
     return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
   };
 
-  // Handle pet submission
   const handlePetSubmit = async (submissionData) => {
     try {
       setIsProcessing(true);
       
-      // Extract training traits if they exist in the submission data
       const { trainingTraits = [], ...petData } = submissionData;
       
-      // If petData is FormData, we need to handle it differently
       const isFormData = petData instanceof FormData;
       
       let updatedPet;
       
       if (currentPet) {
-        // Get the correct ID (trying both _id and id)
         const petId = currentPet._id || currentPet.id;
         
-        // Prepare the update data with validated status
         const updateData = isFormData ? petData : {
           ...petData,
-          // Ensure status is one of the allowed values
           status: ['Available', 'Pending', 'Adopted'].includes(petData.status) 
             ? petData.status 
-            : 'Available' // Default to 'Available' if invalid status
+            : 'Available'
         };
         
-        // Update existing pet
         updatedPet = await petService.updatePet(petId, updateData);
         
         if (!updatedPet) {
@@ -226,20 +196,16 @@ const AdminDashboard = () => {
           throw error;
         }
         
-        // Handle training traits if they were provided
         if (Array.isArray(trainingTraits)) {
           try {
             await petTrainingTraitsService.updateTrainingTraits(petId, trainingTraits);
           } catch (traitsError) {
-            // Don't fail the entire operation if traits update fails
             toast.error('Pet updated, but there was an error updating training traits');
           }
         }
         
-        // Fetch the updated pet to ensure we have all the latest data
         const refreshedPet = await petService.getPet(petId);
         
-        // Update local state
         setAllPets(prevPets => 
           prevPets.map(pet => 
             (pet._id === petId || pet.id === petId) ? { ...pet, ...refreshedPet } : pet
@@ -254,46 +220,36 @@ const AdminDashboard = () => {
         
         toast.success('Pet updated successfully');
       } else {
-        // Create new pet with validated status and ensure required fields are included
         const newPetData = {
-          // Include all form data
           ...petData,
-          // Ensure required fields are included, even if empty
           name: petData.name || '',
           age_group: petData.age_group || '',
           sex: petData.sex || '',
           species: petData.species || '',
-          // Ensure status is one of the allowed values
           status: ['Available', 'Pending', 'Adopted'].includes(petData.status) 
             ? petData.status 
-            : 'Available' // Default to 'Available' if invalid status
+            : 'Available'
         };
         
-        // Create the pet first
         const createdPet = await petService.createPet(newPetData);
         
-        // Handle training traits for the new pet if they were provided
         if (Array.isArray(trainingTraits) && trainingTraits.length > 0) {
           try {
             await petTrainingTraitsService.updateTrainingTraits(createdPet.id || createdPet._id, trainingTraits);
             
-            // Refresh the pet data to include the new traits
             const refreshedPet = await petService.getPet(createdPet.id || createdPet._id);
             createdPet.trainingTraits = refreshedPet.trainingTraits || [];
           } catch (traitsError) {
-            // Don't fail the entire operation if traits update fails
             toast.error('Pet created, but there was an error adding training traits');
           }
         }
         
-        // Add new pet to the beginning of the lists
         setAllPets(prevPets => [createdPet, ...prevPets]);
         setDisplayedPets(prevPets => [createdPet, ...prevPets.slice(0, petsPerPage - 1)]);
         
         toast.success('Pet created successfully');
       }
       
-      // Close the modal and reset state
       setShowPetModal(false);
       setCurrentPet(null);
       
@@ -305,7 +261,6 @@ const AdminDashboard = () => {
     }
   };
   
-  // Handle pet deletion
   const handleDeletePet = async (petId) => {
     try {
       setIsProcessing(true);
@@ -323,22 +278,17 @@ const AdminDashboard = () => {
     }
   };
 
-  // Handle visit form submission
   const handleVisitSubmit = async (visitData) => {
     try {
       setIsProcessing(true);
       
       if (currentVisit) {
-        // Update existing visit
-        // The VisitModal already formats the date as ISO string
         await api.put(`/visit-requests/${currentVisit.id}`, {
           requested_at: visitData.requested_at,
           status: visitData.status
         });
         toast.success('Visit request updated successfully');
       } else {
-        // Create new visit - use the visit-requests endpoint with pet ID
-        // The VisitModal already formats the date as ISO string
         const response = await api.post(`/visit-requests/${visitData.pet_id}`, {
           requested_at: visitData.requested_at
         });
@@ -360,13 +310,11 @@ const AdminDashboard = () => {
     }
   };
 
-  // Handle delete confirmation
   const handleDeleteClick = (id, type) => {
     setItemToDelete({ id, type });
     setShowDeleteModal(true);
   };
 
-  // Confirm delete action
   const handleConfirmDelete = async () => {
     if (!itemToDelete.id || !itemToDelete.type) return;
     
@@ -394,29 +342,23 @@ const AdminDashboard = () => {
     }
   };
 
-  // Handle bulk actions
   const handleBulkAction = async (selectedIds, action) => {
     if (!selectedIds.length) return;
     
     try {
       setIsBulkProcessing(true);
       
-      // Process bulk action based on the type
       if (action === 'delete') {
-        // Show confirmation for delete action
         setBulkAction('delete');
         setItemToDelete({ ids: selectedIds, type: 'bulk' });
         setShowBulkActionModal(true);
         return;
       }
       
-      // Format status to match backend's expected format (PascalCase)
       const formattedStatus = action.charAt(0).toUpperCase() + action.slice(1).toLowerCase();
       
-      // Get the current pets data to include required fields in the update
       const petsToUpdate = allPets.filter(pet => selectedIds.includes(pet.id));
       
-      // Update each pet's status using the petService
       const updatePromises = selectedIds.map(id => {
         const existingPet = petsToUpdate.find(pet => pet.id === id);
         return petService.updatePet(id, { status: formattedStatus }, existingPet)
@@ -438,7 +380,6 @@ const AdminDashboard = () => {
       const successCount = selectedIds.length - failedUpdates.length;
       if (successCount > 0) {
         toast.success(`Successfully updated ${successCount} pet(s) to ${formattedStatus}`);
-        // Update the pets list to reflect the changes
         await fetchPets();
       }
     } catch (error) {
@@ -448,16 +389,12 @@ const AdminDashboard = () => {
     }
   };
 
-  // Handle single visit status update
   const handleVisitStatusUpdate = async (visitId, newStatus) => {
     try {
-      // Normalize status
       const normalizedStatus = normalizeStatus(newStatus);
       
-      // Update the visit status in the backend
       await visitService.updateVisitStatus(visitId, normalizedStatus);
       
-      // Update the local state to reflect the change
       const updateVisit = (visit) => 
         (visit.id === visitId || visit._id === visitId)
           ? { ...visit, status: normalizedStatus }
@@ -475,7 +412,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Handle bulk action confirmation
   const handleConfirmBulkAction = async () => {
     if (!itemToDelete.ids || !itemToDelete.ids.length) {
       toast.error('No items selected');
@@ -487,12 +423,10 @@ const AdminDashboard = () => {
       
       if (itemToDelete.type === 'bulk') {
         if (bulkAction === 'delete') {
-          // Delete multiple pets
           const deleteResults = await Promise.allSettled(
             itemToDelete.ids.map(id => petService.deletePet(id))
           );
           
-          // Filter out successfully deleted pets
           const successfulDeletes = deleteResults
             .filter(result => result.status === 'fulfilled')
             .map(result => result.value);
@@ -508,7 +442,6 @@ const AdminDashboard = () => {
             toast.success(`Deleted ${successfulDeletes.length} of ${itemToDelete.ids.length} selected pets`);
           }
         } else if (bulkAction.startsWith('status:')) {
-          // Handle pet status updates
           const status = bulkAction.split(':')[1].toLowerCase();
           const updatePromises = itemToDelete.ids.map(id => 
             petService.updatePet(id, { status })
@@ -523,7 +456,6 @@ const AdminDashboard = () => {
           const results = await Promise.all(updatePromises);
           const successfulUpdates = results.filter(r => r.success);
           
-          // Update local state for successful updates
           if (successfulUpdates.length > 0) {
             const updatedPetIds = successfulUpdates.map(r => r.id);
             
@@ -554,12 +486,10 @@ const AdminDashboard = () => {
         }
       } else if (itemToDelete.type === 'bulk-visit') {
         if (bulkAction === 'delete') {
-          // Delete multiple visits
           const deleteResults = await Promise.allSettled(
             itemToDelete.ids.map(id => visitService.deleteVisit(id))
           );
           
-          // Filter out successfully deleted visits
           const successfulDeletes = deleteResults
             .filter(result => result.status === 'fulfilled')
             .map(result => result.value);
@@ -581,7 +511,6 @@ const AdminDashboard = () => {
           const result = await visitService.updateVisitsStatus(itemToDelete.ids, normalizedStatus);
           
           if (result && result.success) {
-            // Update local state with normalized status
             const updateVisitStatus = (visit) => 
               itemToDelete.ids.includes(visit._id || visit.id)
                 ? { ...visit, status: normalizedStatus }
@@ -608,7 +537,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Handle bulk visit actions
   const handleBulkVisitAction = async (selectedIds, action) => {
     if (!selectedIds || !selectedIds.length) {
       toast.error('No visits selected');
@@ -618,14 +546,11 @@ const AdminDashboard = () => {
     try {
       setIsBulkProcessing(true);
       
-      // Normalize status to ensure consistent formatting (first letter uppercase, rest lowercase)
       const normalizedStatus = action.charAt(0).toUpperCase() + action.slice(1).toLowerCase();
       
-      // Update visits status in the backend
       const result = await visitService.updateVisitsStatus(selectedIds, normalizedStatus);
       
       if (result && result.success) {
-        // Update local state with normalized status
         const updateVisitStatus = (visit) => 
           selectedIds.includes(visit._id || visit.id)
             ? { ...visit, status: normalizedStatus }
@@ -645,7 +570,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Handle bulk delete confirmation
   const confirmBulkDelete = async () => {
     if (!itemToDelete.ids || !itemToDelete.ids.length) {
       setShowBulkActionModal(false);
@@ -656,7 +580,6 @@ const AdminDashboard = () => {
       setIsBulkProcessing(true);
       
       if (itemToDelete.type === 'bulk') {
-        // Delete multiple pets
         await Promise.all(
           itemToDelete.ids.map(id => petService.deletePet(id))
         );
@@ -665,7 +588,6 @@ const AdminDashboard = () => {
         toast.success(`Deleted ${itemToDelete.ids.length} pets`);
         await fetchPets();
       } else if (itemToDelete.type === 'bulk-visit') {
-        // Delete multiple visits
         await Promise.all(
           itemToDelete.ids.map(id => api.delete(`/visits/${id}`))
         );
@@ -684,7 +606,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Handle logout
   const handleLogout = async () => {
     try {
       await logout();
@@ -696,7 +617,6 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Header */}
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
@@ -704,7 +624,6 @@ const AdminDashboard = () => {
       </header>
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {/* Pet Management Section */}
         <Section 
           title="Pet Management"
           actions={
@@ -773,7 +692,6 @@ const AdminDashboard = () => {
           </div>
         </Section>
 
-        {/* Visit Requests Section */}
         <Section 
           title="Visit Requests"
           actions={
@@ -844,7 +762,6 @@ const AdminDashboard = () => {
         </Section>
       </main>
 
-      {/* Pet Modal */}
       <PetModal
         isOpen={showPetModal}
         onClose={() => {
@@ -858,7 +775,6 @@ const AdminDashboard = () => {
         isProcessing={isProcessing}
       />
 
-      {/* Visit Modal - Using allPets to show all available pets in the dropdown */}
       <VisitModal
         isOpen={showVisitModal}
         onClose={() => setShowVisitModal(false)}
@@ -868,7 +784,6 @@ const AdminDashboard = () => {
         isProcessing={isProcessing}
       />
 
-      {/* Delete Confirmation Modal */}
       <ConfirmationModal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
@@ -880,7 +795,6 @@ const AdminDashboard = () => {
         isProcessing={isProcessing}
       />
 
-      {/* Bulk Action Confirmation Modal */}
       <ConfirmationModal
         isOpen={showBulkActionModal}
         onClose={() => setShowBulkActionModal(false)}
@@ -892,7 +806,6 @@ const AdminDashboard = () => {
         isProcessing={isBulkProcessing}
       />
 
-      {/* Toast Notifications */}
       <Toaster position="top-right" />
     </div>
   );

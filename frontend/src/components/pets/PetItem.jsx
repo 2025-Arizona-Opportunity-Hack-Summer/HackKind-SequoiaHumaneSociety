@@ -18,13 +18,10 @@ const PetItem = ({
   });
 
   const getImageUrl = (image, id) => {
-    // If we have a direct image URL, return it
     if (image) return image;
     
-    // If pet has an image_url, use it
     if (pet.image_url) return pet.image_url;
     
-    // Fallback to placeholder based on pet species
     return `https://source.unsplash.com/featured/200x200/?${pet.species?.toLowerCase() || 'pet'},animal&id=${id}`;
   };
 

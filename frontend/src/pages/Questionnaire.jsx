@@ -33,7 +33,6 @@ export default function Questionnaire() {
   const [formErrors, setFormErrors] = useState({});
 
 
-  // Load saved preferences on component mount
   useEffect(() => {
     const loadPreferences = async () => {
       try {
@@ -54,7 +53,6 @@ export default function Questionnaire() {
     loadPreferences();
   }, []);
 
-  // Check authentication before allowing form submission
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast.error('You must be logged in to save preferences. Redirecting to login...');
@@ -112,7 +110,6 @@ export default function Questionnaire() {
   const handleSubmit = async () => {
     if (isSubmitting) return;
 
-    // Check authentication before submitting
     if (!isAuthenticated) {
       toast.error('You must be logged in to save preferences. Redirecting to login...');
       navigate('/login', { state: { from: '/questionnaire' } });
@@ -175,7 +172,6 @@ export default function Questionnaire() {
       toast.error(errorMessage);
       
       if (error.response?.status >= 500) {
-        // Error will be caught by the ErrorBoundary in index.js
         throw error;
       }
     } finally {
@@ -206,7 +202,6 @@ export default function Questionnaire() {
           </div>
         ) : (
           <div className="relative">
-            {/* Progress indicator */}
             <div className="flex justify-between mb-8 px-8 max-w-md mx-auto">
               {[1, 2].map((stepNum) => (
                 <div key={stepNum} className="flex flex-col items-center">
@@ -224,9 +219,7 @@ export default function Questionnaire() {
               ))}
             </div>
             
-            {/* Form steps */}
             <div className="min-h-96">
-              {/* Global form errors */}
               {Object.keys(formErrors).length > 0 && (
                 <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500">
                   <h3 className="text-red-700 font-medium">Please fix the following errors:</h3>

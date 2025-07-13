@@ -3,7 +3,6 @@ import api from './api';
 const PREFERENCES_ENDPOINT = '/users/me/preferences';
 
 const logErrorDetails = (error, context) => {
-  // Error details are now handled by the error handling in the API layer
 };
 
 export const preferencesService = {
@@ -21,11 +20,9 @@ export const preferencesService = {
     const fullUrl = `${api.defaults.baseURL}${PREFERENCES_ENDPOINT}`.replace('//api', '/api');
     
     try {
-      // First, try to get a CSRF token
       try {
         await api.get('/auth/csrf/');
       } catch (csrfError) {
-        // CSRF token fetch failed, but continue with the request
       }
       
       let preferencesResult;
@@ -71,10 +68,8 @@ export const preferencesService = {
         try {
           await this.saveTrainingTraits(trainingTraits);
         } catch (traitsError) {
-          // console.error('Failed to save training traits, but preferences were saved:', traitsError);
         }
       } else {
-        // console.log('No training traits to save. trainingTraits:', trainingTraits);
       }
       
       return preferencesResult;
@@ -94,7 +89,6 @@ export const preferencesService = {
       if (error.response?.status === 404) {
         return {}; 
       }
-      // console.error('Error fetching user preferences:', error);
       throw error;
     }
   },
@@ -104,7 +98,6 @@ export const preferencesService = {
       const response = await api.patch(PREFERENCES_ENDPOINT, updates);
       return response.data || {};
     } catch (error) {
-      // console.error('Error updating preferences:', error);
       const errorMessage = error.response?.data?.detail || 
                          error.response?.data?.message || 
                          'Failed to update preferences. Please try again.';
@@ -116,7 +109,6 @@ export const preferencesService = {
     try {
       
       if (!traitsArray || !Array.isArray(traitsArray)) {
-        // console.error('Invalid traitsArray:', traitsArray);
         return;
       }
       
@@ -128,14 +120,12 @@ export const preferencesService = {
         .filter(trait => {
           const isValid = trait && trait !== 'none' && trait !== 'allergy_friendly';
           if (!isValid) {
-            // console.log(`Skipping invalid trait: ${trait}`);
           }
           return isValid;
         })
         .filter(trait => {
           const isDuplicate = currentTraitNames.includes(trait);
           if (isDuplicate) {
-            // console.log(`Skipping duplicate trait: ${trait}`);
           }
           return !isDuplicate;
         });
@@ -146,10 +136,7 @@ export const preferencesService = {
             return response;
           })
           .catch(error => {
-            // console.error(`Error saving trait ${trait}:`, error);
             if (error.response) {
-              // console.error('Response data:', error.response.data);
-              // console.error('Status:', error.response.status);
             }
             throw error; 
           });
@@ -159,11 +146,9 @@ export const preferencesService = {
         const results = await Promise.all(savePromises);
         return results;
       } else {
-        // console.log('No new training traits to save');
         return [];
       }
     } catch (error) {
-      // console.error('Error in saveTrainingTraits:', error);
       logErrorDetails(error, 'Save Training Traits');
       throw new Error('Failed to save training traits');
     }
@@ -177,7 +162,6 @@ export const preferencesService = {
       if (error.response?.status === 404) {
         return []; 
       }
-      // console.error('Error fetching training traits:', error);
       throw error;
     }
   },
@@ -212,10 +196,8 @@ export const preferencesService = {
       'NoPreference': 'NoPreference'
     };
     
-    // Determine if we should use 'NoPreference' for species
     const hasNoPreferenceSpecies = formData.pet_type === 'NoPreference';
     
-    // Age mapping - map 'Puppy' and 'Kitten' to 'Baby' for the backend
     const ageMap = {
       'Baby': 'Baby',
       'Puppy': 'Baby',
@@ -259,14 +241,12 @@ export const preferencesService = {
     };
     
     const preferences = {
-      // Set preferred_species to 'NoPreference' when no preference is selected
       preferred_species: hasNoPreferenceSpecies ? 'NoPreference' : (formData.pet_type || 'Dog'),
       pet_purpose: purposeMap[formData.pet_purpose] || 'Myself',
       has_children: Boolean(formData.has_children),
       has_dogs: hasDogs,
       has_cats: hasCats,
       ownership_experience: ownershipMap[formData.ownership_experience] || 'FirstTime',
-      // Use ageMap to determine the correct age label based on pet type preference
       preferred_age: ageMap[formData.preferred_age] || 'NoPreference',
       preferred_sex: sexMap[formData.preferred_sex] || 'NoPreference',
       preferred_size: sizeMap[formData.preferred_size] || 'NoPreference',
@@ -276,36 +256,31 @@ export const preferencesService = {
       accepts_special_needs: Boolean(formData.special_needs)
     };
 
-    // These fields are required but some can be null
     const requiredFields = [
       'preferred_species', 'pet_purpose', 'has_children', 'has_dogs', 'has_cats',
       'ownership_experience', 'preferred_age', 'preferred_sex', 'preferred_size',
       'wants_allergy_friendly', 'accepts_special_needs'
     ];
     
-    // These fields are optional and can be null
     const optionalFields = [
       'preferred_energy_level', 'preferred_hair_length'
     ];
 
     const undefinedFields = [];
     
-    // Check required fields
     requiredFields.forEach(field => {
       if (preferences[field] === undefined) {
         undefinedFields.push(field);
       }
     });
 
-    // Check that optional fields are either valid or null
     optionalFields.forEach(field => {
       if (preferences[field] === undefined) {
-        preferences[field] = null; // Ensure optional fields are explicitly set to null if undefined
+        preferences[field] = null;
       }
     });
 
     if (undefinedFields.length > 0) {
-      // console.error('CRITICAL: Required fields are undefined:', undefinedFields);
     }
 
     return { preferences, trainingTraits };

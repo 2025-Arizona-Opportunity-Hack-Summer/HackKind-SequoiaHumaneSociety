@@ -26,7 +26,6 @@ const VisitModal = ({
         status: visit.status || 'pending approval'
       });
     } else {
-      // Set default date to now + 1 day, rounded to nearest hour
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       tomorrow.setMinutes(0, 0, 0);
@@ -51,7 +50,6 @@ const VisitModal = ({
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Convert local datetime to ISO string
     const submitData = {
       ...formData,
       requested_at: new Date(formData.requested_at).toISOString()
@@ -100,7 +98,7 @@ const VisitModal = ({
                         value={formData.pet_id}
                         onChange={handleChange}
                         className="mt-1 block w-full border border-gray-300 bg-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-red focus:border-primary-red sm:text-sm"
-                        disabled={!!visit} // Disable if editing existing visit
+                        disabled={!!visit}
                       >
                         <option value="">Select a pet</option>
                         {pets.map((pet) => (

@@ -14,7 +14,6 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData, erro
     return touched[field] && errors[field];
   };
 
-  // Update touched state when errors change
   useEffect(() => {
     if (Object.keys(errors).length > 0) {
       const newTouched = { ...touched };
@@ -57,7 +56,6 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData, erro
     }
   }, []);
 
-  // Initialize showChildrenQuestion based on saved data
   useEffect(() => {
     if (formData.pet_purpose === 'MyFamily') {
       setShowChildrenQuestion(true);
@@ -97,7 +95,6 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData, erro
 
   const handleNext = (e) => {
     e.preventDefault();
-    // Mark all fields as touched to show all errors
     const allTouched = Object.keys(touched).reduce((acc, key) => ({
       ...acc,
       [key]: true
@@ -113,7 +110,6 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData, erro
         <h2 className="text-2xl font-bold mb-6 text-gray-800">About You – Step 1 of 2</h2>
         
         <div className="space-y-6">
-          {/* 1. Pet Type Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               1. What type of pet do you want to adopt? <span className="text-red-500">*</span>
@@ -142,7 +138,6 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData, erro
             )}
           </div>
 
-          {/* 2. Pet Purpose */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               2. Who is this pet for? <span className="text-red-500">*</span>
@@ -188,7 +183,6 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData, erro
             )}
           </div>
 
-          {/* 2a. Children in home (conditional) */}
           {showChildrenQuestion && (
             <div className="ml-6 pl-4 border-l-2 border-gray-200">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -220,7 +214,6 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData, erro
             </div>
           )}
 
-          {/* 3. Current Pets */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               3. Do you currently own any pets? <span className="text-red-500">*</span>
@@ -249,7 +242,6 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData, erro
             )}
           </div>
 
-          {/* 4. Ownership Experience */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               4. What is your previous pet ownership experience? <span className="text-red-500">*</span>
@@ -289,7 +281,6 @@ export default function QuestionnaireStep1({ onNext, formData, setFormData, erro
             )}
           </div>
           
-          {/* Next Button */}
           <div className="pt-6 border-t border-gray-200">
             <button
               type="submit"
