@@ -181,11 +181,22 @@ export default function MatchResultsPage() {
 
     try {
       const dateTime = new Date(`${date}T${time}`);
-      
+
+      // Debug: log outgoing request config
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[DEBUG] About to send visit request:', {
+          url: `/visit-requests/${selectedPet.id}`,
+          requested_at: dateTime.toISOString(),
+          headers: (typeof window !== 'undefined' && window?.axiosLastConfig?.headers) || 'see network tab',
+        });
+      }
       const response = await api.post(`/visit-requests/${selectedPet.id}`, {
         requested_at: dateTime.toISOString()
       });
-      
+
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[DEBUG] Visit request response:', response);
+      }
       // If we get a response with success: false, it's a handled error case
       if (response.data && response.data.success === false) {
         return { 
@@ -205,6 +216,9 @@ export default function MatchResultsPage() {
       };
       
     } catch (err) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('[DEBUG] Visit request error:', err);
+      }
       let errorMessage = 'Failed to submit visit request. Please try again.';
       
       if (err.response) {

@@ -74,35 +74,24 @@ api.interceptors.request.use(
       }
     }
 
-    // Add CSRF token for non-GET requests
+    // Always set CSRF token for non-GET/HEAD requests
     if (config.method.toLowerCase() !== 'get' && config.method.toLowerCase() !== 'head') {
-      // Skip CSRF for public endpoints and exempted endpoints
-      const csrfExemptEndpoints = [
-        '/auth/login', 
-        '/auth/refresh', 
-        '/auth/logout', 
-        '/auth/register',
-        '/users/me/preferences',
-        '/users/me/preferences/'
-      ];
-      const isCsrfExempt = csrfExemptEndpoints.some(endpoint => 
-        config.url.endsWith(endpoint) || 
-        config.url.includes(`${endpoint}?`) || 
-        config.url.includes(`${endpoint}&`)
-      );
-
-      if (!isCsrfExempt) {
-        // Get CSRF token from cookies
-        const cookies = document.cookie.split(';').reduce((cookies, item) => {
-          const [name, value] = item.split('=').map(c => c.trim());
-          cookies[name] = value;
-          return cookies;
-        }, {});
-        
-        const csrfToken = cookies['csrftoken'];
-        if (csrfToken) {
-          config.headers['X-CSRF-Token'] = csrfToken;
-          config.withCredentials = true; // Important for sending cookies
+      // Get CSRF token from cookies
+      const cookies = document.cookie.split(';').reduce((cookies, item) => {
+        const [name, value] = item.split('=');
+        if (name && value) cookies[name.trim()] = value.trim();
+        return cookies;
+      }, {});
+      const csrfToken = cookies['csrftoken'];
+      if (csrfToken) {
+        config.headers['X-CSRF-Token'] = csrfToken;
+        config.withCredentials = true; // Important for sending cookies
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[DEBUG] Setting X-CSRF-Token header:', csrfToken);
+        }
+      } else {
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('[DEBUG] No csrftoken cookie found when preparing request');
         }
       }
     }
