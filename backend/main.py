@@ -78,7 +78,6 @@ class CSRFMiddleware:
         request = Request(scope, receive)
         path = scope.get("path", "")
         
-        # Check if this is a preferences endpoint
         isPreferencesEndpoint = (path == "/api/users/me/preferences" or 
                                path == "/api/users/me/preferences/")
         
@@ -86,13 +85,11 @@ class CSRFMiddleware:
         if not csrf_token:
             csrf_token = secrets.token_urlsafe(32)
 
-        # Treat PUT requests to preferences endpoint as safe methods
         if request.method in self.safe_methods or (request.method == "PUT" and isPreferencesEndpoint):
             return await self._process_request(scope, receive, send, csrf_token)
 
         header_token = request.headers.get(self.header_name)
         
-        # Only try to read form data for form requests
         form_token = None
         content_type = request.headers.get("content-type", "")
         if "application/x-www-form-urlencoded" in content_type or "multipart/form-data" in content_type:
@@ -156,9 +153,7 @@ class CSRFExemptMiddleware(CSRFMiddleware):
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] == "http":
             path = scope.get("path", "")
-            # Normalize path by removing trailing slash for comparison
             normalized_path = path.rstrip('/')
-            # Exempt all /api/visit-requests* and /api/admin/visit-requests* endpoints
             if (
                 normalized_path in csrf_exempt_paths or 
                 path in csrf_exempt_paths or 
@@ -191,8 +186,8 @@ middleware = [
         secret=settings.SECRET_KEY,
         cookie_name="csrftoken",
         header_name="X-CSRF-Token",
-        cookie_secure=True,  # must be True for SameSite=None
-        cookie_same_site="none",  # must be 'none' for cross-site
+        cookie_secure=True,  
+        cookie_same_site="none",  
         cookie_http_only=False,
         safe_methods={"GET", "HEAD", "OPTIONS", "TRACE"},
     ),
@@ -227,7 +222,6 @@ def custom_openapi():
 
 app.openapi = custom_openapi
 
-# Routers
 app.include_router(auth_router, prefix="/api")
 app.include_router(user_profile_router, prefix="/api")
 app.include_router(preferences_router, prefix="/api")

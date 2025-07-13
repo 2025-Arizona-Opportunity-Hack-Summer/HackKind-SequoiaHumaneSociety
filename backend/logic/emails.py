@@ -34,7 +34,6 @@ def send_visit_confirmation(adopter_name: str, adopter_email: str, pet_name: str
         mailer.set_reply_to(reply_to, mail_body)
         mailer.send(mail_body)
     except Exception as e:
-        # Removed print statement for error logging
         pass
 
 def send_visit_reminder(adopter_name: str, adopter_email: str, pet_name: str, visit_time: str):

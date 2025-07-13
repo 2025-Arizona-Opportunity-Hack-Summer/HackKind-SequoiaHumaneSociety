@@ -20,18 +20,15 @@ def request_visit(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    # Ensure requested_at is timezone-aware
     from datetime import datetime, timezone
     if payload.requested_at.tzinfo is None:
         requested_at = payload.requested_at.replace(tzinfo=timezone.utc)
     else:
         requested_at = payload.requested_at.astimezone(timezone.utc)
     
-    # Define time window for conflict checking
     time_window_start = requested_at - timedelta(minutes=30)
     time_window_end = requested_at + timedelta(minutes=30)
     
-    # Check for any existing visits in the time window (both pending and confirmed)
     existing_visits = db.query(VisitRequest).filter(
         VisitRequest.pet_id == pet_id,
         VisitRequest.status.in_(["Pending", "Confirmed"]),
@@ -39,7 +36,6 @@ def request_visit(
     ).all()
     
     if existing_visits:
-        # Check if any of the existing visits are from the same user
         user_existing_visit = next(
             (v for v in existing_visits if v.user_id == user.id),
             None
@@ -59,7 +55,6 @@ def request_visit(
                 }
             }
         
-        # If no user-specific conflict, but other users have visits
         conflict_details = [
             {
                 "id": v.id,
@@ -77,11 +72,10 @@ def request_visit(
             "conflicting_visits": conflict_details
         }
     
-    # Check if the same user has already requested a visit for this pet
     existing_user_visit = db.query(VisitRequest).filter(
         VisitRequest.user_id == user.id,
         VisitRequest.pet_id == pet_id,
-        VisitRequest.status == "Pending"  # Only block if they have a pending request
+        VisitRequest.status == "Pending"
     ).first()
     
     if existing_user_visit:

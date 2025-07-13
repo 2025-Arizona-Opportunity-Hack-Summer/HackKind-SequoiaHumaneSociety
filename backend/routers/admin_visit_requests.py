@@ -66,11 +66,10 @@ def update_visit_status(
         raise HTTPException(status_code=404, detail="Visit not found")
 
     previous_status = visit.status
-    visit.status = status.value  # Assign the string value to the Enum column
+    visit.status = status.value
     db.commit()
     db.refresh(visit)
 
-    # Send confirmation email if status changed from Pending to Confirmed
     if previous_status.value.lower() == VisitRequestStatus.Pending.value.lower() and status.value.lower() == VisitRequestStatus.Confirmed.value.lower():
         adopter = db.query(User).filter(User.id == visit.user_id).first()
         pet = db.query(Pet).filter(Pet.id == visit.pet_id).first()

@@ -13,7 +13,6 @@ from  models.pet import Pet
 from sqlalchemy.exc import SQLAlchemyError
 from typing import List, Tuple
 
-#------Vector Building Functions------#
 def build_pet_vector(pet_info: PetResponse, training_traits: list[TrainingTrait]):
     df = pd.DataFrame([{
         "age_group": pet_info.age_group.name if pet_info.age_group is not None else "NoPreference",
@@ -100,7 +99,6 @@ def build_adopter_vector(preferences: PreferencesSchema, training_traits: list[T
     return np.concatenate([df.to_numpy().flatten(), np.array(trait_vector)])
 
 
-#--------Saver Functions--------#
 def save_pet_vector(pet, training_traits, db):
     vector = build_pet_vector(pet, training_traits)
     db_vector = PetVector(
@@ -122,7 +120,6 @@ def save_adopter_vector(user_id, preferences, training_traits, db):
     db.merge(db_vector)
     db.commit()
 
-#--------Matching Functions--------#
 def cosine_similarity(vec1: np.ndarray, vec2: np.ndarray):
     if vec1.size == 0 or vec2.size == 0:
         return 0.0
@@ -155,19 +152,15 @@ def get_top_pet_matches(adopter_vector: List[float], pet_vectors: List[Tuple[int
 
 def save_matches_for_user(user_id: int, matches: List[Tuple[int, float]], db):
     try:
-        # Get existing matches for this user
         existing_matches = {
             match.pet_id: match 
             for match in db.query(Match).filter(Match.user_id == user_id).all()
         }
         
-        # Process each new match
         for pet_id, score in matches:
             if pet_id in existing_matches:
-                # Update existing match
                 existing_matches[pet_id].match_score = score
             else:
-                # Create new match
                 new_match = Match(
                     user_id=user_id,
                     pet_id=pet_id,
@@ -175,7 +168,6 @@ def save_matches_for_user(user_id: int, matches: List[Tuple[int, float]], db):
                 )
                 db.add(new_match)
         
-        # Remove matches that are no longer in the top matches
         current_pet_ids = {pet_id for pet_id, _ in matches}
         for pet_id, match in existing_matches.items():
             if pet_id not in current_pet_ids:
@@ -187,7 +179,6 @@ def save_matches_for_user(user_id: int, matches: List[Tuple[int, float]], db):
         db.rollback()
         raise
 
-#--------Loader Functions--------#
 def load_adopter_vector(user_id: int, db):
     record = db.query(AdopterVector).filter_by(user_id=user_id).first()
     return record.vector if record else None
@@ -202,7 +193,6 @@ def load_pet_vectors(db):
     )
     return [(r.pet_id, r.vector) for r in results]
 
-#--------Match refresh function--------#
 def refresh_all_matches(db):
     pet_vectors = load_pet_vectors(db)
     adopter_vectors = db.query(AdopterVector).all()

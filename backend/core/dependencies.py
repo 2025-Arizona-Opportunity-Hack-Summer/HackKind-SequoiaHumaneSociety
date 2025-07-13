@@ -8,14 +8,12 @@ from  core.database import get_db
 from  models.user import User
 
 def get_optional_user(request: Request, db: Session = Depends(get_db)) -> Optional[User]:
-    # Check for token in Authorization header first
     auth_header = request.headers.get("Authorization")
     token = None
     
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header.split(" ")[1]
     else:
-        # Fall back to checking cookies
         token = request.cookies.get("access_token")
     
     if not token:
@@ -27,7 +25,6 @@ def get_optional_user(request: Request, db: Session = Depends(get_db)) -> Option
         if user_id is None:
             return None
             
-        # Validate token type is access token
         if payload.get("type") != "access":
             return None
             

@@ -29,15 +29,14 @@ from  schemas.auth_schema import TokenResponse, UserCreate, UserResponse
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 security = HTTPBearer()
 
-# Cookie configuration for refresh token
 REFRESH_TOKEN_COOKIE = "refresh_token"
 COOKIE_CONFIG = {
-    "path": "/api",  # Only send cookie to API routes
-    "secure": settings.DEBUG is False,  # True in production with HTTPS, False in development
-    "httponly": True,  # Protect against XSS
-    "samesite": "strict" if settings.DEBUG else "none",  # Strict in development, None in production for cross-site
-    "max_age": int(settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60),  # in seconds
-    "domain": "localhost" if settings.DEBUG else None,  # Explicitly set domain for development
+    "path": "/api",
+    "secure": settings.DEBUG is False,
+    "httponly": True,
+    "samesite": "strict" if settings.DEBUG else "none",
+    "max_age": int(settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60),
+    "domain": "localhost" if settings.DEBUG else None,
 }
 
 @router.get("/csrf/")
@@ -50,29 +49,25 @@ async def get_csrf_token(
     Get a CSRF token. If no valid token exists in cookies, a new one will be generated.
     The token is set in both a cookie and returned in the response.
     """
-    from  main import CSRFMiddleware  # Import here to avoid circular import
+    from  main import CSRFMiddleware
     
-    # If we already have a valid token, return it
     if csrftoken:
         return {"csrftoken": csrftoken}
     
-    # Generate a new token
     new_token = secrets.token_urlsafe(32)
     
-    # Set the token in a cookie
     response.set_cookie(
         key="csrftoken",
         value=new_token,
-        httponly=False,  # Allow JavaScript to read the cookie
+        httponly=False,
         secure=not settings.DEBUG,
         samesite="lax",
-        max_age=60 * 60 * 24 * 7,  # 7 days
+        max_age=60 * 60 * 24 * 7,
         path="/",
     )
     
     return {"csrftoken": new_token}
 
-# CORS settings for auth endpoints
 def get_cors_headers(request=None):
     origin = request.headers.get('origin') if request else None
     allowed_origins = [
@@ -82,7 +77,6 @@ def get_cors_headers(request=None):
         "http://localhost:3001"
     ]
     
-    # If request origin is in allowed origins, use it, otherwise use the first allowed origin
     origin = origin if origin in allowed_origins else allowed_origins[0]
     
     return {
@@ -90,27 +84,23 @@ def get_cors_headers(request=None):
         "Access-Control-Allow-Methods": "POST, GET, OPTIONS, DELETE",
         "Access-Control-Allow-Headers": "Content-Type, Authorization, X-CSRF-Token",
         "Access-Control-Allow-Credentials": "true",
-        "Access-Control-Max-Age": "600",  # 10 minutes
+        "Access-Control-Max-Age": "600",
     }
 
 def _set_refresh_token_cookie(response: Response, token: str, expires: datetime) -> None:
     """Set the refresh token in an HTTP-only cookie."""
-    # Create a copy of the config to avoid modifying the original
     cookie_config = COOKIE_CONFIG.copy()
     
-    # In development, use more permissive settings
     if settings.DEBUG:
         cookie_config.update({
-            "secure": False,  # Allow non-HTTPS in development
-            "samesite": "lax",  # More permissive for local development
-            "domain": None,  # Don't set domain for localhost
+            "secure": False,
+            "samesite": "lax",
+            "domain": None,
         })
     
-    # Ensure path is always set
     cookie_config["path"] = "/"
     
     try:
-        # Set the cookie
         response.set_cookie(
             key=REFRESH_TOKEN_COOKIE,
             value=token,
@@ -138,7 +128,6 @@ async def login(
     Authenticate user and return access token.
     Sets a refresh token in an HTTP-only cookie.
     """
-    # Set CORS headers
     cors_headers = get_cors_headers(request)
     for key, value in cors_headers.items():
         response.headers[key] = value
@@ -147,11 +136,9 @@ async def login(
     if not user or not verify_password(credentials["password"], user.password_hash):
         raise AuthenticationError("Invalid email or password")
     
-    # Create tokens
     access_token, access_expires = create_access_token(str(user.id))
     refresh_token, refresh_expires = create_refresh_token(str(user.id))
     
-    # Set refresh token in HTTP-only cookie with proper CORS settings
     _set_refresh_token_cookie(response, refresh_token, refresh_expires)
     
     return {
@@ -168,7 +155,7 @@ async def login(
     }
 
 @router.post("/refresh", response_model=Union[TokenResponse, Dict[str, str]])
-@router.options("/refresh")  # Add OPTIONS handler for CORS preflight
+@router.options("/refresh")
 async def refresh_token(
     request: Request,
     response: Response,
@@ -178,25 +165,21 @@ async def refresh_token(
     Refresh access token using a valid refresh token.
     The refresh token should be provided in an HTTP-only cookie.
     """
-    # Set CORS headers first
     cors_headers = get_cors_headers(request)
     for key, value in cors_headers.items():
         response.headers[key] = value
     
-    # Handle CORS preflight request
     if request.method == "OPTIONS":
         response.headers.update({
             "Access-Control-Allow-Methods": "POST, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
-            "Access-Control-Max-Age": "600",  # 10 minutes
+            "Access-Control-Max-Age": "600",
         })
         return Response(status_code=204, headers=dict(response.headers))
     
-    # Check for refresh token in cookies
     refresh_token = request.cookies.get(REFRESH_TOKEN_COOKIE)
     
     if not refresh_token:
-        # Return 401 with CORS headers and proper error response format
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return JSONResponse(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -205,20 +188,16 @@ async def refresh_token(
         )
     
     try:
-        # Verify the refresh token
         user_id = get_subject_from_token(refresh_token, "refresh")
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
             raise AuthenticationError("User not found")
         
-        # Create new tokens
         access_token, access_expires = create_access_token(str(user.id))
         new_refresh_token, refresh_expires = create_refresh_token(str(user.id))
         
-        # Update refresh token in cookie with secure settings
         _set_refresh_token_cookie(response, new_refresh_token, refresh_expires)
         
-        # Add cache control headers
         response.headers["Cache-Control"] = "no-store"
         response.headers["Pragma"] = "no-cache"
         
@@ -236,7 +215,6 @@ async def refresh_token(
         }
         
     except (InvalidTokenError, TokenExpiredError) as e:
-        # Clear the invalid refresh token
         response.delete_cookie(
             key=REFRESH_TOKEN_COOKIE,
             path=COOKIE_CONFIG["path"],
@@ -245,7 +223,6 @@ async def refresh_token(
             samesite=COOKIE_CONFIG["samesite"]
         )
         
-        # Return 401 with CORS headers and proper error response format
         return JSONResponse(
             status_code=status.HTTP_401_UNAUTHORIZED,
             content={"detail": "Invalid or expired refresh token. Please log in again."},
@@ -261,7 +238,7 @@ async def refresh_token(
         raise AuthenticationError(str(e))
 
 @router.post("/logout")
-@router.options("/logout")  # Add OPTIONS handler for CORS preflight
+@router.options("/logout")
 async def logout(
     request: Request,
     response: Response
@@ -270,16 +247,13 @@ async def logout(
     Log out the user by clearing the refresh token cookie.
     Handles CORS and ensures secure cookie deletion.
     """
-    # Set CORS headers
     cors_headers = get_cors_headers(request)
     for key, value in cors_headers.items():
         response.headers[key] = value
     
-    # Handle CORS preflight request
     if request.method == "OPTIONS":
         return Response(status_code=204, headers=dict(response.headers))
     
-    # Clear the refresh token cookie with all necessary attributes
     response.delete_cookie(
         key=REFRESH_TOKEN_COOKIE,
         path=COOKIE_CONFIG["path"],
@@ -293,19 +267,17 @@ async def logout(
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """Register a new user."""
-    # Check if user already exists
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
         raise Conflict("Email already registered")
     
-    # Hash password and create user
     hashed_password = get_password_hash(user_data.password)
     new_user = User(
         email=user_data.email,
         full_name=user_data.full_name,
         phone_number=user_data.phone_number,
         password_hash=hashed_password,
-        role='adopter'  # Default role
+        role='adopter'
     )
     
     try:

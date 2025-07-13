@@ -24,16 +24,13 @@ __all__ = [
     'RefreshTokenRequest',
 ]
 
-# Password constraints
 PASSWORD_MIN_LENGTH = 8
 PASSWORD_MAX_LENGTH = 128
 PASSWORD_PATTERN = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]"
 
-# Name constraints
 NAME_MIN_LENGTH = 2
 NAME_MAX_LENGTH = 100
 
-# Phone number constraints
 PHONE_MIN_LENGTH = 10
 PHONE_MAX_LENGTH = 20
 
@@ -113,9 +110,8 @@ class UserCreate(UserBase):
     @classmethod
     def validate_full_name(cls, v: str) -> str:
         """Sanitize and validate full name."""
-        # Remove any potentially dangerous characters
         sanitized = "".join(c for c in v if c.isalpha() or c.isspace() or c in "'-.")
-        sanitized = " ".join(sanitized.split())  # Normalize whitespace
+        sanitized = " ".join(sanitized.split()) 
         if len(sanitized) < NAME_MIN_LENGTH:
             raise ValueError("Name is too short")
         if len(sanitized) > NAME_MAX_LENGTH:
@@ -137,7 +133,6 @@ class UserLogin(BaseModel):
     @model_validator(mode="after")
     def validate_credentials(self) -> "UserLogin":
         """Additional validation for login credentials."""
-        # Here you could add rate limiting checks, etc.
         return self
 
 

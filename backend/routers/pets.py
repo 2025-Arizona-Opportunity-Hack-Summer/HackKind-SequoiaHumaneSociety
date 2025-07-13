@@ -7,7 +7,7 @@ from pathlib import Path
 
 from  core.database import get_db
 import models
-from  logic.image_uploader import upload_pet_photo_local  # Now uses S3
+from  logic.image_uploader import upload_pet_photo_local
 from  schemas.pet_schema import PetResponse
 from  core.dependencies import get_optional_user, get_current_user
 from  models.user import User, UserRole
@@ -100,7 +100,6 @@ async def create_pet(
         }
         
         db_pet = models.Pet(**{k: v for k, v in pet_data.items() if v is not None})
-        # Generate summary using fallback BEFORE commit
         summary = await pet_ai_service.generate_pet_summary({
             'name': name,
             'species': species,
@@ -117,7 +116,7 @@ async def create_pet(
             'pet_friendly': pet_friendly,
             'shelter_notes': shelter_notes,
         })
-        db_pet.summary = summary  # type: ignore
+        db_pet.summary = summary
         db.add(db_pet)
         db.commit()
         db.refresh(db_pet)
@@ -125,7 +124,7 @@ async def create_pet(
         if image and image.filename:
             try:
                 image_url = await upload_pet_photo_local(image, db_pet.id, image.filename)
-                db_pet.image_url = image_url  # type: ignore
+                db_pet.image_url = image_url
             except Exception as e:
                 print(f"Warning: Could not upload image for new pet {db_pet.id}: {e}")
             finally:
@@ -265,14 +264,12 @@ async def get_pet_photo(pet_id: int, db: Session = Depends(get_db)):
     image_url_str = str(pet.image_url)
 
     if image_url_str.startswith('/static/'):
-        # Handle local file
         file_path = Path("backend" + image_url_str)
         if not file_path.exists():
             raise HTTPException(status_code=404, detail="Photo file not found on server")
         return FileResponse(file_path, media_type="image/jpeg", headers={"Cache-Control": "public, max-age=86400"})
 
     elif image_url_str.startswith('http'):
-        # Handle external URL
         try:
             response = requests.get(image_url_str, stream=True, timeout=10)
             response.raise_for_status()

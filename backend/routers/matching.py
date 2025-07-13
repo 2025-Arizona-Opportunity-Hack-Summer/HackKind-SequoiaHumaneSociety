@@ -24,7 +24,6 @@ from fastapi import Query
 
 router = APIRouter(prefix="/match", tags=["Matching"])
 
-# ---------- Helper Functions ----------
 
 def get_user_preferences_and_traits(user_id: int, db: Session):
     prefs = db.query(UserPreferences).filter_by(user_id=user_id).first()
@@ -46,8 +45,6 @@ def get_pet_response_and_traits(pet_id: int, db: Session):
     pet_response = PetResponse(**{k: v for k, v in pet.__dict__.items() if not k.startswith("_")})
     return pet_response, traits
 
-
-# ---------- Routes ----------
 
 @router.post("/refresh-vector")
 def refresh_adopter_vector(
@@ -127,9 +124,9 @@ def get_pet_recommendations(
             if filtered_pet_vectors:
                 pet_vectors = filtered_pet_vectors
             else:
-                pass # No pets match the preferred species, falling back to all pets
+                pass
         elif preferences.preferred_species == "NoPreference":
-            pass # No preference for species, considering all available pets
+            pass
 
         top_matches = get_top_pet_matches(adopter_vector, pet_vectors, top_k=50)
         

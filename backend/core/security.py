@@ -7,12 +7,10 @@ from passlib.context import CryptContext
 from  core.config import settings
 from  core.exceptions import InvalidTokenError, TokenExpiredError
 
-# Password hashing configuration
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Token configurations
-ACCESS_TOKEN_EXPIRE_MINUTES = 15  # 15 minutes
-REFRESH_TOKEN_EXPIRE_DAYS = 7  # 7 days
+ACCESS_TOKEN_EXPIRE_MINUTES = 15
+REFRESH_TOKEN_EXPIRE_DAYS = 7
 ALGORITHM = "HS256"
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -65,7 +63,6 @@ def create_access_token(subject: str) -> Tuple[str, datetime]:
 def create_refresh_token(subject: str) -> Tuple[str, datetime]:
     """Create a refresh token that expires in 7 days."""
     expires_delta = timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-    # Ensure we use timezone-aware datetime for cookie expiration
     token = create_token(subject, expires_delta, "refresh")
     expires = datetime.now(timezone.utc) + expires_delta
     return token, expires
