@@ -183,8 +183,11 @@ middleware = [
     Middleware(SecurityHeadersMiddleware),
     Middleware(
         CSRFExemptMiddleware,
-        cookie_secure=not settings.DEBUG,
-        cookie_same_site="lax",
+        secret=settings.SECRET_KEY,
+        cookie_name="csrftoken",
+        header_name="X-CSRF-Token",
+        cookie_secure=True,  # must be True for SameSite=None
+        cookie_same_site="none",  # must be 'none' for cross-site
         cookie_http_only=False,
         safe_methods={"GET", "HEAD", "OPTIONS", "TRACE"},
     ),
