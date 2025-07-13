@@ -76,8 +76,15 @@ api.interceptors.request.use(
 
     // Add CSRF token for non-GET requests
     if (config.method.toLowerCase() !== 'get' && config.method.toLowerCase() !== 'head') {
-      // Skip CSRF for public endpoints
-      const csrfExemptEndpoints = ['/auth/login', '/auth/refresh', '/auth/logout', '/auth/register'];
+      // Skip CSRF for public endpoints and exempted endpoints
+      const csrfExemptEndpoints = [
+        '/auth/login', 
+        '/auth/refresh', 
+        '/auth/logout', 
+        '/auth/register',
+        '/users/me/preferences',
+        '/users/me/preferences/'
+      ];
       const isCsrfExempt = csrfExemptEndpoints.some(endpoint => 
         config.url.endsWith(endpoint) || 
         config.url.includes(`${endpoint}?`) || 
@@ -96,8 +103,6 @@ api.interceptors.request.use(
         if (csrfToken) {
           config.headers['X-CSRF-Token'] = csrfToken;
           config.withCredentials = true; // Important for sending cookies
-        } else {
-          // console.warn('CSRF token not found in cookies.');
         }
       }
     }

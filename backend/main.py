@@ -76,16 +76,31 @@ class CSRFMiddleware:
             return await self.app(scope, receive, send)
 
         request = Request(scope, receive)
+        path = scope.get("path", "")
+        
+        # Check if this is a preferences endpoint
+        isPreferencesEndpoint = (path == "/api/users/me/preferences" or 
+                               path == "/api/users/me/preferences/")
+        
         csrf_token = request.cookies.get(self.cookie_name)
         if not csrf_token:
             csrf_token = secrets.token_urlsafe(32)
 
-        if request.method in self.safe_methods:
+        # Treat PUT requests to preferences endpoint as safe methods
+        if request.method in self.safe_methods or (request.method == "PUT" and isPreferencesEndpoint):
             return await self._process_request(scope, receive, send, csrf_token)
 
         header_token = request.headers.get(self.header_name)
-        form_data = await request.form()
-        form_token = form_data.get("csrf_token")
+        
+        # Only try to read form data for form requests
+        form_token = None
+        content_type = request.headers.get("content-type", "")
+        if "application/x-www-form-urlencoded" in content_type or "multipart/form-data" in content_type:
+            try:
+                form_data = await request.form()
+                form_token = form_data.get("csrf_token")
+            except:
+                pass
 
         if not (header_token and header_token == csrf_token) and not (form_token and form_token == csrf_token):
             response = StarletteResponse(
@@ -131,14 +146,21 @@ csrf_exempt_paths = {
     "/openapi.json",
     "/api/pets",
     "/api/pets/",
-    "/api/users/me/preferences"
+    "/api/users/me/preferences",
+    "/api/users/me/preferences/"
 }
 
 class CSRFExemptMiddleware(CSRFMiddleware):
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] == "http":
             path = scope.get("path", "")
-            if path in csrf_exempt_paths or path.startswith("/api/pets"):
+            # Normalize path by removing trailing slash for comparison
+            normalized_path = path.rstrip('/')
+            
+            # Check if the normalized path is in exempt paths or starts with pets
+            if (normalized_path in csrf_exempt_paths or 
+                path in csrf_exempt_paths or 
+                path.startswith("/api/pets")):
                 await self.app(scope, receive, send)
                 return
         await super().__call__(scope, receive, send)

@@ -19,7 +19,15 @@ export const preferencesService = {
     }
     
     const fullUrl = `${api.defaults.baseURL}${PREFERENCES_ENDPOINT}`.replace('//api', '/api');
+    
     try {
+      // First, try to get a CSRF token
+      try {
+        await api.get('/auth/csrf/');
+      } catch (csrfError) {
+        // CSRF token fetch failed, but continue with the request
+      }
+      
       let preferencesResult;
       try {
         const response = await api.put(PREFERENCES_ENDPOINT, preferences, {
