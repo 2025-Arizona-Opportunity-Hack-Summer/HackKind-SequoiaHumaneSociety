@@ -360,4 +360,17 @@ function redirectToLogin() {
   }
 }
 
+// Utility to ensure CSRF token is set
+export async function ensureCsrfToken() {
+  const cookies = document.cookie.split(';').reduce((cookies, item) => {
+    const [name, value] = item.split('=');
+    if (name && value) cookies[name.trim()] = value.trim();
+    return cookies;
+  }, {});
+  if (!cookies['csrftoken']) {
+    // Fetch the CSRF token from the backend
+    await fetch('/api/auth/csrf/', { credentials: 'include' });
+  }
+}
+
 export default api;

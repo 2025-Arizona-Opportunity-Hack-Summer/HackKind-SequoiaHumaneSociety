@@ -3,6 +3,7 @@ import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { petService } from "../services/petService";
 import api from "../services/api";
+import { ensureCsrfToken } from "../services/api";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -174,6 +175,9 @@ export default function MatchResultsPage() {
 
     setIsSubmitting(true);
     setError("");
+
+    // Ensure CSRF token is set before making the request
+    await ensureCsrfToken();
 
     try {
       const dateTime = new Date(`${date}T${time}`);
